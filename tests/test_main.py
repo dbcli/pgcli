@@ -14,6 +14,7 @@ from pgcli.main import (
     obfuscate_process_password,
     duration_in_words,
     format_output,
+    notify_callback,
     PGCli,
     OutputSettings,
     COLOR_CODE_REGEX,
@@ -433,6 +434,7 @@ def test_pg_service_file(tmpdir):
         "b_host",
         "5435",
         "",
+        notify_callback,
         application_name="pgcli",
     )
     del os.environ["PGPASSWORD"]
@@ -488,7 +490,7 @@ def test_application_name_db_uri(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
     mock_pgexecute.assert_called_with(
-        "bar", "bar", "", "baz.com", "", "", application_name="cow"
+        "bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow"
     )
 
 

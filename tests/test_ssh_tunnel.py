@@ -6,7 +6,7 @@ from configobj import ConfigObj
 from click.testing import CliRunner
 from sshtunnel import SSHTunnelForwarder
 
-from pgcli.main import cli, PGCli
+from pgcli.main import cli, notify_callback, PGCli
 from pgcli.pgexecute import PGExecute
 
 
@@ -61,6 +61,7 @@ def test_ssh_tunnel(
         "127.0.0.1",
         pgcli.ssh_tunnel.local_bind_ports[0],
         "",
+        notify_callback,
     )
     mock_ssh_tunnel_forwarder.reset_mock()
     mock_pgexecute.reset_mock()
@@ -96,6 +97,7 @@ def test_ssh_tunnel(
         "127.0.0.1",
         pgcli.ssh_tunnel.local_bind_ports[0],
         "",
+        notify_callback,
     )
     mock_ssh_tunnel_forwarder.reset_mock()
     mock_pgexecute.reset_mock()
