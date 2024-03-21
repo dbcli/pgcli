@@ -298,6 +298,24 @@ def test_i_works(tmpdir, executor):
 
 
 @dbtest
+def test_toggle_verbose_errors(executor):
+    cli = PGCli(pgexecute=executor)
+
+    cli._evaluate_command("\\v on")
+    assert cli.verbose_errors
+    output, _ = cli._evaluate_command("SELECT 1/0")
+    assert "SQLSTATE" in output[0]
+
+    cli._evaluate_command("\\v off")
+    assert not cli.verbose_errors
+    output, _ = cli._evaluate_command("SELECT 1/0")
+    assert "SQLSTATE" not in output[0]
+
+    cli._evaluate_command("\\v")
+    assert cli.verbose_errors
+
+
+@dbtest
 def test_echo_works(executor):
     cli = PGCli(pgexecute=executor)
     statement = r"\echo asdf"

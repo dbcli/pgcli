@@ -156,8 +156,9 @@ max_field_width = 500
 # Skip intro on startup and goodbye on exit
 less_chatty = False
 
-# Show all Postgres error fields (as in
-# https://www.postgresql.org/docs/current/protocol-error-fields.html)
+# Show all Postgres error fields (as listed in
+# https://www.postgresql.org/docs/current/protocol-error-fields.html).
+# Can be toggled with \v.
 verbose_errors = False
 
 # Postgres prompt

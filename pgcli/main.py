@@ -384,6 +384,26 @@ class PGCli:
             "Echo a string to the query output channel.",
         )
 
+        self.pgspecial.register(
+            self.toggle_verbose_errors,
+            "\\v",
+            "\\v [on|off]",
+            "Toggle verbose errors.",
+        )
+
+    def toggle_verbose_errors(self, pattern, **_):
+        flag = pattern.strip()
+
+        if flag == "on":
+            self.verbose_errors = True
+        elif flag == "off":
+            self.verbose_errors = False
+        else:
+            self.verbose_errors = not self.verbose_errors
+
+        message = "Verbose errors " + "on." if self.verbose_errors else "off."
+        return [(None, None, None, message)]
+
     def echo(self, pattern, **_):
         return [(None, None, None, pattern)]
 

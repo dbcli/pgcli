@@ -220,8 +220,10 @@ def test_database_list(executor):
 
 @dbtest
 def test_invalid_syntax(executor, exception_formatter):
-    result = run(executor, "invalid syntax!", exception_formatter=exception_formatter)
+    result = run(executor, "invalid syntax!", exception_formatter=lambda x:
+                 main_exception_formatter(x, verbose_errors=False))
     assert 'syntax error at or near "invalid"' in result[0]
+    assert 'SQLSTATE' not in result[0]
 
 
 @dbtest
