@@ -167,6 +167,7 @@ class PGExecute:
         host=None,
         port=None,
         dsn=None,
+        notify_callback=None,
         **kwargs,
     ):
         self._conn_params = {}
@@ -179,6 +180,7 @@ class PGExecute:
         self.port = None
         self.server_version = None
         self.extra_args = None
+        self.notify_callback = notify_callback
         self.connect(database, user, password, host, port, dsn, **kwargs)
         self.reset_expanded = None
 
@@ -236,6 +238,9 @@ class PGExecute:
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
+
+        if self.notify_callback is not None:
+            self.conn.add_notify_handler(self.notify_callback)
 
         # When we connect using a DSN, we don't really know what db,
         # user, etc. we connected to. Let's read it.
