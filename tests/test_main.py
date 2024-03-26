@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 from unittest import mock
 
 import pytest
@@ -13,6 +14,7 @@ from pgcli.main import (
     obfuscate_process_password,
     duration_in_words,
     format_output,
+    notify_callback,
     PGCli,
     OutputSettings,
     COLOR_CODE_REGEX,
@@ -450,6 +452,7 @@ def test_pg_service_file(tmpdir):
         "b_host",
         "5435",
         "",
+        notify_callback,
         application_name="pgcli",
     )
     del os.environ["PGPASSWORD"]
@@ -505,7 +508,7 @@ def test_application_name_db_uri(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
     mock_pgexecute.assert_called_with(
-        "bar", "bar", "", "baz.com", "", "", application_name="cow"
+        "bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow"
     )
 
 
@@ -532,3 +535,23 @@ def test_application_name_db_uri(tmpdir):
 )
 def test_duration_in_words(duration_in_seconds, words):
     assert duration_in_words(duration_in_seconds) == words
+
+
+@dbtest
+def test_notifications(executor):
+    run(executor, "listen chan1")
+
+    with mock.patch("pgcli.main.click.secho") as mock_secho:
+        run(executor, "notify chan1, 'testing1'")
+        mock_secho.assert_called()
+        arg = mock_secho.call_args_list[0].args[0]
+    assert re.match(
+        r'Notification received on channel "chan1" \(PID \d+\):\ntesting1',
+        arg,
+    )
+
+    run(executor, "unlisten chan1")
+
+    with mock.patch("pgcli.main.click.secho") as mock_secho:
+        run(executor, "notify chan1, 'testing2'")
+        mock_secho.assert_not_called()

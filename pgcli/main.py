@@ -73,7 +73,7 @@ from urllib.parse import urlparse
 
 from getpass import getuser
 
-from psycopg import OperationalError, InterfaceError
+from psycopg import OperationalError, InterfaceError, Notify
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
 from psycopg.errors import Diagnostic
 
@@ -127,6 +127,15 @@ OutputSettings.__new__.__defaults__ = (
 
 class PgCliQuitError(Exception):
     pass
+
+
+def notify_callback(notify: Notify):
+    click.secho(
+        'Notification received on channel "{}" (PID {}):\n{}'.format(
+            notify.channel, notify.pid, notify.payload
+        ),
+        fg="green",
+    )
 
 
 class PGCli:
@@ -684,7 +693,16 @@ class PGCli:
         # prompt for a password (no -w flag), prompt for a passwd and try again.
         try:
             try:
-                pgexecute = PGExecute(database, user, passwd, host, port, dsn, **kwargs)
+                pgexecute = PGExecute(
+                    database,
+                    user,
+                    passwd,
+                    host,
+                    port,
+                    dsn,
+                    notify_callback,
+                    **kwargs,
+                )
             except (OperationalError, InterfaceError) as e:
                 if should_ask_for_password(e):
                     passwd = click.prompt(
@@ -694,7 +712,14 @@ class PGCli:
                         type=str,
                     )
                     pgexecute = PGExecute(
-                        database, user, passwd, host, port, dsn, **kwargs
+                        database,
+                        user,
+                        passwd,
+                        host,
+                        port,
+                        dsn,
+                        notify_callback,
+                        **kwargs,
                     )
                 else:
                     raise e

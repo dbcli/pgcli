@@ -4,8 +4,9 @@ Upcoming
 Features:
 ---------
 * Support `PGAPPNAME` as an environment variable and `--application-name` as a command line argument.
-* Add `verbose_errors` config which enables the displaying of all Postgres
-  error fields received.
+* Add `verbose_errors` config and `\v` special command which enable the
+  displaying of all Postgres error fields received.
+* Show Postgres notifications.
 
 Bug fixes:
 ----------

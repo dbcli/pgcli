@@ -9,6 +9,7 @@ from utils import (
     db_connection,
     drop_tables,
 )
+import pgcli.main
 import pgcli.pgexecute
 
 
@@ -37,6 +38,7 @@ def executor(connection):
         password=POSTGRES_PASSWORD,
         port=POSTGRES_PORT,
         dsn=None,
+        notify_callback=pgcli.main.notify_callback,
     )
 
 
