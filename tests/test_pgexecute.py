@@ -1,3 +1,4 @@
+import re
 from textwrap import dedent
 
 import psycopg
@@ -6,7 +7,7 @@ from unittest.mock import patch, MagicMock
 from pgspecial.main import PGSpecial, NO_QUERY
 from utils import run, dbtest, requires_json, requires_jsonb
 
-from pgcli.main import PGCli
+from pgcli.main import PGCli, exception_formatter as main_exception_formatter
 from pgcli.packages.parseutils.meta import FunctionMetadata
 
 
@@ -219,8 +220,33 @@ def test_database_list(executor):
 
 @dbtest
 def test_invalid_syntax(executor, exception_formatter):
-    result = run(executor, "invalid syntax!", exception_formatter=exception_formatter)
+    result = run(
+        executor,
+        "invalid syntax!",
+        exception_formatter=lambda x: main_exception_formatter(x, verbose_errors=False),
+    )
     assert 'syntax error at or near "invalid"' in result[0]
+    assert "SQLSTATE" not in result[0]
+
+
+@dbtest
+def test_invalid_syntax_verbose(executor):
+    result = run(
+        executor,
+        "invalid syntax!",
+        exception_formatter=lambda x: main_exception_formatter(x, verbose_errors=True),
+    )
+    fields = r"""
+Severity: ERROR
+Severity \(non-localized\): ERROR
+SQLSTATE code: 42601
+Message: syntax error at or near "invalid"
+Position: 1
+File: scan\.l
+Line: \d+
+Routine: scanner_yyerror
+    """.strip()
+    assert re.search(fields, result[0])
 
 
 @dbtest
