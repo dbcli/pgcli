@@ -1,6 +1,8 @@
 import os
 import platform
 import re
+import tempfile
+import datetime
 from unittest import mock
 
 import pytest
@@ -331,6 +333,30 @@ def test_qecho_works(executor):
     statement = r"\qecho asdf"
     result = run(executor, statement, pgspecial=cli.pgspecial)
     assert result == ["asdf"]
+
+
+@dbtest
+def test_logfile_works(executor):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        log_file = f"{tmpdir}/tempfile.log"
+        cli = PGCli(pgexecute=executor, log_file=log_file)
+        statement = r"\qecho hello!"
+        cli.execute_command(statement)
+        with open(log_file, "r") as f:
+            log_contents = f.readlines()
+        assert datetime.datetime.fromisoformat(log_contents[0].strip())
+        assert log_contents[1].strip() == r"\qecho hello!"
+        assert log_contents[2].strip() == "hello!"
+
+
+@dbtest
+def test_logfile_unwriteable_file(executor):
+    cli = PGCli(pgexecute=executor)
+    statement = r"\log-file /etc/forbidden.log"
+    result = run(executor, statement, pgspecial=cli.pgspecial)
+    assert result == [
+        "[Errno 13] Permission denied: '/etc/forbidden.log'\nLogfile capture disabled"
+    ]
 
 
 @dbtest
