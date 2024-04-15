@@ -14,7 +14,7 @@ install_requirements = [
     "prompt_toolkit>=2.0.6,<4.0.0",
     "psycopg >= 3.0.14; sys_platform != 'win32'",
     "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
-    "sqlparse >=0.3.0,<0.5",
+    "sqlparse >=0.3.0,<0.6",
     "configobj >= 5.0.6",
     "cli_helpers[styles] >= 2.2.1",
 ]

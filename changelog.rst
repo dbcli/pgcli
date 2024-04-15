@@ -7,6 +7,7 @@ Features:
 * Add `verbose_errors` config and `\v` special command which enable the
   displaying of all Postgres error fields received.
 * Show Postgres notifications.
+* Support sqlparse 0.5.x
 
 Bug fixes:
 ----------
