@@ -85,7 +85,7 @@ jobs:
         run: behave tests/features --no-capture
 
       - name: Check changelog for ReST compliance
-        run: rst2html.py --halt=warning changelog.rst >/dev/null
+        run: docutils --halt=warning changelog.rst >/dev/null
 
       - name: Run Black
         run: black --check .
