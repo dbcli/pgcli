@@ -313,7 +313,8 @@ class PGCli:
         self.ssh_tunnel = None
 
         if log_file:
-            open(log_file, "a+").close()  # ensure writeable
+            with open(log_file, "a+"):
+                pass  # ensure writeable
         self.log_file = log_file
 
         # formatter setup
