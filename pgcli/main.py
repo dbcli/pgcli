@@ -880,7 +880,7 @@ class PGCli:
                 ):
                     try:
                         with open(self.log_file, "a", encoding="utf-8") as f:
-                            click.echo(dt.datetime.now(), file=f)  # timestamp log
+                            click.echo(dt.datetime.now().isoformat(), file=f)  # timestamp log
                             click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
