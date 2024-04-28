@@ -530,7 +530,8 @@ class PGCli:
         log_file = pathlib.Path(pattern).expanduser().absolute()
 
         try:
-            open(log_file, "a+").close()  # ensure writeable
+            with open(log_file, "a+"):
+                pass  # ensure writeable
         except OSError as e:
             self.log_file = None
             message = str(e) + "\nLogfile capture disabled"
