@@ -352,10 +352,12 @@ def test_logfile_works(executor):
 @dbtest
 def test_logfile_unwriteable_file(executor):
     cli = PGCli(pgexecute=executor)
-    statement = r"\log-file /etc/forbidden.log"
-    result = run(executor, statement, pgspecial=cli.pgspecial)
+    statement = r"\log-file forbidden.log"
+    with mock.patch("builtins.open") as mock_open:
+        mock_open.side_effect = PermissionError("[Errno 13] Permission denied: 'forbidden.log'")
+        result = run(executor, statement, pgspecial=cli.pgspecial)
     assert result == [
-        "[Errno 13] Permission denied: '/etc/forbidden.log'\nLogfile capture disabled"
+        "[Errno 13] Permission denied: 'forbidden.log'\nLogfile capture disabled"
     ]
 
 
