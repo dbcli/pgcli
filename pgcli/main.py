@@ -13,6 +13,7 @@ import shutil
 import functools
 import datetime as dt
 import itertools
+import pathlib
 import platform
 from time import time, sleep
 from typing import Optional
@@ -182,6 +183,7 @@ class PGCli:
         auto_vertical_output=False,
         warn=None,
         ssh_tunnel_url: Optional[str] = None,
+        log_file: Optional[str] = None,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -310,6 +312,11 @@ class PGCli:
         self.ssh_tunnel_url = ssh_tunnel_url
         self.ssh_tunnel = None
 
+        if log_file:
+            with open(log_file, "a+"):
+                pass  # ensure writeable
+        self.log_file = log_file
+
         # formatter setup
         self.formatter = TabularOutputFormatter(format_name=c["main"]["table_format"])
         register_new_formatter(self.formatter)
@@ -368,6 +375,12 @@ class PGCli:
             "\\o",
             "\\o [filename]",
             "Send all query results to file.",
+        )
+        self.pgspecial.register(
+            self.write_to_logfile,
+            "\\log-file",
+            "\\log-file [filename]",
+            "Log all query results to a logfile, in addition to the normal output destination.",
         )
         self.pgspecial.register(
             self.info_connection, "\\conninfo", "\\conninfo", "Get connection details"
@@ -507,6 +520,26 @@ class PGCli:
             on_error_resume=on_error_resume,
             explain_mode=self.explain_mode,
         )
+
+    def write_to_logfile(self, pattern, **_):
+        if not pattern:
+            self.log_file = None
+            message = "Logfile capture disabled"
+            return [(None, None, None, message, "", True, True)]
+
+        log_file = pathlib.Path(pattern).expanduser().absolute()
+
+        try:
+            with open(log_file, "a+"):
+                pass  # ensure writeable
+        except OSError as e:
+            self.log_file = None
+            message = str(e) + "\nLogfile capture disabled"
+            return [(None, None, None, message, "", False, True)]
+
+        self.log_file = str(log_file)
+        message = 'Writing to file "%s"' % self.log_file
+        return [(None, None, None, message, "", True, True)]
 
     def write_to_file(self, pattern, **_):
         if not pattern:
@@ -826,7 +859,7 @@ class PGCli:
         else:
             try:
                 if self.output_file and not text.startswith(
-                    ("\\o ", "\\? ", "\\echo ")
+                    ("\\o ", "\\log-file", "\\? ", "\\echo ")
                 ):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
@@ -838,6 +871,23 @@ class PGCli:
                 else:
                     if output:
                         self.echo_via_pager("\n".join(output))
+
+                # Log to file in addition to normal output
+                if (
+                    self.log_file
+                    and not text.startswith(("\\o ", "\\log-file", "\\? ", "\\echo "))
+                    and not text.strip() == ""
+                ):
+                    try:
+                        with open(self.log_file, "a", encoding="utf-8") as f:
+                            click.echo(
+                                dt.datetime.now().isoformat(), file=f
+                            )  # timestamp log
+                            click.echo(text, file=f)
+                            click.echo("\n".join(output), file=f)
+                            click.echo("", file=f)  # extra newline
+                    except OSError as e:
+                        click.secho(str(e), err=True, fg="red")
             except KeyboardInterrupt:
                 pass
 
@@ -1428,6 +1478,11 @@ class PGCli:
     default=None,
     help="Open an SSH tunnel to the given address and connect to the database from it.",
 )
+@click.option(
+    "--log-file",
+    default=None,
+    help="Write all queries & output into a file, in addition to the normal output destination.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1453,6 +1508,7 @@ def cli(
     list_dsn,
     warn,
     ssh_tunnel: str,
+    log_file: str,
 ):
     if version:
         print("Version:", __version__)
@@ -1511,6 +1567,7 @@ def cli(
         auto_vertical_output=auto_vertical_output,
         warn=warn,
         ssh_tunnel_url=ssh_tunnel,
+        log_file=log_file,
     )
 
     # Choose which ever one has a valid value.

@@ -8,6 +8,8 @@ Features:
   displaying of all Postgres error fields received.
 * Show Postgres notifications.
 * Support sqlparse 0.5.x
+* Add `--log-file [filename]` cli argument and `\log-file [filename]` special commands to
+  log to an external file in addition to the normal output
 
 Bug fixes:
 ----------
