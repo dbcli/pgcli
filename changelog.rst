@@ -4,6 +4,7 @@ Dev
 Features
 --------
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
+* Changed the packaging metadata from setup.py to pyproject.toml
 
 4.1.0 (2024-03-09)
 ==================
