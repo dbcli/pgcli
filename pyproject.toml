@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-urls = { Homepage = "http://pgcli.com" }
+urls = { Homepage = "https://pgcli.com" }
 requires-python = ">=3.8"
 dependencies = [
     "pgspecial>=2.0.0",
@@ -42,6 +42,10 @@ dependencies = [
     "setproctitle >= 1.1.9; sys_platform != 'win32' and 'CYGWIN' not in sys_platform",
 ]
 dynamic = ["version"]
+
+
+[project.scripts]
+pgcli = "pgcli.main:cli"
 
 [project.optional-dependencies]
 keyring = ["keyring >= 12.2.0"]
