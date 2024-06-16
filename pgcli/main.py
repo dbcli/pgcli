@@ -1464,6 +1464,13 @@ class PGCli:
     help="list available databases, then exit.",
 )
 @click.option(
+    "--ping",
+    "ping_database",
+    is_flag=True,
+    default=False,
+    help="Check database connectivity, then exit.",
+)
+@click.option(
     "--auto-vertical-output",
     is_flag=True,
     help="Automatically switch to vertical output mode if the result is wider than the terminal width.",
@@ -1504,6 +1511,7 @@ def cli(
     prompt,
     prompt_dsn,
     list_databases,
+    ping_database,
     auto_vertical_output,
     list_dsn,
     warn,
@@ -1581,8 +1589,8 @@ def cli(
         service = database[8:]
     elif os.getenv("PGSERVICE") is not None:
         service = os.getenv("PGSERVICE")
-    # because option --list or -l are not supposed to have a db name
-    if list_databases:
+    # because option --ping, --list or -l are not supposed to have a db name
+    if list_databases or ping_database:
         database = "postgres"
 
     if dsn != "":
@@ -1625,6 +1633,25 @@ def cli(
         pgcli.echo_via_pager("\n".join(formatted))
 
         sys.exit(0)
+
+    if ping_database:
+        results = None
+        try:
+            results = list(pgcli.pgexecute.run("SELECT 1"))
+        except Exception:
+            # yup, really, anything here
+            ...
+
+        if results:
+            pgcli.echo("PONG")
+            sys.exit(0)
+        else:
+            click.secho(
+                "Could not connect to the database. Please check that the database is running.",
+                err=True,
+                fg="red",
+            )
+            sys.exit(1)
 
     pgcli.logger.debug(
         "Launch Params: \n" "\tdatabase: %r" "\tuser: %r" "\thost: %r" "\tport: %r",
