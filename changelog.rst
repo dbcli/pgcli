@@ -1,3 +1,10 @@
+Dev
+===
+
+Features
+--------
+* Add a `--ping` command line option; allows pgcli to replace `pg_isready`
+
 4.1.0 (2024-03-09)
 ==================
 
