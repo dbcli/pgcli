@@ -1643,7 +1643,7 @@ def cli(
             ...
 
         if results:
-            pgcli.echo("PONG")
+            click.echo("PONG")
             sys.exit(0)
         else:
             click.secho(
