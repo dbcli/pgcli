@@ -1639,19 +1639,15 @@ def cli(
         try:
             results = list(pgcli.pgexecute.run("SELECT 1"))
         except Exception:
-            # yup, really, anything here
-            ...
-
-        if results:
-            click.echo("PONG")
-            sys.exit(0)
-        else:
             click.secho(
                 "Could not connect to the database. Please check that the database is running.",
                 err=True,
                 fg="red",
             )
             sys.exit(1)
+        else:
+            click.echo("PONG")
+            sys.exit(0)
 
     pgcli.logger.debug(
         "Launch Params: \n" "\tdatabase: %r" "\tuser: %r" "\thost: %r" "\tport: %r",
