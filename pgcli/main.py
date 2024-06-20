@@ -1635,9 +1635,8 @@ def cli(
         sys.exit(0)
 
     if ping_database:
-        results = None
         try:
-            results = list(pgcli.pgexecute.run("SELECT 1"))
+            list(pgcli.pgexecute.run("SELECT 1"))
         except Exception:
             click.secho(
                 "Could not connect to the database. Please check that the database is running.",
