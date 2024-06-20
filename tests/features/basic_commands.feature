@@ -51,6 +51,10 @@ Feature: run the cli,
       When we list databases
       then we see list of databases
 
+  Scenario: ping databases
+      When we ping the database
+      then we get a pong response
+
   Scenario: run the cli with --username
     When we launch dbcli using --username
       and we send "\?" command

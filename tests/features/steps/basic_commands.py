@@ -26,6 +26,19 @@ def step_see_list_databases(context):
     context.cmd_output = None
 
 
+@when("we ping the database")
+def step_ping_database(context):
+    cmd = ["pgcli", "--ping"]
+    context.cmd_output = subprocess.check_output(cmd, cwd=context.package_root)
+
+
+@then("we get a pong response")
+def step_get_pong_response(context):
+    # exit code 0 is implied by the presence of cmd_output here, which
+    # is only set on a successful run.
+    assert context.cmd_output.strip() == b"PONG", f"Output was {context.cmd_output}"
+
+
 @when("we run dbcli")
 def step_run_cli(context):
     wrappers.run_cli(context)
