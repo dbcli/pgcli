@@ -179,7 +179,7 @@ Alternatively, you can install ``pgcli`` as a python package using a package
 manager called called ``pip``. You will need postgres installed on your system
 for this to work.
 
-In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installation/
 
 ::
 
@@ -209,7 +209,7 @@ If pip is not installed check if easy_install is available on the system.
 Linux:
 ======
 
-In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installing.html.
+In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installation/
 
 Check if pip is already available in your system.
 
