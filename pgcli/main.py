@@ -610,7 +610,7 @@ class PGCli:
             click.secho(
                 f"service '{service}' was not found in {file}", err=True, fg="red"
             )
-            exit(1)
+            sys.exit(1)
         self.connect(
             database=service_config.get("dbname"),
             host=service_config.get("host"),
@@ -710,7 +710,7 @@ class PGCli:
                 self.logger.handlers = logger_handlers
                 self.logger.error("traceback: %r", traceback.format_exc())
                 click.secho(str(e), err=True, fg="red")
-                exit(1)
+                sys.exit(1)
             self.logger.handlers = logger_handlers
 
             atexit.register(self.ssh_tunnel.stop)
@@ -763,7 +763,7 @@ class PGCli:
             self.logger.debug("Database connection failed: %r.", e)
             self.logger.error("traceback: %r", traceback.format_exc())
             click.secho(str(e), err=True, fg="red")
-            exit(1)
+            sys.exit(1)
 
         self.pgexecute = pgexecute
 
@@ -1551,7 +1551,7 @@ def cli(
                 err=True,
                 fg="red",
             )
-            exit(1)
+            sys.exit(1)
 
     if ssh_tunnel and not SSH_TUNNEL_SUPPORT:
         click.secho(
@@ -1560,7 +1560,7 @@ def cli(
             err=True,
             fg="red",
         )
-        exit(1)
+        sys.exit(1)
 
     pgcli = PGCli(
         prompt_passwd,
@@ -1604,7 +1604,7 @@ def cli(
                 err=True,
                 fg="red",
             )
-            exit(1)
+            sys.exit(1)
         except Exception:
             click.secho(
                 "Invalid DSNs found in the config file. "
@@ -1612,7 +1612,7 @@ def cli(
                 err=True,
                 fg="red",
             )
-            exit(1)
+            sys.exit(1)
         pgcli.connect_uri(dsn_config)
         pgcli.dsn_alias = dsn
     elif "://" in database:
