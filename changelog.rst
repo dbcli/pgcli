@@ -5,6 +5,10 @@ Features
 --------
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
 
+Bug fixes:
+----------
+* Avoid raising `NameError` when exiting unsuccessfully in some cases
+
 4.1.0 (2024-03-09)
 ==================
 
