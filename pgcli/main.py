@@ -23,6 +23,7 @@ from cli_helpers.tabular_output.preprocessors import align_decimals, format_numb
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+import tzlocal
 
 try:
     import setproctitle
@@ -1624,12 +1625,7 @@ def cli(
     else:
         pgcli.connect(database, host, user, port)
 
-    try:
-        import tzlocal
-
-        pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
-    except ImportError:
-        ...
+    pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
 
     if list_databases:
         cur, headers, status = pgcli.pgexecute.full_databases()
