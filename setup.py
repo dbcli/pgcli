@@ -17,7 +17,7 @@ install_requirements = [
     "sqlparse >=0.3.0,<0.6",
     "configobj >= 5.0.6",
     "cli_helpers[styles] >= 2.2.1",
-    "tzlocal >= 5.2"
+    "tzlocal >= 5.2",
 ]
 
 
