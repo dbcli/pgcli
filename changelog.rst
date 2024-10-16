@@ -4,6 +4,7 @@ Dev
 Features
 --------
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
+* The session time zone setting is set to the system time zone by default
 
 Bug fixes:
 ----------
