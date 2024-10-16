@@ -1624,6 +1624,13 @@ def cli(
     else:
         pgcli.connect(database, host, user, port)
 
+    try:
+        import tzlocal
+
+        pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
+    except ImportError:
+        ...
+
     if list_databases:
         cur, headers, status = pgcli.pgexecute.full_databases()
 
