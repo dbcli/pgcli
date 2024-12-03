@@ -6,6 +6,10 @@ Features
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
 * Changed the packaging metadata from setup.py to pyproject.toml
 
+Bug fixes:
+----------
+* Avoid raising `NameError` when exiting unsuccessfully in some cases
+
 4.1.0 (2024-03-09)
 ==================
 
