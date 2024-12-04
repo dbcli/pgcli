@@ -1,3 +1,75 @@
+[project]
+name = "pgcli"
+authors = [{ name = "Pgcli Core Team", email = "pgcli-dev@googlegroups.com" }]
+license = { text = "BSD" }
+description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
+readme = "README.rst"
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: SQL",
+    "Topic :: Database",
+    "Topic :: Database :: Front-Ends",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+urls = { Homepage = "https://pgcli.com" }
+requires-python = ">=3.8"
+dependencies = [
+    "pgspecial>=2.0.0",
+    "click >= 4.1",
+    "Pygments>=2.0",  # Pygments has to be Capitalcased. WTF?
+    # We still need to use pt-2 unless pt-3 released on Fedora32
+    # see: https://github.com/dbcli/pgcli/pull/1197
+    "prompt_toolkit>=2.0.6,<4.0.0",
+    "psycopg >= 3.0.14; sys_platform != 'win32'",
+    "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
+    "sqlparse >=0.3.0,<0.6",
+    "configobj >= 5.0.6",
+    "cli_helpers[styles] >= 2.2.1",
+    # setproctitle is used to mask the password when running `ps` in command line.
+    # But this is not necessary in Windows since the password is never shown in the
+    # task manager. Also setproctitle is a hard dependency to install in Windows,
+    # so we'll only install it if we're not in Windows.
+    "setproctitle >= 1.1.9; sys_platform != 'win32' and 'CYGWIN' not in sys_platform",
+]
+dynamic = ["version"]
+
+
+[project.scripts]
+pgcli = "pgcli.main:cli"
+
+[project.optional-dependencies]
+keyring = ["keyring >= 12.2.0"]
+sshtunnel = ["sshtunnel >= 0.4.0"]
+
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+version = { attr = "pgcli.__version__" }
+
+[tool.setuptools.packages]
+find = { namespaces = false }
+
+[tool.setuptools.package-data]
+pgcli = [
+    "pgclirc",
+    "packages/pgliterals/pgliterals.json",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py38']
