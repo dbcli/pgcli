@@ -1,3 +1,4 @@
+from zoneinfo import ZoneInfoNotFoundError
 from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
 from .config import skip_initial_comment
@@ -1625,7 +1626,13 @@ def cli(
     else:
         pgcli.connect(database, host, user, port)
 
-    pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
+    try:
+        pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
+    except ZoneInfoNotFoundError as e:
+        click.secho(e.args[0], err=True, fg="yellow")
+        click.secho(
+            "Continuing with the default server timezone", err=True, fg="yellow"
+        )
 
     if list_databases:
         cur, headers, status = pgcli.pgexecute.full_databases()
