@@ -1626,12 +1626,28 @@ def cli(
     else:
         pgcli.connect(database, host, user, port)
 
+    local_tz = None
     try:
-        pgcli.pgexecute.set_timezone(tzlocal.get_localzone_name())
+        local_tz = tzlocal.get_localzone_name()
+
+        if local_tz is None:
+            click.secho(
+                "No local time zone configuration found",
+                err=True,
+                fg="yellow",
+            )
     except ZoneInfoNotFoundError as e:
+        # e.args[0] is the pre-formatted message which includes a list
+        # of conflicting sources
         click.secho(e.args[0], err=True, fg="yellow")
+
+    if local_tz is not None:
+        pgcli.pgexecute.set_timezone(local_tz)
+    else:
         click.secho(
-            "Continuing with the default server timezone", err=True, fg="yellow"
+            "Continuing with the default server time zone",
+            err=True,
+            fg="yellow",
         )
 
     if list_databases:
