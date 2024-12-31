@@ -6,6 +6,7 @@ Features
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
 * Changed the packaging metadata from setup.py to pyproject.toml
 * Add bash completion for services defined in the service file `~/.pg_service.conf`
+* Added support for per-column date/time formatting using `column_date_formats` in config
 
 Bug fixes:
 ----------
