@@ -10,6 +10,11 @@ Bug fixes:
 ----------
 * Avoid raising `NameError` when exiting unsuccessfully in some cases
 
+Internal:
+---------
+
+* Drop support for Python 3.8 and add 3.13.
+
 4.1.0 (2024-03-09)
 ==================
 

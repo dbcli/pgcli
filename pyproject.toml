@@ -10,11 +10,11 @@ classifiers = [
     "Operating System :: Unix",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: SQL",
     "Topic :: Database",
     "Topic :: Database :: Front-Ends",
@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 urls = { Homepage = "https://pgcli.com" }
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "pgspecial>=2.0.0",
     "click >= 4.1",

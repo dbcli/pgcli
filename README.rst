@@ -352,7 +352,10 @@ choice:
 
     In [3]: my_result = _
 
-Pgcli dropped support for Python<3.8 as of 4.0.0. If you need it, install ``pgcli <= 4.0.0``.
+Pgcli dropped support for:
+
+* Python<3.8 as of 4.0.0.
+* Python<3.9 as of 4.2.0.
 
 Thanks:
 -------
