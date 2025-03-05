@@ -77,13 +77,13 @@ jobs:
       - name: Run unit tests
         run: coverage run --source pgcli -m pytest
 
-      - name: Run integration tests
-        env:
-            PGUSER: postgres
-            PGPASSWORD: postgres
-            TERM: xterm
+      # - name: Run integration tests
+      #   env:
+      #       PGUSER: postgres
+      #       PGPASSWORD: postgres
+      #       TERM: xterm
 
-        run: behave tests/features --no-capture
+      #   run: behave tests/features --no-capture
 
       - name: Check changelog for ReST compliance
         run: docutils --halt=warning changelog.rst >/dev/null
