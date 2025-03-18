@@ -2,10 +2,10 @@
 """A script to publish a release of pgcli to PyPI."""
 
 import io
-from optparse import OptionParser
 import re
 import subprocess
 import sys
+from optparse import OptionParser
 
 import click
 
@@ -66,7 +66,8 @@ def create_git_tag(tag_name):
 
 
 def create_distribution_files():
-    run_step("python", "setup.py", "clean", "--all", "sdist", "bdist_wheel")
+    run_step("rm", "-rf", "dist/")
+    run_step("python", "-m", "build")
 
 
 def upload_distribution_files():
@@ -91,11 +92,11 @@ if __name__ == "__main__":
     if DEBUG:
         subprocess.check_output = lambda x: x
 
-    checks = [
-        "Have you updated the AUTHORS file?",
-        "Have you updated the `Usage` section of the README?",
-    ]
-    checklist(checks)
+    # checks = [
+    #     "Have you updated the AUTHORS file?",
+    #     "Have you updated the `Usage` section of the README?",
+    # ]
+    # checklist(checks)
 
     ver = version("pgcli/__init__.py")
     print("Releasing Version:", ver)

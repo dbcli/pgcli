@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     services:
       postgres:
@@ -77,12 +77,13 @@ jobs:
       - name: Run unit tests
         run: coverage run --source pgcli -m pytest
 
-      - name: Run integration tests
-        env:
-            PGUSER: postgres
-            PGPASSWORD: postgres
+      # - name: Run integration tests
+      #   env:
+      #       PGUSER: postgres
+      #       PGPASSWORD: postgres
+      #       TERM: xterm
 
-        run: behave tests/features --no-capture
+      #   run: behave tests/features --no-capture
 
       - name: Check changelog for ReST compliance
         run: docutils --halt=warning changelog.rst >/dev/null

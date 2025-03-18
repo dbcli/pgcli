@@ -1,15 +1,28 @@
 Dev
-===
+==================
+
+Features
+--------
+* The session time zone setting is set to the system time zone by default
+
+4.2.0 (2025-03-06)
+==================
 
 Features
 --------
 * Add a `--ping` command line option; allows pgcli to replace `pg_isready`
 * Changed the packaging metadata from setup.py to pyproject.toml
-* The session time zone setting is set to the system time zone by default
+* Add bash completion for services defined in the service file `~/.pg_service.conf`
 
 Bug fixes:
 ----------
 * Avoid raising `NameError` when exiting unsuccessfully in some cases
+* Use configured `alias_map_file` to generate table aliases if available.
+
+Internal:
+---------
+
+* Drop support for Python 3.8 and add 3.13.
 
 4.1.0 (2024-03-09)
 ==================
