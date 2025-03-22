@@ -1,3 +1,10 @@
+Dev
+==================
+
+Features
+--------
+* The session time zone setting is set to the system time zone by default
+
 4.2.0 (2025-03-06)
 ==================
 

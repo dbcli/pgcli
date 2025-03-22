@@ -1,3 +1,4 @@
+from zoneinfo import ZoneInfoNotFoundError
 from configobj import ConfigObj, ParseError
 from pgspecial.namedqueries import NamedQueries
 from .config import skip_initial_comment
@@ -27,6 +28,7 @@ from cli_helpers.tabular_output.preprocessors import (
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+import tzlocal
 
 try:
     import setproctitle
@@ -1600,9 +1602,9 @@ def cli(
     if list_databases or ping_database:
         database = "postgres"
 
+    cfg = load_config(pgclirc, config_full_path)
     if dsn != "":
         try:
-            cfg = load_config(pgclirc, config_full_path)
             dsn_config = cfg["alias_dsn"][dsn]
         except KeyError:
             click.secho(
@@ -1630,6 +1632,55 @@ def cli(
         pgcli.connect_service(service, user)
     else:
         pgcli.connect(database, host, user, port)
+
+    if "use_local_timezone" not in cfg["main"] or cfg["main"].as_bool(
+        "use_local_timezone"
+    ):
+        server_tz = pgcli.pgexecute.get_timezone()
+
+        def echo_error(msg: str):
+            click.secho(
+                "Failed to determine the local time zone",
+                err=True,
+                fg="yellow",
+            )
+            click.secho(
+                msg,
+                err=True,
+                fg="yellow",
+            )
+            click.secho(
+                f"Continuing with the default time zone as preset by the server ({server_tz})",
+                err=True,
+                fg="yellow",
+            )
+            click.secho(
+                "Set `use_local_timezone = False` in the config to avoid trying to override the server time zone\n",
+                err=True,
+                dim=True,
+            )
+
+        local_tz = None
+        try:
+            local_tz = tzlocal.get_localzone_name()
+
+            if local_tz is None:
+                echo_error("No local time zone configuration found\n")
+            else:
+                click.secho(
+                    f"Using local time zone {local_tz} (server uses {server_tz})",
+                    fg="green",
+                )
+                click.secho(
+                    "Use `set time zone <TZ>` to override, or set `use_local_timezone = False` in the config",
+                    dim=True,
+                )
+
+                pgcli.pgexecute.set_timezone(local_tz)
+        except ZoneInfoNotFoundError as e:
+            # e.args[0] is the pre-formatted message which includes a list
+            # of conflicting sources
+            echo_error(e.args[0])
 
     if list_databases:
         cur, headers, status = pgcli.pgexecute.full_databases()
