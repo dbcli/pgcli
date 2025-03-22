@@ -34,7 +34,7 @@ dependencies = [
     "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
     "sqlparse >=0.3.0,<0.6",
     "configobj >= 5.0.6",
-    "cli_helpers[styles] >= 2.2.1",
+    "cli_helpers[styles] >= 2.4.0",
     # setproctitle is used to mask the password when running `ps` in command line.
     # But this is not necessary in Windows since the password is never shown in the
     # task manager. Also setproctitle is a hard dependency to install in Windows,
