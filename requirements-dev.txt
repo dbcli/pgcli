@@ -11,3 +11,4 @@ autopep8>=1.3.3
 twine>=1.11.0
 wheel>=0.33.6
 sshtunnel>=0.4.0
+build<0.10.0
