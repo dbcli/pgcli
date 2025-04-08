@@ -209,43 +209,27 @@ If pip is not installed check if easy_install is available on the system.
 Linux:
 ======
 
-In depth getting started guide for ``pip`` - https://pip.pypa.io/en/latest/installation/
+Many distributions have ``pgcli`` packages.
+Refer to https://repology.org/project/pgcli/versions or your distribution to check the available versions.
 
-Check if pip is already available in your system.
+Alternatively, you can use tools such as `pipx`_ or `uvx`_ to install the latest published package to an isolated virtual environment.
 
-::
+.. _pipx: https://pipx.pypa.io/
+.. _uvx: https://docs.astral.sh/uv/guides/tools/
 
-    $ which pip
-
-If it doesn't exist, use your linux package manager to install `pip`. This
-might look something like:
-
-::
-
-    $ sudo apt-get install python-pip   # Debian, Ubuntu, Mint etc
-
-    or
-
-    $ sudo yum install python-pip  # RHEL, Centos, Fedora etc
-
-``pgcli`` requires python-dev, libpq-dev and libevent-dev packages. You can
-install these via your operating system package manager.
-
+Run:
 
 ::
 
-    $ sudo apt-get install python-dev libpq-dev libevent-dev
+    $ pipx install pgcli
 
-    or
-
-    $ sudo yum install python-devel postgresql-devel
-
-Then you can install pgcli:
+to install ``pgcli`` with ``pipx``, or run:
 
 ::
 
-    $ sudo pip install pgcli
+    $ uvx pgcli
 
+to run ``pgcli`` by installing on the fly with ``uvx``.
 
 Docker
 ======
