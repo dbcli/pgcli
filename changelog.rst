@@ -1,3 +1,13 @@
+Upcoming (TBD)
+==============
+
+Features:
+---------
+* Add support for `init-command` to run when the connection is established.
+    * Command line option `--init-command`
+    * Provide `init-command` in the config file
+    * Support dsn specific init-command in the config file
+
 4.3.0 (2025-03-22)
 ==================
 
