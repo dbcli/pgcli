@@ -1499,6 +1499,12 @@ class PGCli:
     default=None,
     help="Write all queries & output into a file, in addition to the normal output destination.",
 )
+@click.option(
+    "--init-command",
+    "init_command",
+    type=str,
+    help="SQL statement to execute after connecting.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1525,6 +1531,7 @@ def cli(
     list_dsn,
     warn,
     ssh_tunnel: str,
+    init_command: str,
     log_file: str,
 ):
     if version:
@@ -1681,6 +1688,33 @@ def cli(
             # e.args[0] is the pre-formatted message which includes a list
             # of conflicting sources
             echo_error(e.args[0])
+
+    # Merge init-commands: global, DSN-specific, then CLI-provided
+    init_cmds = []
+    # 1) Global init-commands
+    global_section = pgcli.config.get("init-commands", {})
+    for _, val in global_section.items():
+        if isinstance(val, (list, tuple)):
+            init_cmds.extend(val)
+        elif val:
+            init_cmds.append(val)
+    # 2) DSN-specific init-commands
+    if dsn:
+        alias_section = pgcli.config.get("alias_dsn.init-commands", {})
+        if dsn in alias_section:
+            val = alias_section.get(dsn)
+            if isinstance(val, (list, tuple)):
+                init_cmds.extend(val)
+            elif val:
+                init_cmds.append(val)
+    # 3) CLI-provided init-command
+    if init_command:
+        init_cmds.append(init_command)
+    if init_cmds:
+        click.echo("Running init commands: %s" % "; ".join(init_cmds))
+        for cmd in init_cmds:
+            # Execute each init command
+            list(pgcli.pgexecute.run(cmd))
 
     if list_databases:
         cur, headers, status = pgcli.pgexecute.full_databases()

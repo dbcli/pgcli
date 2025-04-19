@@ -238,6 +238,14 @@ output.null = "#808080"
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
 
+# Initial commands to execute when connecting to any database.
+[init-commands]
+# example = "SET search_path TO myschema"
+
+# Initial commands to execute when connecting to a DSN alias.
+[alias_dsn.init-commands]
+# example_dsn = "SET search_path TO otherschema; SET timezone TO 'UTC'"
+
 # Format for number representation
 # for decimal "d" - 12345678, ",d" - 12,345,678
 # for float "g" - 123456.78, ",g" - 123,456.78
