@@ -232,6 +232,7 @@ output.null = "#808080"
 
 # Named queries are queries you can execute by name.
 [named queries]
+# ver = "SELECT version()"
 
 # Here's where you can provide a list of connection string aliases.
 # You can use it by passing the -D option. `pgcli -D example_dsn`
