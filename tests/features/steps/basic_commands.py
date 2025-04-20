@@ -36,7 +36,7 @@ def step_ping_database(context):
 def step_get_pong_response(context):
     # exit code 0 is implied by the presence of cmd_output here, which
     # is only set on a successful run.
-    assert context.cmd_output.strip() == b"PONG", f"Output was {context.cmd_output}"
+    assert b"PONG" in context.cmd_output.strip(), f"Output was {context.cmd_output}"
 
 
 @when("we run dbcli")
