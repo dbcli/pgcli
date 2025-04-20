@@ -25,8 +25,8 @@ urls = { Homepage = "https://pgcli.com" }
 requires-python = ">=3.9"
 dependencies = [
     "pgspecial>=2.0.0",
-    "click >= 4.1",
-    "Pygments>=2.0",  # Pygments has to be Capitalcased. WTF?
+    "click >= 4.1,<8.1.8",
+    "Pygments>=2.0",       # Pygments has to be Capitalcased. WTF?
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
     "prompt_toolkit>=2.0.6,<4.0.0",
@@ -66,10 +66,7 @@ version = { attr = "pgcli.__version__" }
 find = { namespaces = false }
 
 [tool.setuptools.package-data]
-pgcli = [
-    "pgclirc",
-    "packages/pgliterals/pgliterals.json",
-]
+pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 
 [tool.black]
 line-length = 88
