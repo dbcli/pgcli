@@ -232,11 +232,20 @@ output.null = "#808080"
 
 # Named queries are queries you can execute by name.
 [named queries]
+# ver = "SELECT version()"
 
 # Here's where you can provide a list of connection string aliases.
 # You can use it by passing the -D option. `pgcli -D example_dsn`
 [alias_dsn]
 # example_dsn = postgresql://[user[:password]@][netloc][:port][/dbname]
+
+# Initial commands to execute when connecting to any database.
+[init-commands]
+# example = "SET search_path TO myschema"
+
+# Initial commands to execute when connecting to a DSN alias.
+[alias_dsn.init-commands]
+# example_dsn = "SET search_path TO otherschema; SET timezone TO 'UTC'"
 
 # Format for number representation
 # for decimal "d" - 12345678, ",d" - 12,345,678
