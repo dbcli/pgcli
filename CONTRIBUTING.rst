@@ -158,8 +158,8 @@ in the ``tests`` directory.  An example::
 First, install the requirements for testing:
 
 ::
-    $ pip install --no-cache-dir ".[sshtunnel]" 
-    $ pip install --no-cache-dir ".[dev]"
+    $ uv pip install ".[sshtunnel]"
+    $ uv pip install ".[dev]"
 
 Ensure that the database user has permissions to create and drop test databases
 by checking your ``pg_hba.conf`` file. The default user should be ``postgres``
