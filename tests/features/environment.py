@@ -151,17 +151,15 @@ def before_step(context, _):
 
 
 def is_known_problem(scenario):
-    """TODO: why is this not working in 3.12?"""
-    if sys.version_info >= (3, 12):
-        return scenario.name in (
-            'interrupt current query via "ctrl + c"',
-            "run the cli with --username",
-            "run the cli with --user",
-            "run the cli with --port",
-            "confirm exit when a transaction is ongoing",
-            "cancel exit when a transaction is ongoing",
-        )
-    return False
+    """TODO: can we fix this?"""
+    return scenario.name in (
+        'interrupt current query via "ctrl + c"',
+        "run the cli with --username",
+        "run the cli with --user",
+        "run the cli with --port",
+        "confirm exit when a transaction is ongoing",
+        "cancel exit when a transaction is ongoing",
+    )
 
 
 def before_scenario(context, scenario):
