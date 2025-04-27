@@ -52,17 +52,18 @@ pgcli = "pgcli.main:cli"
 keyring = ["keyring >= 12.2.0"]
 sshtunnel = ["sshtunnel >= 0.4.0"]
 dev = [
-    "pytest>=2.7.0",
-    "tox>=1.9.2",
+    # "build<0.10.0",
     "behave>=1.2.4",
-    "pexpect==3.3; platform_system != 'Windows'",
-    "pre-commit>=1.16.0",
     "coverage>=5.0.4",
     "codecov>=1.5.1",
     "docutils>=0.13.1",
+    "keyrings.alt>=3.1",
+    "pexpect==3.3; platform_system != 'Windows'",
+    "pre-commit>=1.16.0",
+    "pytest>=2.7.0",
     "ruff>=0.11.7",
     "sshtunnel>=0.4.0",
-    "build<0.10.0",
+    "tox>=1.9.2",
 ]
 
 [build-system]
@@ -107,8 +108,13 @@ ignore = [
     'E114',   # indentation-with-invalid-multiple-comment
     'E117',   # over-indented
     'W191',   # tab-indentation
+    'E741',   # ambiguous-variable-name
     # TODO
     'PIE796', # todo enableme Enum contains duplicate value
+]
+exclude = [
+    'pgcli/magic.py',
+    'pgcli/pyev.py',
 ]
 
 [tool.ruff.lint.isort]
@@ -124,7 +130,6 @@ preview = true
 quote-style = 'preserve'
 exclude = [
     'build',
-    'pgcli/magic.py',
 ]
 
 [tool.pytest.ini_options]

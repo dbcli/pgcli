@@ -54,6 +54,7 @@ def Candidate(completion, prio=None, meta=None, synonyms=None, prio2=None, displ
 # Used to strip trailing '::some_type' from default-value expressions
 arg_default_type_strip_regex = re.compile(r"::[\w\.]+(\[\])?$")
 
+
 def normalize_ref(ref):
     return ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
@@ -493,8 +494,10 @@ class PGCompleter(Completer):
                 "if_more_than_one_table": len(tables) > 1,
             }[self.qualify_columns]
         )
+
         def qualify(col, tbl):
-            return ((tbl + "." + self.case(col)) if do_qualify else self.case(col))
+            return (tbl + "." + self.case(col)) if do_qualify else self.case(col)
+
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
@@ -515,12 +518,12 @@ class PGCompleter(Completer):
         if lastword == "*":
             if suggestion.context == "insert":
 
-                def filter(col):
+                def _filter(col):
                     if not col.has_default:
                         return True
                     return not any(p.match(col.default) for p in self.insert_col_skip_patterns)
 
-                scoped_cols = {t: [col for col in cols if filter(col)] for t, cols in scoped_cols.items()}
+                scoped_cols = {t: [col for col in cols if _filter(col)] for t, cols in scoped_cols.items()}
             if self.asterisk_column_order == "alphabetic":
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter("name"))

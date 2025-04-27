@@ -48,7 +48,7 @@ def create_db(dbname):
     with db_connection().cursor() as cur:
         try:
             cur.execute("""CREATE DATABASE _test_db""")
-        except:
+        except Exception:
             pass
 
 

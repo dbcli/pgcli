@@ -158,7 +158,6 @@ in the ``tests`` directory.  An example::
 First, install the requirements for testing:
 
 ::
-    $ uv pip install ".[sshtunnel]"
     $ uv pip install ".[dev]"
 
 Ensure that the database user has permissions to create and drop test databases

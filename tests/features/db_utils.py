@@ -1,9 +1,7 @@
 from psycopg import connect
 
 
-def create_db(
-    hostname="localhost", username=None, password=None, dbname=None, port=None
-):
+def create_db(hostname="localhost", username=None, password=None, dbname=None, port=None):
     """Create test database.
 
     :param hostname: string
@@ -36,9 +34,7 @@ def create_cn(hostname, password, username, dbname, port):
     :param dbname: string
     :return: psycopg2.connection
     """
-    cn = connect(
-        host=hostname, user=username, dbname=dbname, password=password, port=port
-    )
+    cn = connect(host=hostname, user=username, dbname=dbname, password=password, port=port)
 
     print(f"Created connection: {cn.info.get_parameters()}.")
     return cn
@@ -49,7 +45,7 @@ def pgbouncer_available(hostname="localhost", password=None, username="postgres"
     try:
         cn = create_cn(hostname, password, username, "pgbouncer", 6432)
         return True
-    except:
+    except Exception:
         print("Pgbouncer is not available.")
     finally:
         if cn:

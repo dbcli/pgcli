@@ -530,10 +530,10 @@ def _suggest_expression(token_v, stmt):
     )
 
 
-def identifies(id, ref):
+def identifies(table_id, ref):
     """Returns true if string `id` matches TableReference `ref`"""
 
-    return id == ref.alias or id == ref.name or (ref.schema and (id == ref.schema + "." + ref.name))
+    return table_id == ref.alias or table_id == ref.name or (ref.schema and (table_id == ref.schema + "." + ref.name))
 
 
 def _allow_join_condition(statement):

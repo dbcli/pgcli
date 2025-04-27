@@ -72,4 +72,5 @@ target/
 venv/
 
 .ropeproject/
+uv.lock
 

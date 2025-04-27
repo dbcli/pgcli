@@ -61,9 +61,7 @@ def test_obfuscate_process_password():
 
 def test_format_output():
     settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g")
-    results = format_output(
-        "Title", [("abc", "def")], ["head1", "head2"], "test status", settings
-    )
+    results = format_output("Title", [("abc", "def")], ["head1", "head2"], "test status", settings)
     expected = [
         "Title",
         "+-------+-------+",
@@ -128,9 +126,7 @@ def test_no_column_date_formats():
 
 
 def test_format_output_truncate_on():
-    settings = OutputSettings(
-        table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=10
-    )
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=10)
     results = format_output(
         None,
         [("first field value", "second field value")],
@@ -149,9 +145,7 @@ def test_format_output_truncate_on():
 
 
 def test_format_output_truncate_off():
-    settings = OutputSettings(
-        table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=None
-    )
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", max_field_width=None)
     long_field_value = ("first field " * 100).strip()
     results = format_output(None, [(long_field_value,)], ["head1"], None, settings)
     lines = list(results)
@@ -207,12 +201,8 @@ def test_format_array_output_expanded(executor):
 
 
 def test_format_output_auto_expand():
-    settings = OutputSettings(
-        table_format="psql", dcmlfmt="d", floatfmt="g", max_width=100
-    )
-    table_results = format_output(
-        "Title", [("abc", "def")], ["head1", "head2"], "test status", settings
-    )
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", max_width=100)
+    table_results = format_output("Title", [("abc", "def")], ["head1", "head2"], "test status", settings)
     table = [
         "Title",
         "+-------+-------+",
@@ -269,18 +259,18 @@ test_ids = [
 def pset_pager_mocks():
     cli = PGCli()
     cli.watch_command = None
-    with mock.patch("pgcli.main.click.echo") as mock_echo, mock.patch(
-        "pgcli.main.click.echo_via_pager"
-    ) as mock_echo_via_pager, mock.patch.object(cli, "prompt_app") as mock_app:
+    with (
+        mock.patch("pgcli.main.click.echo") as mock_echo,
+        mock.patch("pgcli.main.click.echo_via_pager") as mock_echo_via_pager,
+        mock.patch.object(cli, "prompt_app") as mock_app,
+    ):
         yield cli, mock_echo, mock_echo_via_pager, mock_app
 
 
 @pytest.mark.parametrize("term_height,term_width,text", test_data, ids=test_ids)
 def test_pset_pager_off(term_height, term_width, text, pset_pager_mocks):
     cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
-    mock_cli.output.get_size.return_value = termsize(
-        rows=term_height, columns=term_width
-    )
+    mock_cli.output.get_size.return_value = termsize(rows=term_height, columns=term_width)
 
     with mock.patch.object(cli.pgspecial, "pager_config", PAGER_OFF):
         cli.echo_via_pager(text)
@@ -292,9 +282,7 @@ def test_pset_pager_off(term_height, term_width, text, pset_pager_mocks):
 @pytest.mark.parametrize("term_height,term_width,text", test_data, ids=test_ids)
 def test_pset_pager_always(term_height, term_width, text, pset_pager_mocks):
     cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
-    mock_cli.output.get_size.return_value = termsize(
-        rows=term_height, columns=term_width
-    )
+    mock_cli.output.get_size.return_value = termsize(rows=term_height, columns=term_width)
 
     with mock.patch.object(cli.pgspecial, "pager_config", PAGER_ALWAYS):
         cli.echo_via_pager(text)
@@ -306,14 +294,10 @@ def test_pset_pager_always(term_height, term_width, text, pset_pager_mocks):
 pager_on_test_data = [l + (r,) for l, r in zip(test_data, use_pager_when_on)]
 
 
-@pytest.mark.parametrize(
-    "term_height,term_width,text,use_pager", pager_on_test_data, ids=test_ids
-)
+@pytest.mark.parametrize("term_height,term_width,text,use_pager", pager_on_test_data, ids=test_ids)
 def test_pset_pager_on(term_height, term_width, text, use_pager, pset_pager_mocks):
     cli, mock_echo, mock_echo_via_pager, mock_cli = pset_pager_mocks
-    mock_cli.output.get_size.return_value = termsize(
-        rows=term_height, columns=term_width
-    )
+    mock_cli.output.get_size.return_value = termsize(rows=term_height, columns=term_width)
 
     with mock.patch.object(cli.pgspecial, "pager_config", PAGER_LONG_OUTPUT):
         cli.echo_via_pager(text)
@@ -330,7 +314,7 @@ def test_pset_pager_on(term_height, term_width, text, use_pager, pset_pager_mock
     "text,expected_length",
     [
         (
-            "22200K .......\u001b[0m\u001b[91m... .......... ...\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... .........\u001b[0m\u001b[91m.\u001b[0m\u001b[91m \u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... 50% 28.6K 12m55s",
+            "22200K .......\u001b[0m\u001b[91m... .......... ...\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... .........\u001b[0m\u001b[91m.\u001b[0m\u001b[91m \u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m.\u001b[0m\u001b[91m...... 50% 28.6K 12m55s",  # noqa: E501
             78,
         ),
         ("=\u001b[m=", 2),
@@ -405,34 +389,24 @@ def test_logfile_unwriteable_file(executor):
     cli = PGCli(pgexecute=executor)
     statement = r"\log-file forbidden.log"
     with mock.patch("builtins.open") as mock_open:
-        mock_open.side_effect = PermissionError(
-            "[Errno 13] Permission denied: 'forbidden.log'"
-        )
+        mock_open.side_effect = PermissionError("[Errno 13] Permission denied: 'forbidden.log'")
         result = run(executor, statement, pgspecial=cli.pgspecial)
-    assert result == [
-        "[Errno 13] Permission denied: 'forbidden.log'\nLogfile capture disabled"
-    ]
+    assert result == ["[Errno 13] Permission denied: 'forbidden.log'\nLogfile capture disabled"]
 
 
 @dbtest
 def test_watch_works(executor):
     cli = PGCli(pgexecute=executor)
 
-    def run_with_watch(
-        query, target_call_count=1, expected_output="", expected_timing=None
-    ):
+    def run_with_watch(query, target_call_count=1, expected_output="", expected_timing=None):
         """
         :param query: Input to the CLI
         :param target_call_count: Number of times the user lets the command run before Ctrl-C
         :param expected_output: Substring expected to be found for each executed query
         :param expected_timing: value `time.sleep` expected to be called with on every invocation
         """
-        with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch(
-            "pgcli.main.sleep"
-        ) as mock_sleep:
-            mock_sleep.side_effect = [None] * (target_call_count - 1) + [
-                KeyboardInterrupt
-            ]
+        with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+            mock_sleep.side_effect = [None] * (target_call_count - 1) + [KeyboardInterrupt]
             cli.handle_watch_command(query)
         # Validate that sleep was called with the right timing
         for i in range(target_call_count - 1):
@@ -446,16 +420,11 @@ def test_watch_works(executor):
     with mock.patch("pgcli.main.click.secho") as mock_secho:
         cli.handle_watch_command(r"\watch 2")
     mock_secho.assert_called()
-    assert (
-        r"\watch cannot be used with an empty query"
-        in mock_secho.call_args_list[0][0][0]
-    )
+    assert r"\watch cannot be used with an empty query" in mock_secho.call_args_list[0][0][0]
 
     # Usage 1: Run a query and then re-run it with \watch across two prompts.
     run_with_watch("SELECT 111", expected_output="111")
-    run_with_watch(
-        "\\watch 10", target_call_count=2, expected_output="111", expected_timing=10
-    )
+    run_with_watch("\\watch 10", target_call_count=2, expected_output="111", expected_timing=10)
 
     # Usage 2: Run a query and \watch via the same prompt.
     run_with_watch(
@@ -466,9 +435,7 @@ def test_watch_works(executor):
     )
 
     # Usage 3: Re-run the last watched command with a new timing
-    run_with_watch(
-        "\\watch 5", target_call_count=4, expected_output="222", expected_timing=5
-    )
+    run_with_watch("\\watch 5", target_call_count=4, expected_output="222", expected_timing=5)
 
 
 def test_missing_rc_dir(tmpdir):
@@ -482,9 +449,7 @@ def test_quoted_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar%5E:%5Dfoo@baz.com/testdb%5B")
-    mock_connect.assert_called_with(
-        database="testdb[", host="baz.com", user="bar^", passwd="]foo"
-    )
+    mock_connect.assert_called_with(database="testdb[", host="baz.com", user="bar^", passwd="]foo")
 
 
 def test_pg_service_file(tmpdir):
@@ -544,8 +509,7 @@ def test_ssl_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri(
-            "postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?"
-            "sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem"
+            "postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem"
         )
     mock_connect.assert_called_with(
         database="testdb[",
@@ -563,17 +527,13 @@ def test_port_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar:foo@baz.com:2543/testdb")
-    mock_connect.assert_called_with(
-        database="testdb", host="baz.com", user="bar", passwd="foo", port="2543"
-    )
+    mock_connect.assert_called_with(database="testdb", host="baz.com", user="bar", passwd="foo", port="2543")
 
 
 def test_multihost_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri(
-            "postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb"
-        )
+        cli.connect_uri("postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb")
     mock_connect.assert_called_with(
         database="testdb",
         host="baz1.com,baz2.com,baz3.com",
@@ -588,9 +548,7 @@ def test_application_name_db_uri(tmpdir):
         mock_pgexecute.return_value = None
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
-    mock_pgexecute.assert_called_with(
-        "bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow"
-    )
+    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow")
 
 
 @pytest.mark.parametrize(
