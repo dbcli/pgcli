@@ -1,4 +1,3 @@
-import errno
 import shutil
 import os
 import platform

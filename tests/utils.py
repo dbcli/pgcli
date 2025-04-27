@@ -27,7 +27,7 @@ try:
     SERVER_VERSION = conn.info.parameter_status("server_version")
     JSON_AVAILABLE = True
     JSONB_AVAILABLE = True
-except Exception as x:
+except Exception:
     CAN_CONNECT_TO_DB = JSON_AVAILABLE = JSONB_AVAILABLE = False
     SERVER_VERSION = 0
 
@@ -38,14 +38,10 @@ dbtest = pytest.mark.skipif(
 )
 
 
-requires_json = pytest.mark.skipif(
-    not JSON_AVAILABLE, reason="Postgres server unavailable or json type not defined"
-)
+requires_json = pytest.mark.skipif(not JSON_AVAILABLE, reason="Postgres server unavailable or json type not defined")
 
 
-requires_jsonb = pytest.mark.skipif(
-    not JSONB_AVAILABLE, reason="Postgres server unavailable or jsonb type not defined"
-)
+requires_jsonb = pytest.mark.skipif(not JSONB_AVAILABLE, reason="Postgres server unavailable or jsonb type not defined")
 
 
 def create_db(dbname):
@@ -67,16 +63,12 @@ def drop_tables(conn):
         )
 
 
-def run(
-    executor, sql, join=False, expanded=False, pgspecial=None, exception_formatter=None
-):
+def run(executor, sql, join=False, expanded=False, pgspecial=None, exception_formatter=None):
     "Return string output for the sql to be run"
 
     results = executor.run(sql, pgspecial, exception_formatter)
     formatted = []
-    settings = OutputSettings(
-        table_format="psql", dcmlfmt="d", floatfmt="g", expanded=expanded
-    )
+    settings = OutputSettings(table_format="psql", dcmlfmt="d", floatfmt="g", expanded=expanded)
     for title, rows, headers, status, sql, success, is_special in results:
         formatted.extend(format_output(title, rows, headers, status, settings))
     if join:
@@ -86,7 +78,4 @@ def run(
 
 
 def completions_to_set(completions):
-    return {
-        (completion.display_text, completion.display_meta_text)
-        for completion in completions
-    }
+    return {(completion.display_text, completion.display_meta_text) for completion in completions}
