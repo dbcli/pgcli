@@ -321,8 +321,7 @@ def test_pset_pager_on(term_height, term_width, text, use_pager, pset_pager_mock
         ("-\u001b]23\u0007-", 2),
     ],
 )
-def test_color_pattern(text, expected_length, pset_pager_mocks):
-    pset_pager_mocks[0]
+def test_color_pattern(text, expected_length):
     assert len(COLOR_CODE_REGEX.sub("", text)) == expected_length
 
 
