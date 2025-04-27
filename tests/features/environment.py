@@ -159,6 +159,7 @@ def is_known_problem(scenario):
         "run the cli with --port",
         "confirm exit when a transaction is ongoing",
         "cancel exit when a transaction is ongoing",
+        "run the cli and exit",
     )
 
 
