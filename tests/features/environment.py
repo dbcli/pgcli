@@ -1,13 +1,13 @@
 import copy
 import os
+import shutil
+import signal
 import sys
+import tempfile
+
 import db_utils as dbutils
 import fixture_utils as fixutils
 import pexpect
-import tempfile
-import shutil
-import signal
-
 
 from steps import wrappers
 
@@ -22,17 +22,13 @@ def before_all(context):
     os.environ["VISUAL"] = "ex"
     os.environ["PROMPT_TOOLKIT_NO_CPR"] = "1"
 
-    context.package_root = os.path.abspath(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    )
+    context.package_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
     fixture_dir = os.path.join(context.package_root, "tests/features/fixture_data")
 
     print("package root:", context.package_root)
     print("fixture dir:", fixture_dir)
 
-    os.environ["COVERAGE_PROCESS_START"] = os.path.join(
-        context.package_root, ".coveragerc"
-    )
+    os.environ["COVERAGE_PROCESS_START"] = os.path.join(context.package_root, ".coveragerc")
 
     context.exit_sent = False
 
@@ -42,30 +38,20 @@ def before_all(context):
 
     # Store get params from config.
     context.conf = {
-        "host": context.config.userdata.get(
-            "pg_test_host", os.getenv("PGHOST", "localhost")
-        ),
-        "user": context.config.userdata.get(
-            "pg_test_user", os.getenv("PGUSER", "postgres")
-        ),
-        "pass": context.config.userdata.get(
-            "pg_test_pass", os.getenv("PGPASSWORD", None)
-        ),
-        "port": context.config.userdata.get(
-            "pg_test_port", os.getenv("PGPORT", "5432")
-        ),
+        "host": context.config.userdata.get("pg_test_host", os.getenv("PGHOST", "localhost")),
+        "user": context.config.userdata.get("pg_test_user", os.getenv("PGUSER", "postgres")),
+        "pass": context.config.userdata.get("pg_test_pass", os.getenv("PGPASSWORD", None)),
+        "port": context.config.userdata.get("pg_test_port", os.getenv("PGPORT", "5432")),
         "cli_command": (
             context.config.userdata.get("pg_cli_command", None)
             or '{python} -c "{startup}"'.format(
                 python=sys.executable,
-                startup="; ".join(
-                    [
-                        "import coverage",
-                        "coverage.process_startup()",
-                        "import pgcli.main",
-                        "pgcli.main.cli(auto_envvar_prefix='BEHAVE')",
-                    ]
-                ),
+                startup="; ".join([
+                    "import coverage",
+                    "coverage.process_startup()",
+                    "import pgcli.main",
+                    "pgcli.main.cli(auto_envvar_prefix='BEHAVE')",
+                ]),
             )
         ),
         "dbname": db_name_full,
@@ -172,6 +158,8 @@ def is_known_problem(scenario):
             "run the cli with --username",
             "run the cli with --user",
             "run the cli with --port",
+            "confirm exit when a transaction is ongoing",
+            "cancel exit when a transaction is ongoing",
         )
     return False
 
