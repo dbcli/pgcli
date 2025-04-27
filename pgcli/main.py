@@ -315,7 +315,8 @@ class PGCli:
             aliases=("use", "\\connect", "USE"),
         )
 
-        refresh_callback = lambda: self.refresh_completions(persist_priorities="all")
+        def refresh_callback():
+            return self.refresh_completions(persist_priorities="all")
 
         self.pgspecial.register(
             self.quit,
@@ -439,7 +440,7 @@ class PGCli:
             # Get all the parameters in pattern, handling double quotes if any.
             infos = re.findall(r'"[^"]*"|[^"\'\s]+', pattern)
             # Now removing quotes.
-            list(map(lambda s: s.strip('"'), infos))
+            [s.strip('"') for s in infos]
 
             infos.extend([None] * (4 - len(infos)))
             db, user, host, port = infos

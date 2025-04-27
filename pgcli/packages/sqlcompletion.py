@@ -26,16 +26,16 @@ Join = namedtuple("Join", ["table_refs", "schema"])
 
 Function = namedtuple("Function", ["schema", "table_refs", "usage"])
 # For convenience, don't require the `usage` argument in Function constructor
-Function.__new__.__defaults__ = (None, tuple(), None)
-Table.__new__.__defaults__ = (None, tuple(), tuple())
-View.__new__.__defaults__ = (None, tuple())
-FromClauseItem.__new__.__defaults__ = (None, tuple(), tuple())
+Function.__new__.__defaults__ = (None, (), None)
+Table.__new__.__defaults__ = (None, (), ())
+View.__new__.__defaults__ = (None, ())
+FromClauseItem.__new__.__defaults__ = (None, (), ())
 
 Column = namedtuple(
     "Column",
     ["table_refs", "require_last_table", "local_tables", "qualifiable", "context"],
 )
-Column.__new__.__defaults__ = (None, None, tuple(), False, None)
+Column.__new__.__defaults__ = (None, None, (), False, None)
 
 Keyword = namedtuple("Keyword", ["last_token"])
 Keyword.__new__.__defaults__ = (None,)
@@ -424,7 +424,7 @@ def suggest_based_on_last_token(token, stmt):
 
         except ValueError:
             pass
-        return tuple()
+        return ()
 
     elif token_v in ("table", "view"):
         # E.g. 'ALTER TABLE <tablname>'

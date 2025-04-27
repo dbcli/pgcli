@@ -46,7 +46,7 @@ def test_select_suggests_cols_with_qualified_table_scope():
 def test_cte_does_not_crash():
     sql = "WITH CTE AS (SELECT F.* FROM Foo F WHERE F.Bar > 23) SELECT C.* FROM CTE C WHERE C.FooID BETWEEN 123 AND 234;"
     for i in range(len(sql)):
-        suggestions = suggest_type(sql[: i + 1], sql[: i + 1])
+        suggest_type(sql[: i + 1], sql[: i + 1])
 
 
 @pytest.mark.parametrize("expression", ['SELECT * FROM "tabl" WHERE '])
@@ -140,7 +140,7 @@ def test_suggest_tables_views_schemas_and_functions(expression):
 )
 def test_suggest_after_join_with_two_tables(expression):
     suggestions = suggest_type(expression, expression)
-    tables = tuple([(None, "foo", None, False), (None, "bar", None, False)])
+    tables = ((None, "foo", None, False), (None, "bar", None, False))
     assert set(suggestions) == {
         FromClauseItem(schema=None, table_refs=tables),
         Join(tables, None),
@@ -193,7 +193,7 @@ def test_suggest_qualified_tables_views_and_functions(expression):
 @pytest.mark.parametrize("expression", ["SELECT * FROM foo JOIN sch."])
 def test_suggest_qualified_tables_views_functions_and_joins(expression):
     suggestions = suggest_type(expression, expression)
-    tbls = tuple([(None, "foo", None, False)])
+    tbls = ((None, "foo", None, False),)
     assert set(suggestions) == {
         FromClauseItem(schema="sch", table_refs=tbls),
         Join(tbls, "sch"),
@@ -452,7 +452,7 @@ def test_sub_select_table_name_completion(expression):
 )
 def test_sub_select_table_name_completion_with_outer_table(expression):
     suggestion = suggest_type(expression, expression)
-    tbls = tuple([(None, "foo", None, False)])
+    tbls = ((None, "foo", None, False),)
     assert set(suggestion) == {FromClauseItem(schema=None, table_refs=tbls), Schema()}
 
 
@@ -492,7 +492,7 @@ def test_sub_select_dot_col_name_completion():
 def test_join_suggests_tables_and_schemas(tbl_alias, join_type):
     text = f"SELECT * FROM abc {tbl_alias} {join_type} JOIN "
     suggestion = suggest_type(text, text)
-    tbls = tuple([(None, "abc", tbl_alias or None, False)])
+    tbls = ((None, "abc", tbl_alias or None, False),)
     assert set(suggestion) == {
         FromClauseItem(schema=None, table_refs=tbls),
         Schema(),
@@ -505,7 +505,7 @@ def test_left_join_with_comma():
     suggestions = suggest_type(text, text)
     # tbls should also include (None, 'bar', 'b', False)
     # but there's a bug with commas
-    tbls = tuple([(None, "foo", "f", False)])
+    tbls = ((None, "foo", "f", False),)
     assert set(suggestions) == {FromClauseItem(schema=None, table_refs=tbls), Schema()}
 
 

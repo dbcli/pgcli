@@ -90,8 +90,8 @@ def test_expanded_slash_G(executor, pgspecial):
     # Tests whether we reset the expanded output after a \G.
     run(executor, """create table test(a boolean)""")
     run(executor, """insert into test values(True)""")
-    results = run(executor, r"""select * from test \G""", pgspecial=pgspecial)
-    assert pgspecial.expanded_output == False
+    run(executor, r"""select * from test \G""", pgspecial=pgspecial)
+    assert pgspecial.expanded_output is False
 
 
 @dbtest
@@ -269,8 +269,8 @@ def test_not_is_special(executor, pgspecial):
     query = "select 1"
     result = list(executor.run(query, pgspecial=pgspecial))
     success, is_special = result[0][5:]
-    assert success == True
-    assert is_special == False
+    assert success is True
+    assert is_special is False
 
 
 @dbtest
@@ -279,8 +279,8 @@ def test_execute_from_file_no_arg(executor, pgspecial):
     result = list(executor.run(r"\i", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert "missing required argument" in status
-    assert success == False
-    assert is_special == True
+    assert success is False
+    assert is_special is True
 
 
 @dbtest
@@ -294,8 +294,8 @@ def test_execute_from_file_io_error(os, executor, pgspecial):
     result = list(executor.run(r"\i test", pgspecial=pgspecial))
     status, sql, success, is_special = result[0][3:]
     assert status == "test"
-    assert success == False
-    assert is_special == True
+    assert success is False
+    assert is_special is True
 
 
 @dbtest
@@ -309,10 +309,10 @@ def test_execute_from_commented_file_that_executes_another_file(executor, pgspec
     rcfile = str(tmpdir.join("rcfile"))
     print(rcfile)
     cli = PGCli(pgexecute=executor, pgclirc_file=rcfile)
-    assert cli != None
+    assert cli is not None
     statement = "--comment\n\\h"
     result = run(executor, statement, pgspecial=cli.pgspecial)
-    assert result != None
+    assert result is not None
     assert result[0].find("ALTER TABLE")
 
 
@@ -321,30 +321,30 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     # just some base cases that should work also
     statement = "--comment\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("now") >= 0
 
     statement = "/*comment*/\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("now") >= 0
 
     # https://github.com/dbcli/pgcli/issues/1362
     statement = "--comment\n\\h"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = "--comment1\n--comment2\n\\h"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = "/*comment*/\n\\h;"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
@@ -352,7 +352,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     comment2*/
     \h"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
@@ -362,32 +362,32 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     comment4*/
     \\h"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = "    /*comment*/\n\\h;"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = "/*comment\ncomment line2*/\n\\h;"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = "          /*comment\ncomment line2*/\n\\h;"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
     statement = """\\h /*comment4 */"""
     result = run(executor, statement, pgspecial=pgspecial)
     print(result)
-    assert result != None
+    assert result is not None
     assert result[0].find("No help") >= 0
 
     # TODO: we probably don't want to do this but sqlparse is not parsing things well
@@ -398,7 +398,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     \h
     /*comment4 */"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[0].find("No help") >= 0
 
     # TODO: same for this one
@@ -410,7 +410,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     comment5
     comment6*/"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[0].find("No help") >= 0
 
 
@@ -421,12 +421,12 @@ def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
     # just some base cases that should work also
     statement = "--comment\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("now") >= 0
 
     statement = "/*comment*/\nselect now();"
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[1].find("now") >= 0
 
     # this simulates the original error (1403) without having to add/drop tables
@@ -436,26 +436,26 @@ def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
     # test that the statement works
     statement = """VALUES (1, 'one'), (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # test the statement with a \n in the middle
     statement = """VALUES (1, 'one'),\n (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # test the statement with a newline in the middle
     statement = """VALUES (1, 'one'),
      (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # now add a single comment line
     statement = """--comment\nVALUES (1, 'one'), (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # doing without special char \n
@@ -463,13 +463,13 @@ def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
     VALUES (1,'one'),
     (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # two comment lines
     statement = """--comment\n--comment2\nVALUES (1,'one'), (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # doing without special char \n
@@ -478,7 +478,7 @@ def test_execute_commented_first_line_and_normal(executor, pgspecial, tmpdir):
     VALUES (1,'one'), (2, 'two'), (3, 'three');
     """
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # multiline comment + newline in middle of the statement
@@ -488,7 +488,7 @@ comment3*/
 VALUES (1,'one'),
 (2, 'two'), (3, 'three');"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
     # multiline comment + newline in middle of the statement
@@ -501,7 +501,7 @@ VALUES (1,'one'),
 --comment4
 --comment5"""
     result = run(executor, statement, pgspecial=pgspecial)
-    assert result != None
+    assert result is not None
     assert result[5].find("three") >= 0
 
 
@@ -654,7 +654,7 @@ def test_on_error_stop(executor, exception_formatter):
 @dbtest
 def test_nonexistent_function_definition(executor):
     with pytest.raises(RuntimeError):
-        result = executor.view_definition("there_is_no_such_function")
+        executor.view_definition("there_is_no_such_function")
 
 
 @dbtest
@@ -670,7 +670,7 @@ def test_function_definition(executor):
             $function$
     """,
     )
-    result = executor.function_definition("the_number_three")
+    executor.function_definition("the_number_three")
 
 
 @dbtest
@@ -721,9 +721,9 @@ def test_view_definition(executor):
 @dbtest
 def test_nonexistent_view_definition(executor):
     with pytest.raises(RuntimeError):
-        result = executor.view_definition("there_is_no_such_view")
+        executor.view_definition("there_is_no_such_view")
     with pytest.raises(RuntimeError):
-        result = executor.view_definition("mvw1")
+        executor.view_definition("mvw1")
 
 
 @dbtest

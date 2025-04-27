@@ -172,7 +172,7 @@ def test_subselect_tables():
 @pytest.mark.parametrize("text", ["SELECT * FROM foo.", "SELECT 123 AS foo"])
 def test_extract_no_tables(text):
     tables = extract_tables(text)
-    assert tables == tuple()
+    assert tables == ()
 
 
 @pytest.mark.parametrize("arg_list", ["", "arg1", "arg1, arg2, arg3"])
