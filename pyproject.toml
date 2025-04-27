@@ -51,10 +51,25 @@ pgcli = "pgcli.main:cli"
 [project.optional-dependencies]
 keyring = ["keyring >= 12.2.0"]
 sshtunnel = ["sshtunnel >= 0.4.0"]
+dev = [
+    "pytest>=2.7.0",
+    "tox>=1.9.2",
+    "behave>=1.2.4",
+    "pexpect==3.3; platform_system != 'Windows'",
+    "pre-commit>=1.16.0",
+    "coverage>=5.0.4",
+    "codecov>=1.5.1",
+    "docutils>=0.13.1",
+    "ruff>=0.11.7",
+    "sshtunnel>=0.4.0",
+    "build<0.10.0",
+]
 
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=64.0", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
 
 [tool.setuptools]
 include-package-data = false
@@ -68,24 +83,15 @@ find = { namespaces = false }
 [tool.setuptools.package-data]
 pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.cache
-  | \.pytest_cache
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/data
-)/
-'''
+[tool.ruff]
+target-version = 'py39'
+line-length = 140
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ['pgcli', 'tests']
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--capture=sys --showlocals -rxs"
+testpaths = ["tests"]

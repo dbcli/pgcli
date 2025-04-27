@@ -23,8 +23,8 @@ repo.
    $ git remote add upstream git@github.com:dbcli/pgcli.git
 
 Once the 'upstream' end point is added you can then periodically do a ``git
-pull upstream master`` to update your local copy and then do a ``git push
-origin master`` to keep your own fork up to date.
+pull upstream main`` to update your local copy and then do a ``git push
+origin main`` to keep your own fork up to date.
 
 Check Github's `Understanding the GitHub flow guide
 <https://guides.github.com/introduction/flow/>`_ for a more detailed
@@ -38,30 +38,23 @@ pgcli. If you're developing pgcli, you'll need to install it in a slightly
 different way so you can see the effects of your changes right away without
 having to go through the install cycle every time you change the code.
 
-It is highly recommended to use virtualenv for development. If you don't know
-what a virtualenv is, `this guide <http://docs.python-guide.org/en/latest/dev/virtualenvs/#virtual-environments>`_
-will help you get started.
-
-Create a virtualenv (let's call it pgcli-dev). Activate it:
+Set up [uv](https://docs.astral.sh/uv/getting-started/installation/) for development:
 
 ::
 
+    cd pgcli
+    uv venv
     source ./pgcli-dev/bin/activate
 
-    or
-
-    .\pgcli-dev\scripts\activate (for Windows)
-
-Once the virtualenv is activated, `cd` into the local clone of pgcli folder
-and install pgcli using pip as follows:
+Once the virtualenv is activated, install pgcli using pip as follows:
 
 ::
 
-    $ pip install --editable .
+    $ uv pip install --editable .
 
     or
 
-    $ pip install -e .
+    $ uv pip install -e .
 
 This will install the necessary dependencies as well as install pgcli from the
 working folder into the virtualenv. By installing it using `pip install -e`
@@ -165,9 +158,8 @@ in the ``tests`` directory.  An example::
 First, install the requirements for testing:
 
 ::
-    $ pip install -U pip setuptools 
     $ pip install --no-cache-dir ".[sshtunnel]" 
-    $ pip install -r requirements-dev.txt 
+    $ pip install --no-cache-dir ".[dev]"
 
 Ensure that the database user has permissions to create and drop test databases
 by checking your ``pg_hba.conf`` file. The default user should be ``postgres``
@@ -180,20 +172,14 @@ service for the changes to take effect.
     # ONLY IF YOU MADE CHANGES TO YOUR pg_hba.conf FILE
     $ sudo service postgresql restart
 
-After that, tests in the ``/pgcli/tests`` directory can be run with:
-(Note that these ``behave`` tests do not currently work when developing on Windows due to pexpect incompatibility.)
+After that:
 
 ::
 
-    # on directory /pgcli/tests
+    $ cd pgcli/tests
     $ behave
 
-And on the ``/pgcli`` directory:
-
-::
-
-    # on directory /pgcli
-    $ py.test
+Note that these ``behave`` tests do not currently work when developing on Windows due to pexpect incompatibility.
 
 To see stdout/stderr, use the following command:
 
@@ -209,10 +195,21 @@ Troubleshooting the integration tests
 - Check `this issue <https://github.com/dbcli/pgcli/issues/945>`_ for relevant information.
 - `File an issue <https://github.com/dbcli/pgcli/issues/new>`_.
 
+Running the unit tests
+----------------------
+
+The unit tests can be run with pytest:
+
+::
+
+    $ cd pgcli
+    $ pytest
+
+
 Coding Style
 ------------
 
-``pgcli`` uses `black <https://github.com/ambv/black>`_ to format the source code. Make sure to install black.
+``pgcli`` uses `ruff <https://github.com/astral-sh/ruff>`_ to format the source code.
 
 Releases
 --------
