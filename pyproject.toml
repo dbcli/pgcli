@@ -87,9 +87,45 @@ pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 target-version = 'py39'
 line-length = 140
 
+[tool.ruff.lint]
+select = [
+    'A',
+#   'I',      # todo enableme imports
+    'E',
+    'W',
+    'F',
+    'C4',
+    'PIE',
+    'TID',
+]
+ignore = [
+    'E401',   # Multiple imports on one line
+    'E402',   # Module level import not at top of file
+    'PIE808', # range() starting with 0
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    'E111',   # indentation-with-invalid-multiple
+    'E114',   # indentation-with-invalid-multiple-comment
+    'E117',   # over-indented
+    'W191',   # tab-indentation
+    # TODO
+    'PIE796', # todo enableme Enum contains duplicate value
+]
+
 [tool.ruff.lint.isort]
 force-sort-within-sections = true
-known-first-party = ['pgcli', 'tests']
+known-first-party = [
+    'pgcli',
+    'tests',
+    'steps',
+]
+
+[tool.ruff.format]
+preview = true
+quote-style = 'preserve'
+exclude = [
+    'build',
+    'pgcli/magic.py',
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
