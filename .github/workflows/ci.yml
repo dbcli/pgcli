@@ -90,9 +90,3 @@ jobs:
 
       - name: Run style checks
         run: uv run tox -e style
-
-      - name: Coverage
-        run: |
-          coverage combine
-          coverage report
-          codecov
