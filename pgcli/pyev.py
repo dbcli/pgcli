@@ -99,17 +99,13 @@ class Visualizer:
             return plan
 
         if plan["Plan Rows"] != 0:
-            plan["Planner Row Estimate Factor"] = (
-                plan["Actual Rows"] / plan["Plan Rows"]
-            )
+            plan["Planner Row Estimate Factor"] = plan["Actual Rows"] / plan["Plan Rows"]
 
         if plan["Planner Row Estimate Factor"] < 10:
             plan["Planner Row Estimate Factor"] = 0
             plan["Planner Row Estimate Direction"] = "Over"
             if plan["Actual Rows"] != 0:
-                plan["Planner Row Estimate Factor"] = (
-                    plan["Plan Rows"] / plan["Actual Rows"]
-                )
+                plan["Planner Row Estimate Factor"] = plan["Plan Rows"] / plan["Actual Rows"]
         return plan
 
     #
@@ -119,9 +115,7 @@ class Visualizer:
 
         for child in plan.get("Plans", []):
             if child["Node Type"] != "CTEScan":
-                plan["Actual Duration"] = (
-                    plan["Actual Duration"] - child["Actual Total Time"]
-                )
+                plan["Actual Duration"] = plan["Actual Duration"] - child["Actual Total Time"]
                 plan["Actual Cost"] = plan["Actual Cost"] - child["Total Cost"]
 
         if plan["Actual Cost"] < 0:
@@ -243,9 +237,7 @@ class Visualizer:
 
     def create_lines(self, plan, prefix, depth, width, last_child):
         current_prefix = prefix
-        self.string_lines.append(
-            self.output_fn(current_prefix, self.prefix_format("│"))
-        )
+        self.string_lines.append(self.output_fn(current_prefix, self.prefix_format("│")))
 
         joint = "├"
         if last_child:
@@ -277,9 +269,7 @@ class Visualizer:
             DESCRIPTIONS.get(plan["Node Type"], "Not found : %s" % plan["Node Type"]),
             cols,
         ):
-            self.string_lines.append(
-                self.output_fn(current_prefix, "%s" % self.muted_format(line))
-            )
+            self.string_lines.append(self.output_fn(current_prefix, "%s" % self.muted_format(line)))
         #
         if plan.get("Actual Duration"):
             self.string_lines.append(
@@ -289,8 +279,7 @@ class Visualizer:
                     % (
                         "Duration:",
                         self.duration_to_string(plan["Actual Duration"]),
-                        (plan["Actual Duration"] / self.explain["Execution Time"])
-                        * 100,
+                        (plan["Actual Duration"] / self.explain["Execution Time"]) * 100,
                     ),
                 )
             )
@@ -361,9 +350,7 @@ class Visualizer:
                     % (
                         self.muted_format("filter"),
                         plan["Filter"],
-                        self.muted_format(
-                            "[-%s rows]" % self.intcomma(plan["Rows Removed by Filter"])
-                        ),
+                        self.muted_format("[-%s rows]" % self.intcomma(plan["Rows Removed by Filter"])),
                     ),
                 )
             )
@@ -377,9 +364,7 @@ class Visualizer:
             )
 
         if plan.get("CTE Name"):
-            self.string_lines.append(
-                self.output_fn(current_prefix, "CTE %s" % plan["CTE Name"])
-            )
+            self.string_lines.append(self.output_fn(current_prefix, "CTE %s" % plan["CTE Name"]))
 
         if plan.get("Planner Row Estimate Factor") != 0:
             self.string_lines.append(
@@ -398,29 +383,22 @@ class Visualizer:
         current_prefix = prefix
 
         if len(plan.get("Output", [])) > 0:
-            for index, line in enumerate(
-                self.wrap_string(" + ".join(plan["Output"]), cols)
-            ):
+            for index, line in enumerate(self.wrap_string(" + ".join(plan["Output"]), cols)):
                 self.string_lines.append(
                     self.output_fn(
                         current_prefix,
-                        self.prefix_format(self.get_terminator(index, plan))
-                        + self.output_format(line),
+                        self.prefix_format(self.get_terminator(index, plan)) + self.output_format(line),
                     )
                 )
 
         for index, nested_plan in enumerate(plan.get("Plans", [])):
-            self.create_lines(
-                nested_plan, prefix, depth + 1, width, index == len(plan["Plans"]) - 1
-            )
+            self.create_lines(nested_plan, prefix, depth + 1, width, index == len(plan["Plans"]) - 1)
 
     def generate_lines(self):
         self.string_lines = [
             "○ Total Cost: %s" % self.intcomma(self.explain["Total Cost"]),
-            "○ Planning Time: %s"
-            % self.duration_to_string(self.explain["Planning Time"]),
-            "○ Execution Time: %s"
-            % self.duration_to_string(self.explain["Execution Time"]),
+            "○ Planning Time: %s" % self.duration_to_string(self.explain["Planning Time"]),
+            "○ Execution Time: %s" % self.duration_to_string(self.explain["Execution Time"]),
             self.prefix_format("┬"),
         ]
         self.create_lines(

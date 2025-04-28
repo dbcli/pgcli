@@ -1,8 +1,6 @@
 from collections import namedtuple
 
-_ColumnMetadata = namedtuple(
-    "ColumnMetadata", ["name", "datatype", "foreignkeys", "default", "has_default"]
-)
+_ColumnMetadata = namedtuple("ColumnMetadata", ["name", "datatype", "foreignkeys", "default", "has_default"])
 
 
 def ColumnMetadata(name, datatype, foreignkeys=None, default=None, has_default=False):
@@ -143,11 +141,7 @@ class FunctionMetadata:
             num_args = len(args)
             num_defaults = len(self.arg_defaults)
             has_default = num + num_defaults >= num_args
-            default = (
-                self.arg_defaults[num - num_args + num_defaults]
-                if has_default
-                else None
-            )
+            default = self.arg_defaults[num - num_args + num_defaults] if has_default else None
             return ColumnMetadata(name, typ, [], default, has_default)
 
         return [arg(name, typ, num) for num, (name, typ) in enumerate(args)]

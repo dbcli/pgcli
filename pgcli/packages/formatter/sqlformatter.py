@@ -52,16 +52,11 @@ def adapter(data, headers, table_format=None, **kwargs):
             yield 'UPDATE "{}" SET'.format(table_name)
             prefix = "  "
             for i, v in enumerate(d[keys:], keys):
-                yield '{}"{}" = {}'.format(
-                    prefix, headers[i], escape_for_sql_statement(v)
-                )
+                yield '{}"{}" = {}'.format(prefix, headers[i], escape_for_sql_statement(v))
                 if prefix == "  ":
                     prefix = ", "
             f = '"{}" = {}'
-            where = (
-                f.format(headers[i], escape_for_sql_statement(d[i]))
-                for i in range(keys)
-            )
+            where = (f.format(headers[i], escape_for_sql_statement(d[i])) for i in range(keys))
             yield "WHERE {};".format(" AND ".join(where))
 
 
@@ -69,6 +64,4 @@ def register_new_formatter(TabularOutputFormatter):
     global formatter
     formatter = TabularOutputFormatter
     for sql_format in supported_formats:
-        TabularOutputFormatter.register_new_formatter(
-            sql_format, adapter, preprocessors, {"table_format": sql_format}
-        )
+        TabularOutputFormatter.register_new_formatter(sql_format, adapter, preprocessors, {"table_format": sql_format})

@@ -62,9 +62,7 @@ def step_run_cli_using_arg(context, arg):
         arg = "service=mock_postgres --password"
         prompt_check = False
         currentdb = "postgres"
-    wrappers.run_cli(
-        context, run_args=[arg], prompt_check=prompt_check, currentdb=currentdb
-    )
+    wrappers.run_cli(context, run_args=[arg], prompt_check=prompt_check, currentdb=currentdb)
 
 
 @when("we wait for prompt")
@@ -188,9 +186,7 @@ def step_send_source_command(context):
 
 @when("we run query to check application_name")
 def step_check_application_name(context):
-    context.cli.sendline(
-        "SELECT 'found' FROM pg_stat_activity WHERE application_name = 'pgcli' HAVING COUNT(*) > 0;"
-    )
+    context.cli.sendline("SELECT 'found' FROM pg_stat_activity WHERE application_name = 'pgcli' HAVING COUNT(*) > 0;")
 
 
 @then("we see found")

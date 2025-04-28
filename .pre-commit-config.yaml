@@ -6,5 +6,5 @@ repos:
     # Run the linter.
     - id: ruff
       args: [ --fix ]
-    # Run the formatter. TODO: uncomment when the rest of the code is ruff-formatted
-    # - id: ruff-format
+    # Run the formatter.
+    - id: ruff-format

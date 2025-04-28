@@ -20,9 +20,7 @@ def test_keyring_get_password_ok():
 
 def test_keyring_get_password_exception():
     with mock.patch("pgcli.auth.keyring", return_value=mock.MagicMock()):
-        with mock.patch(
-            "pgcli.auth.keyring.get_password", side_effect=Exception("Boom!")
-        ):
+        with mock.patch("pgcli.auth.keyring.get_password", side_effect=Exception("Boom!")):
             assert auth.keyring_get_password("test") == ""
 
 
@@ -34,7 +32,5 @@ def test_keyring_set_password_ok():
 
 def test_keyring_set_password_exception():
     with mock.patch("pgcli.auth.keyring", return_value=mock.MagicMock()):
-        with mock.patch(
-            "pgcli.auth.keyring.set_password", side_effect=Exception("Boom!")
-        ):
+        with mock.patch("pgcli.auth.keyring.set_password", side_effect=Exception("Boom!")):
             auth.keyring_set_password("test", "abc123")

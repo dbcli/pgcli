@@ -87,9 +87,7 @@ def style_factory(name, cli_style):
             prompt_styles.append((token, cli_style[token]))
 
     override_style = Style([("bottom-toolbar", "noreverse")])
-    return merge_styles(
-        [style_from_pygments_cls(style), override_style, Style(prompt_styles)]
-    )
+    return merge_styles([style_from_pygments_cls(style), override_style, Style(prompt_styles)])
 
 
 def style_factory_output(name, cli_style):

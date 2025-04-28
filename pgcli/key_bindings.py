@@ -107,8 +107,7 @@ def pgcli_bindings(pgcli):
     # history search, and one of several conditions are True
     @kb.add(
         "enter",
-        filter=~(completion_is_selected | is_searching)
-        & buffer_should_be_handled(pgcli),
+        filter=~(completion_is_selected | is_searching) & buffer_should_be_handled(pgcli),
     )
     def _(event):
         _logger.debug("Detected enter key.")

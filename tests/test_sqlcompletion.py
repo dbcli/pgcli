@@ -18,9 +18,7 @@ from pgcli.packages.parseutils.tables import TableReference
 import pytest
 
 
-def cols_etc(
-    table, schema=None, alias=None, is_function=False, parent=None, last_keyword=None
-):
+def cols_etc(table, schema=None, alias=None, is_function=False, parent=None, last_keyword=None):
     """Returns the expected select-clause suggestions for a single-table
     select."""
     return {
@@ -117,9 +115,7 @@ def test_select_suggests_cols_and_funcs():
     }
 
 
-@pytest.mark.parametrize(
-    "expression", ["INSERT INTO ", "COPY ", "UPDATE ", "DESCRIBE "]
-)
+@pytest.mark.parametrize("expression", ["INSERT INTO ", "COPY ", "UPDATE ", "DESCRIBE "])
 def test_suggests_tables_views_and_schemas(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == {Table(schema=None), View(schema=None), Schema()}
@@ -148,9 +144,7 @@ def test_suggest_after_join_with_two_tables(expression):
     }
 
 
-@pytest.mark.parametrize(
-    "expression", ["SELECT * FROM foo JOIN ", "SELECT * FROM foo JOIN bar"]
-)
+@pytest.mark.parametrize("expression", ["SELECT * FROM foo JOIN ", "SELECT * FROM foo JOIN bar"])
 def test_suggest_after_join_with_one_table(expression):
     suggestions = suggest_type(expression, expression)
     tables = ((None, "foo", None, False),)
@@ -161,9 +155,7 @@ def test_suggest_after_join_with_one_table(expression):
     }
 
 
-@pytest.mark.parametrize(
-    "expression", ["INSERT INTO sch.", "COPY sch.", "DESCRIBE sch."]
-)
+@pytest.mark.parametrize("expression", ["INSERT INTO sch.", "COPY sch.", "DESCRIBE sch."])
 def test_suggest_qualified_tables_and_views(expression):
     suggestions = suggest_type(expression, expression)
     assert set(suggestions) == {Table(schema="sch"), View(schema="sch")}
@@ -210,9 +202,7 @@ def test_truncate_suggests_qualified_tables():
     assert set(suggestions) == {Table(schema="sch")}
 
 
-@pytest.mark.parametrize(
-    "text", ["SELECT DISTINCT ", "INSERT INTO foo SELECT DISTINCT "]
-)
+@pytest.mark.parametrize("text", ["SELECT DISTINCT ", "INSERT INTO foo SELECT DISTINCT "])
 def test_distinct_suggests_cols(text):
     suggestions = suggest_type(text, text)
     assert set(suggestions) == {
@@ -233,9 +223,7 @@ def test_distinct_suggests_cols(text):
         ),
     ],
 )
-def test_distinct_and_order_by_suggestions_with_aliases(
-    text, text_before, last_keyword
-):
+def test_distinct_and_order_by_suggestions_with_aliases(text, text_before, last_keyword):
     suggestions = suggest_type(text, text_before)
     assert set(suggestions) == {
         Column(
@@ -309,34 +297,24 @@ def test_into_suggests_tables_and_schemas():
     assert set(suggestion) == {Table(schema=None), View(schema=None), Schema()}
 
 
-@pytest.mark.parametrize(
-    "text", ["INSERT INTO abc (", "INSERT INTO abc () SELECT * FROM hij;"]
-)
+@pytest.mark.parametrize("text", ["INSERT INTO abc (", "INSERT INTO abc () SELECT * FROM hij;"])
 def test_insert_into_lparen_suggests_cols(text):
     suggestions = suggest_type(text, "INSERT INTO abc (")
-    assert suggestions == (
-        Column(table_refs=((None, "abc", None, False),), context="insert"),
-    )
+    assert suggestions == (Column(table_refs=((None, "abc", None, False),), context="insert"),)
 
 
 def test_insert_into_lparen_partial_text_suggests_cols():
     suggestions = suggest_type("INSERT INTO abc (i", "INSERT INTO abc (i")
-    assert suggestions == (
-        Column(table_refs=((None, "abc", None, False),), context="insert"),
-    )
+    assert suggestions == (Column(table_refs=((None, "abc", None, False),), context="insert"),)
 
 
 def test_insert_into_lparen_comma_suggests_cols():
     suggestions = suggest_type("INSERT INTO abc (id,", "INSERT INTO abc (id,")
-    assert suggestions == (
-        Column(table_refs=((None, "abc", None, False),), context="insert"),
-    )
+    assert suggestions == (Column(table_refs=((None, "abc", None, False),), context="insert"),)
 
 
 def test_partially_typed_col_name_suggests_col_names():
-    suggestions = suggest_type(
-        "SELECT * FROM tabl WHERE col_n", "SELECT * FROM tabl WHERE col_n"
-    )
+    suggestions = suggest_type("SELECT * FROM tabl WHERE col_n", "SELECT * FROM tabl WHERE col_n")
     assert set(suggestions) == cols_etc("tabl", last_keyword="WHERE")
 
 
@@ -389,9 +367,7 @@ def test_dot_suggests_cols_of_an_alias_where(sql):
 
 
 def test_dot_col_comma_suggests_cols_or_schema_qualified_table():
-    suggestions = suggest_type(
-        "SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2", "SELECT t1.a, t2."
-    )
+    suggestions = suggest_type("SELECT t1.a, t2. FROM tabl1 t1, tabl2 t2", "SELECT t1.a, t2.")
     assert set(suggestions) == {
         Column(table_refs=((None, "tabl2", "t2", False),)),
         Table(schema="t2"),
@@ -457,9 +433,7 @@ def test_sub_select_table_name_completion_with_outer_table(expression):
 
 
 def test_sub_select_col_name_completion():
-    suggestions = suggest_type(
-        "SELECT * FROM (SELECT  FROM abc", "SELECT * FROM (SELECT "
-    )
+    suggestions = suggest_type("SELECT * FROM (SELECT  FROM abc", "SELECT * FROM (SELECT ")
     assert set(suggestions) == {
         Column(table_refs=((None, "abc", None, False),), qualifiable=True),
         Function(schema=None),
@@ -469,16 +443,12 @@ def test_sub_select_col_name_completion():
 
 @pytest.mark.xfail
 def test_sub_select_multiple_col_name_completion():
-    suggestions = suggest_type(
-        "SELECT * FROM (SELECT a, FROM abc", "SELECT * FROM (SELECT a, "
-    )
+    suggestions = suggest_type("SELECT * FROM (SELECT a, FROM abc", "SELECT * FROM (SELECT a, ")
     assert set(suggestions) == cols_etc("abc")
 
 
 def test_sub_select_dot_col_name_completion():
-    suggestions = suggest_type(
-        "SELECT * FROM (SELECT t. FROM tabl t", "SELECT * FROM (SELECT t."
-    )
+    suggestions = suggest_type("SELECT * FROM (SELECT t. FROM tabl t", "SELECT * FROM (SELECT t.")
     assert set(suggestions) == {
         Column(table_refs=((None, "tabl", "t", False),)),
         Table(schema="t"),
@@ -627,9 +597,7 @@ def test_on_suggests_tables_and_join_conditions_right_side(sql):
 )
 def test_join_using_suggests_common_columns(text):
     tables = ((None, "abc", None, False), (None, "def", None, False))
-    assert set(suggest_type(text, text)) == {
-        Column(table_refs=tables, require_last_table=True)
-    }
+    assert set(suggest_type(text, text)) == {Column(table_refs=tables, require_last_table=True)}
 
 
 def test_suggest_columns_after_multiple_joins():
@@ -643,14 +611,10 @@ def test_suggest_columns_after_multiple_joins():
 
 
 def test_2_statements_2nd_current():
-    suggestions = suggest_type(
-        "select * from a; select * from ", "select * from a; select * from "
-    )
+    suggestions = suggest_type("select * from a; select * from ", "select * from a; select * from ")
     assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
-    suggestions = suggest_type(
-        "select * from a; select  from b", "select * from a; select "
-    )
+    suggestions = suggest_type("select * from a; select  from b", "select * from a; select ")
     assert set(suggestions) == {
         Column(table_refs=((None, "b", None, False),), qualifiable=True),
         Function(schema=None),
@@ -658,9 +622,7 @@ def test_2_statements_2nd_current():
     }
 
     # Should work even if first statement is invalid
-    suggestions = suggest_type(
-        "select * from; select * from ", "select * from; select * from "
-    )
+    suggestions = suggest_type("select * from; select * from ", "select * from; select * from ")
     assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
 
@@ -679,9 +641,7 @@ def test_3_statements_2nd_current():
     )
     assert set(suggestions) == {FromClauseItem(schema=None), Schema()}
 
-    suggestions = suggest_type(
-        "select * from a; select  from b; select * from c", "select * from a; select "
-    )
+    suggestions = suggest_type("select * from a; select  from b; select * from c", "select * from a; select ")
     assert set(suggestions) == cols_etc("b", last_keyword="SELECT")
 
 
@@ -773,9 +733,7 @@ def test_statements_with_cursor_before_function_body(text):
 
 
 def test_create_db_with_template():
-    suggestions = suggest_type(
-        "create database foo with template ", "create database foo with template "
-    )
+    suggestions = suggest_type("create database foo with template ", "create database foo with template ")
 
     assert set(suggestions) == {Database()}
 
@@ -814,9 +772,7 @@ def test_cast_operator_suggests_types(text):
     }
 
 
-@pytest.mark.parametrize(
-    "text", ["SELECT foo::bar.", "SELECT foo::bar.baz", "SELECT (x + y)::bar."]
-)
+@pytest.mark.parametrize("text", ["SELECT foo::bar.", "SELECT foo::bar.baz", "SELECT (x + y)::bar."])
 def test_cast_operator_suggests_schema_qualified_types(text):
     assert set(suggest_type(text, text)) == {
         Datatype(schema="bar"),

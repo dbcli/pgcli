@@ -12,9 +12,7 @@ from pgcli.pgexecute import PGExecute
 
 @pytest.fixture
 def mock_ssh_tunnel_forwarder() -> MagicMock:
-    mock_ssh_tunnel_forwarder = MagicMock(
-        SSHTunnelForwarder, local_bind_ports=[1111], autospec=True
-    )
+    mock_ssh_tunnel_forwarder = MagicMock(SSHTunnelForwarder, local_bind_ports=[1111], autospec=True)
     with patch(
         "pgcli.main.sshtunnel.SSHTunnelForwarder",
         return_value=mock_ssh_tunnel_forwarder,
@@ -28,9 +26,7 @@ def mock_pgexecute() -> MagicMock:
         yield mock_pgexecute
 
 
-def test_ssh_tunnel(
-    mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock
-) -> None:
+def test_ssh_tunnel(mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock) -> None:
     # Test with just a host
     tunnel_url = "some.host"
     db_params = {
@@ -103,18 +99,12 @@ def test_ssh_tunnel(
     mock_pgexecute.reset_mock()
 
     # Test with DSN
-    dsn = (
-        f"user={db_params['user']} password={db_params['passwd']} "
-        f"host={db_params['host']} port={db_params['port']}"
-    )
+    dsn = f"user={db_params['user']} password={db_params['passwd']} host={db_params['host']} port={db_params['port']}"
 
     pgcli = PGCli(ssh_tunnel_url=tunnel_url)
     pgcli.connect(dsn=dsn)
 
-    expected_dsn = (
-        f"user={db_params['user']} password={db_params['passwd']} "
-        f"host=127.0.0.1 port={pgcli.ssh_tunnel.local_bind_ports[0]}"
-    )
+    expected_dsn = f"user={db_params['user']} password={db_params['passwd']} host=127.0.0.1 port={pgcli.ssh_tunnel.local_bind_ports[0]}"
 
     mock_ssh_tunnel_forwarder.assert_called_once_with(**expected_tunnel_params)
     mock_pgexecute.assert_called_once()
@@ -126,18 +116,14 @@ def test_ssh_tunnel(
 def test_cli_with_tunnel() -> None:
     runner = CliRunner()
     tunnel_url = "mytunnel"
-    with patch.object(
-        PGCli, "__init__", autospec=True, return_value=None
-    ) as mock_pgcli:
+    with patch.object(PGCli, "__init__", autospec=True, return_value=None) as mock_pgcli:
         runner.invoke(cli, ["--ssh-tunnel", tunnel_url])
         mock_pgcli.assert_called_once()
         call_args, call_kwargs = mock_pgcli.call_args
         assert call_kwargs["ssh_tunnel_url"] == tunnel_url
 
 
-def test_config(
-    tmpdir: os.PathLike, mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock
-) -> None:
+def test_config(tmpdir: os.PathLike, mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock) -> None:
     pgclirc = str(tmpdir.join("rcfile"))
 
     tunnel_user = "tunnel_user"

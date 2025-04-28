@@ -45,9 +45,7 @@ def run_step(*args):
 
 
 def version(version_file):
-    _version_re = re.compile(
-        r'__version__\s+=\s+(?P<quote>[\'"])(?P<version>.*)(?P=quote)'
-    )
+    _version_re = re.compile(r'__version__\s+=\s+(?P<quote>[\'"])(?P<version>.*)(?P=quote)')
 
     with io.open(version_file, encoding="utf-8") as f:
         ver = _version_re.search(f.read()).group("version")
@@ -108,9 +106,7 @@ if __name__ == "__main__":
         action="store_true",
         dest="confirm_steps",
         default=False,
-        help=(
-            "Confirm every step. If the step is not " "confirmed, it will be skipped."
-        ),
+        help=("Confirm every step. If the step is not confirmed, it will be skipped."),
     )
     parser.add_option(
         "-d",
