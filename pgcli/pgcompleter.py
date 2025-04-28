@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from itertools import count, repeat, chain
+from itertools import count, chain
 import operator
 from collections import namedtuple, defaultdict, OrderedDict
 from cli_helpers.tabular_output import TabularOutputFormatter
@@ -32,7 +32,6 @@ from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
-from .config import load_config, config_location
 
 _logger = logging.getLogger(__name__)
 
@@ -48,18 +47,16 @@ def SchemaObject(name, schema=None, meta=None):
 _Candidate = namedtuple("Candidate", "completion prio meta synonyms prio2 display")
 
 
-def Candidate(
-    completion, prio=None, meta=None, synonyms=None, prio2=None, display=None
-):
-    return _Candidate(
-        completion, prio, meta, synonyms or [completion], prio2, display or completion
-    )
+def Candidate(completion, prio=None, meta=None, synonyms=None, prio2=None, display=None):
+    return _Candidate(completion, prio, meta, synonyms or [completion], prio2, display or completion)
 
 
 # Used to strip trailing '::some_type' from default-value expressions
 arg_default_type_strip_regex = re.compile(r"::[\w\.]+(\[\])?$")
 
-normalize_ref = lambda ref: ref if ref[0] == '"' else '"' + ref.lower() + '"'
+
+def normalize_ref(ref):
+    return ref if ref[0] == '"' else '"' + ref.lower() + '"'
 
 
 def generate_alias(tbl, alias_map=None):
@@ -77,10 +74,7 @@ def generate_alias(tbl, alias_map=None):
     """
     if alias_map and tbl in alias_map:
         return alias_map[tbl]
-    return "".join(
-        [l for l in tbl if l.isupper()]
-        or [l for l, prev in zip(tbl, "_" + tbl) if prev == "_" and l != "_"]
-    )
+    return "".join([l for l in tbl if l.isupper()] or [l for l, prev in zip(tbl, "_" + tbl) if prev == "_" and l != "_"])
 
 
 class InvalidMapFile(ValueError):
@@ -92,9 +86,7 @@ def load_alias_map_file(path):
         with open(path) as fo:
             alias_map = json.load(fo)
     except FileNotFoundError as err:
-        raise InvalidMapFile(
-            f"Cannot read alias_map_file - {err.filename} does not exist"
-        )
+        raise InvalidMapFile(f"Cannot read alias_map_file - {err.filename} does not exist")
     except json.JSONDecodeError:
         raise InvalidMapFile(f"Cannot read alias_map_file - {path} is not valid json")
     else:
@@ -116,15 +108,9 @@ class PGCompleter(Completer):
         self.pgspecial = pgspecial
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
-        self.signature_arg_style = settings.get(
-            "signature_arg_style", "{arg_name} {arg_type}"
-        )
-        self.call_arg_style = settings.get(
-            "call_arg_style", "{arg_name: <{max_arg_len}} := {arg_default}"
-        )
-        self.call_arg_display_style = settings.get(
-            "call_arg_display_style", "{arg_name}"
-        )
+        self.signature_arg_style = settings.get("signature_arg_style", "{arg_name} {arg_type}")
+        self.call_arg_style = settings.get("call_arg_style", "{arg_name: <{max_arg_len}} := {arg_default}")
+        self.call_arg_display_style = settings.get("call_arg_display_style", "{arg_name}")
         self.call_arg_oneliner_max = settings.get("call_arg_oneliner_max", 2)
         self.search_path_filter = settings.get("search_path_filter")
         self.generate_aliases = settings.get("generate_aliases")
@@ -135,16 +121,11 @@ class PGCompleter(Completer):
             self.alias_map = None
         self.casing_file = settings.get("casing_file")
         self.insert_col_skip_patterns = [
-            re.compile(pattern)
-            for pattern in settings.get(
-                "insert_col_skip_patterns", [r"^now\(\)$", r"^nextval\("]
-            )
+            re.compile(pattern) for pattern in settings.get("insert_col_skip_patterns", [r"^now\(\)$", r"^nextval\("])
         ]
         self.generate_casing_file = settings.get("generate_casing_file")
         self.qualify_columns = settings.get("qualify_columns", "if_more_than_one_table")
-        self.asterisk_column_order = settings.get(
-            "asterisk_column_order", "table_order"
-        )
+        self.asterisk_column_order = settings.get("asterisk_column_order", "table_order")
 
         keyword_casing = settings.get("keyword_casing", "upper").lower()
         if keyword_casing not in ("upper", "lower", "auto"):
@@ -160,11 +141,7 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def escape_name(self, name):
-        if name and (
-            (not self.name_pattern.match(name))
-            or (name.upper() in self.reserved_words)
-            or (name.upper() in self.functions)
-        ):
+        if name and ((not self.name_pattern.match(name)) or (name.upper() in self.reserved_words) or (name.upper() in self.functions)):
             name = '"%s"' % name
 
         return name
@@ -230,9 +207,7 @@ class PGCompleter(Completer):
             try:
                 metadata[schema][relname] = OrderedDict()
             except KeyError:
-                _logger.error(
-                    "%r %r listed in unrecognized schema %r", kind, relname, schema
-                )
+                _logger.error("%r %r listed in unrecognized schema %r", kind, relname, schema)
             self.all_completions.add(relname)
 
     def extend_columns(self, column_data, kind):
@@ -306,9 +281,7 @@ class PGCompleter(Completer):
             childcol, parcol = e([fk.childcolumn, fk.parentcolumn])
             childcolmeta = meta[childschema][childtable][childcol]
             parcolmeta = meta[parentschema][parenttable][parcol]
-            fk = ForeignKey(
-                parentschema, parenttable, parcol, childschema, childtable, childcol
-            )
+            fk = ForeignKey(parentschema, parenttable, parcol, childschema, childtable, childcol)
             childcolmeta.foreignkeys.append(fk)
             parcolmeta.foreignkeys.append(fk)
 
@@ -452,12 +425,7 @@ class PGCompleter(Completer):
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
                 lexical_priority = (
-                    tuple(
-                        0 if c in " _" else -ord(c)
-                        for c in self.unescape_name(item.lower())
-                    )
-                    + (1,)
-                    + tuple(c for c in item)
+                    tuple(0 if c in " _" else -ord(c) for c in self.unescape_name(item.lower())) + (1,) + tuple(c for c in item)
                 )
 
                 item = self.case(item)
@@ -495,9 +463,7 @@ class PGCompleter(Completer):
         # If smart_completion is off then match any word that starts with
         # 'word_before_cursor'.
         if not smart_completion:
-            matches = self.find_matches(
-                word_before_cursor, self.all_completions, mode="strict"
-            )
+            matches = self.find_matches(word_before_cursor, self.all_completions, mode="strict")
             completions = [m.completion for m in matches]
             return sorted(completions, key=operator.attrgetter("text"))
 
@@ -528,9 +494,10 @@ class PGCompleter(Completer):
                 "if_more_than_one_table": len(tables) > 1,
             }[self.qualify_columns]
         )
-        qualify = lambda col, tbl: (
-            (tbl + "." + self.case(col)) if do_qualify else self.case(col)
-        )
+
+        def qualify(col, tbl):
+            return (tbl + "." + self.case(col)) if do_qualify else self.case(col)
+
         _logger.debug("Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
@@ -539,61 +506,38 @@ class PGCompleter(Completer):
             return Candidate(qualify(name, ref), 0, "column", synonyms)
 
         def flat_cols():
-            return [
-                make_cand(c.name, t.ref)
-                for t, cols in scoped_cols.items()
-                for c in cols
-            ]
+            return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items() for c in cols]
 
         if suggestion.require_last_table:
             # require_last_table is used for 'tb11 JOIN tbl2 USING (...' which should
             # suggest only columns that appear in the last table and one more
             ltbl = tables[-1].ref
-            other_tbl_cols = {
-                c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs
-            }
-            scoped_cols = {
-                t: [col for col in cols if col.name in other_tbl_cols]
-                for t, cols in scoped_cols.items()
-                if t.ref == ltbl
-            }
+            other_tbl_cols = {c.name for t, cs in scoped_cols.items() if t.ref != ltbl for c in cs}
+            scoped_cols = {t: [col for col in cols if col.name in other_tbl_cols] for t, cols in scoped_cols.items() if t.ref == ltbl}
         lastword = last_word(word_before_cursor, include="most_punctuations")
         if lastword == "*":
             if suggestion.context == "insert":
 
-                def filter(col):
+                def _filter(col):
                     if not col.has_default:
                         return True
-                    return not any(
-                        p.match(col.default) for p in self.insert_col_skip_patterns
-                    )
+                    return not any(p.match(col.default) for p in self.insert_col_skip_patterns)
 
-                scoped_cols = {
-                    t: [col for col in cols if filter(col)]
-                    for t, cols in scoped_cols.items()
-                }
+                scoped_cols = {t: [col for col in cols if _filter(col)] for t, cols in scoped_cols.items()}
             if self.asterisk_column_order == "alphabetic":
                 for cols in scoped_cols.values():
                     cols.sort(key=operator.attrgetter("name"))
-            if (
-                lastword != word_before_cursor
-                and len(tables) == 1
-                and word_before_cursor[-len(lastword) - 1] == "."
-            ):
+            if lastword != word_before_cursor and len(tables) == 1 and word_before_cursor[-len(lastword) - 1] == ".":
                 # User typed x.*; replicate "x." for all columns except the
                 # first, which gets the original (as we only replace the "*"")
                 sep = ", " + word_before_cursor[:-1]
                 collist = sep.join(self.case(c.completion) for c in flat_cols())
             else:
-                collist = ", ".join(
-                    qualify(c.name, t.ref) for t, cs in scoped_cols.items() for c in cs
-                )
+                collist = ", ".join(qualify(c.name, t.ref) for t, cs in scoped_cols.items() for c in cs)
 
             return [
                 Match(
-                    completion=Completion(
-                        collist, -1, display_meta="columns", display="*"
-                    ),
+                    completion=Completion(collist, -1, display_meta="columns", display="*"),
                     priority=(1, 1, 1),
                 )
             ]
@@ -627,12 +571,7 @@ class PGCompleter(Completer):
         other_tbls = {(t.schema, t.name) for t in list(cols)[:-1]}
         joins = []
         # Iterate over FKs in existing tables to find potential joins
-        fks = (
-            (fk, rtbl, rcol)
-            for rtbl, rcols in cols.items()
-            for rcol in rcols
-            for fk in rcol.foreignkeys
-        )
+        fks = ((fk, rtbl, rcol) for rtbl, rcols in cols.items() for rcol in rcols for fk in rcol.foreignkeys)
         col = namedtuple("col", "schema tbl col")
         for fk, rtbl, rcol in fks:
             right = col(rtbl.schema, rtbl.name, rcol.name)
@@ -644,31 +583,21 @@ class PGCompleter(Completer):
             c = self.case
             if self.generate_aliases or normalize_ref(left.tbl) in refs:
                 lref = self.alias(left.tbl, suggestion.table_refs)
-                join = "{0} {4} ON {4}.{1} = {2}.{3}".format(
-                    c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref
-                )
+                join = "{0} {4} ON {4}.{1} = {2}.{3}".format(c(left.tbl), c(left.col), rtbl.ref, c(right.col), lref)
             else:
-                join = "{0} ON {0}.{1} = {2}.{3}".format(
-                    c(left.tbl), c(left.col), rtbl.ref, c(right.col)
-                )
+                join = "{0} ON {0}.{1} = {2}.{3}".format(c(left.tbl), c(left.col), rtbl.ref, c(right.col))
             alias = generate_alias(self.case(left.tbl), alias_map=self.alias_map)
             synonyms = [
                 join,
-                "{0} ON {0}.{1} = {2}.{3}".format(
-                    alias, c(left.col), rtbl.ref, c(right.col)
-                ),
+                "{0} ON {0}.{1} = {2}.{3}".format(alias, c(left.col), rtbl.ref, c(right.col)),
             ]
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (
-                qualified[normalize_ref(rtbl.ref)]
-                and left.schema == right.schema
-                or left.schema not in (right.schema, "public")
+                qualified[normalize_ref(rtbl.ref)] and left.schema == right.schema or left.schema not in (right.schema, "public")
             ):
                 join = left.schema + "." + join
-            prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
-                0 if (left.schema, left.tbl) in other_tbls else 1
-            )
+            prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (0 if (left.schema, left.tbl) in other_tbls else 1)
             joins.append(Candidate(join, prio, "join", synonyms=synonyms))
 
         return self.find_matches(word_before_cursor, joins, meta="join")
@@ -701,9 +630,7 @@ class PGCompleter(Completer):
         # Tables that are closer to the cursor get higher prio
         ref_prio = {tbl.ref: num for num, tbl in enumerate(suggestion.table_refs)}
         # Map (schema, table, col) to tables
-        coldict = list_dict(
-            ((t.schema, t.name, c.name), t) for t, c in cols if t.ref != lref
-        )
+        coldict = list_dict(((t.schema, t.name, c.name), t) for t, c in cols if t.ref != lref)
         # For each fk from the left table, generate a join condition if
         # the other table is also in the scope
         fks = ((fk, lcol.name) for lcol in lcols for fk in lcol.foreignkeys)
@@ -734,24 +661,16 @@ class PGCompleter(Completer):
                     not f.is_aggregate
                     and not f.is_window
                     and not f.is_extension
-                    and (
-                        f.is_public
-                        or f.schema_name in self.search_path
-                        or f.schema_name == suggestion.schema
-                    )
+                    and (f.is_public or f.schema_name in self.search_path or f.schema_name == suggestion.schema)
                 )
 
         else:
             alias = False
 
             def filt(f):
-                return not f.is_extension and (
-                    f.is_public or f.schema_name == suggestion.schema
-                )
+                return not f.is_extension and (f.is_public or f.schema_name == suggestion.schema)
 
-        arg_mode = {"signature": "signature", "special": None}.get(
-            suggestion.usage, "call"
-        )
+        arg_mode = {"signature": "signature", "special": None}.get(suggestion.usage, "call")
 
         # Function overloading means we way have multiple functions of the same
         # name at this point, so keep unique names only
@@ -762,9 +681,7 @@ class PGCompleter(Completer):
 
         if not suggestion.schema and not suggestion.usage:
             # also suggest hardcoded functions using startswith matching
-            predefined_funcs = self.find_matches(
-                word_before_cursor, self.functions, mode="strict", meta="function"
-            )
+            predefined_funcs = self.find_matches(word_before_cursor, self.functions, mode="strict", meta="function")
             matches.extend(predefined_funcs)
 
         return matches
@@ -815,10 +732,7 @@ class PGCompleter(Completer):
             return "()"
         multiline = usage == "call" and len(args) > self.call_arg_oneliner_max
         max_arg_len = max(len(a.name) for a in args) if multiline else 0
-        args = (
-            self._format_arg(template, arg, arg_num + 1, max_arg_len)
-            for arg_num, arg in enumerate(args)
-        )
+        args = (self._format_arg(template, arg, arg_num + 1, max_arg_len) for arg_num, arg in enumerate(args))
         if multiline:
             return "(" + ",".join("\n    " + a for a in args if a) + "\n)"
         else:
@@ -917,15 +831,11 @@ class PGCompleter(Completer):
         else:
             keywords = [k.lower() for k in keywords]
 
-        return self.find_matches(
-            word_before_cursor, keywords, mode="strict", meta="keyword"
-        )
+        return self.find_matches(word_before_cursor, keywords, mode="strict", meta="keyword")
 
     def get_path_matches(self, _, word_before_cursor):
         completer = PathCompleter(expanduser=True)
-        document = Document(
-            text=word_before_cursor, cursor_position=len(word_before_cursor)
-        )
+        document = Document(text=word_before_cursor, cursor_position=len(word_before_cursor))
         for c in completer.get_completions(document, None):
             yield Match(completion=c, priority=(0,))
 
@@ -946,18 +856,12 @@ class PGCompleter(Completer):
 
         if not suggestion.schema:
             # Also suggest hardcoded types
-            matches.extend(
-                self.find_matches(
-                    word_before_cursor, self.datatypes, mode="strict", meta="datatype"
-                )
-            )
+            matches.extend(self.find_matches(word_before_cursor, self.datatypes, mode="strict", meta="datatype"))
 
         return matches
 
     def get_namedquery_matches(self, _, word_before_cursor):
-        return self.find_matches(
-            word_before_cursor, NamedQueries.instance.list(), meta="named query"
-        )
+        return self.find_matches(word_before_cursor, NamedQueries.instance.list(), meta="named query")
 
     suggestion_matchers = {
         FromClauseItem: get_from_clause_item_matches,
@@ -1047,9 +951,7 @@ class PGCompleter(Completer):
         """
 
         return [
-            SchemaObject(
-                name=obj, schema=(self._maybe_schema(schema=sch, parent=schema))
-            )
+            SchemaObject(name=obj, schema=(self._maybe_schema(schema=sch, parent=schema)))
             for sch in self._get_schemas(obj_type, schema)
             for obj in self.dbmetadata[obj_type][sch].keys()
         ]

@@ -55,7 +55,7 @@ def test_output_sql_insert():
     }
     formatter.query = 'SELECT * FROM "user";'
     output = adapter(data, header, table_format=table_format, **kwargs)
-    output_list = [l for l in output]
+    output_list = list(output)
     expected = [
         'INSERT INTO "user" ("id", "name", "email", "phone", "description", "created_at", "updated_at") VALUES',
         "  ('1', 'Jackson', 'jackson_test@gmail.com', '132454789', NULL, "
@@ -96,7 +96,7 @@ def test_output_sql_update():
     }
     formatter.query = 'SELECT * FROM "user";'
     output = adapter(data, header, table_format=table_format, **kwargs)
-    output_list = [l for l in output]
+    output_list = list(output)
     print(output_list)
     expected = [
         'UPDATE "user" SET',

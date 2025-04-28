@@ -8,6 +8,15 @@ Features:
     * Provide `init-command` in the config file
     * Support dsn specific init-command in the config file
 
+Internal:
+---------
+
+* Moderize the repository
+  * Use uv instead of pip
+  * Use github trusted publisher for pypi release
+  * Update dev requirements and replace requirements-dev.txt with pyproject.toml
+  * Use ruff instead of black
+
 4.3.0 (2025-03-22)
 ==================
 

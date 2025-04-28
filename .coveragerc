@@ -1,3 +1,2 @@
 [run]
-parallel=True
 source=pgcli

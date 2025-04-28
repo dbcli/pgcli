@@ -155,7 +155,7 @@ If you're interested in contributing to this project, first of all I would like
 to extend my heartfelt gratitude. I've written a small doc to describe how to
 get this running in a development setup.
 
-https://github.com/dbcli/pgcli/blob/master/DEVELOP.rst
+https://github.com/dbcli/pgcli/blob/main/CONTRIBUTING.rst
 
 Please feel free to reach out to us if you need help.
 * Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
@@ -362,12 +362,12 @@ Thanks to all the beta testers and contributors for your time and patience. :)
 .. |Build Status| image:: https://github.com/dbcli/pgcli/actions/workflows/ci.yml/badge.svg?branch=main
     :target: https://github.com/dbcli/pgcli/actions/workflows/ci.yml
 
-.. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/master/graph/badge.svg
+.. |CodeCov| image:: https://codecov.io/gh/dbcli/pgcli/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/dbcli/pgcli
    :alt: Code coverage report
 
-.. |Landscape| image:: https://landscape.io/github/dbcli/pgcli/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/dbcli/pgcli/master
+.. |Landscape| image:: https://landscape.io/github/dbcli/pgcli/main/landscape.svg?style=flat
+   :target: https://landscape.io/github/dbcli/pgcli/main
    :alt: Code Health
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pgcli.svg

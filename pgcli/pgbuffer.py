@@ -25,9 +25,7 @@ mode, which by default will insert new lines on Enter.
 def safe_multi_line_mode(pgcli):
     @Condition
     def cond():
-        _logger.debug(
-            'Multi-line mode state: "%s" / "%s"', pgcli.multi_line, pgcli.multiline_mode
-        )
+        _logger.debug('Multi-line mode state: "%s" / "%s"', pgcli.multi_line, pgcli.multiline_mode)
         return pgcli.multi_line and (pgcli.multiline_mode == "safe")
 
     return cond
@@ -48,14 +46,13 @@ def buffer_should_be_handled(pgcli):
         text = doc.text.strip()
 
         return (
-            text.startswith("\\")  # Special Command
-            or text.endswith(r"\e")  # Special Command
-            or text.endswith(r"\G")  # Ended with \e which should launch the editor
-            or _is_complete(text)  # A complete SQL command
-            or (text == "exit")  # Exit doesn't need semi-colon
-            or (text == "quit")  # Quit doesn't need semi-colon
-            or (text == ":q")  # To all the vim fans out there
-            or (text == "")  # Just a plain enter without any text
+            text.startswith("\\")
+            or text.endswith((r"\e", r"\G"))
+            or _is_complete(text)
+            or text == "exit"
+            or text == "quit"
+            or text == ":q"
+            or text == ""  # Just a plain enter without any text
         )
 
     return cond

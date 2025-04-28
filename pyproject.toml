@@ -51,10 +51,24 @@ pgcli = "pgcli.main:cli"
 [project.optional-dependencies]
 keyring = ["keyring >= 12.2.0"]
 sshtunnel = ["sshtunnel >= 0.4.0"]
+dev = [
+    "behave>=1.2.4",
+    "coverage>=7.2.7",
+    "docutils>=0.13.1",
+    "keyrings.alt>=3.1",
+    "pexpect>=4.9.0; platform_system != 'Windows'",
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.11.7",
+    "sshtunnel>=0.4.0",
+    "tox>=1.9.2",
+]
 
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools>=64.0", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
 
 [tool.setuptools]
 include-package-data = false
@@ -68,24 +82,55 @@ find = { namespaces = false }
 [tool.setuptools.package-data]
 pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.cache
-  | \.pytest_cache
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/data
-)/
-'''
+[tool.ruff]
+target-version = 'py39'
+line-length = 140
+
+[tool.ruff.lint]
+select = [
+    'A',
+#   'I',      # todo enableme imports
+    'E',
+    'W',
+    'F',
+    'C4',
+    'PIE',
+    'TID',
+]
+ignore = [
+    'E401',   # Multiple imports on one line
+    'E402',   # Module level import not at top of file
+    'PIE808', # range() starting with 0
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    'E111',   # indentation-with-invalid-multiple
+    'E114',   # indentation-with-invalid-multiple-comment
+    'E117',   # over-indented
+    'W191',   # tab-indentation
+    'E741',   # ambiguous-variable-name
+    # TODO
+    'PIE796', # todo enableme Enum contains duplicate value
+]
+exclude = [
+    'pgcli/magic.py',
+    'pgcli/pyev.py',
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = [
+    'pgcli',
+    'tests',
+    'steps',
+]
+
+[tool.ruff.format]
+preview = true
+quote-style = 'preserve'
+exclude = [
+    'build',
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--capture=sys --showlocals -rxs"
+testpaths = ["tests"]

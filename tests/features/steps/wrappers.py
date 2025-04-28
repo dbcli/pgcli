@@ -1,6 +1,5 @@
 import re
 import pexpect
-from pgcli.main import COLOR_CODE_REGEX
 import textwrap
 
 from io import StringIO
@@ -37,10 +36,7 @@ def expect_exact(context, expected, timeout):
 
 def expect_pager(context, expected, timeout):
     formatted = expected if isinstance(expected, list) else [expected]
-    formatted = [
-        f"{context.conf['pager_boundary']}\r\n{t}{context.conf['pager_boundary']}\r\n"
-        for t in formatted
-    ]
+    formatted = [f"{context.conf['pager_boundary']}\r\n{t}{context.conf['pager_boundary']}\r\n" for t in formatted]
 
     expect_exact(
         context,
