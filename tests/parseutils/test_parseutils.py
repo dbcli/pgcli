@@ -19,9 +19,7 @@ def test_simple_select_single_table():
     assert tables == ((None, "abc", None, False),)
 
 
-@pytest.mark.parametrize(
-    "sql", ['select * from "abc"."def"', 'select * from abc."def"']
-)
+@pytest.mark.parametrize("sql", ['select * from "abc"."def"', 'select * from abc."def"'])
 def test_simple_select_single_table_schema_qualified_quoted_table(sql):
     tables = extract_tables(sql)
     assert tables == (("abc", "def", '"def"', False),)
@@ -225,9 +223,7 @@ def test_find_prev_keyword_where(sql):
     assert kw.value == "where" and stripped == "select * from foo where"
 
 
-@pytest.mark.parametrize(
-    "sql", ["create table foo (bar int, baz ", "select * from foo() as bar (baz "]
-)
+@pytest.mark.parametrize("sql", ["create table foo (bar int, baz ", "select * from foo() as bar (baz "])
 def test_find_prev_keyword_open_parens(sql):
     kw, _ = find_prev_keyword(sql)
     assert kw.value == "("

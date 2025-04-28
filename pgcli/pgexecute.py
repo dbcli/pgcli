@@ -13,9 +13,7 @@ from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)
 
-ViewDef = namedtuple(
-    "ViewDef", "nspname relname relkind viewdef reloptions checkoption"
-)
+ViewDef = namedtuple("ViewDef", "nspname relname relkind viewdef reloptions checkoption")
 
 
 # we added this funcion to strip beginning comments
@@ -51,9 +49,7 @@ def register_typecasters(connection):
         "json",
         "jsonb",
     ]:
-        connection.adapters.register_loader(
-            forced_text_type, psycopg.types.string.TextLoader
-        )
+        connection.adapters.register_loader(forced_text_type, psycopg.types.string.TextLoader)
 
 
 # pg3: I don't know what is this
@@ -219,9 +215,7 @@ class PGExecute:
             new_params = {"dsn": new_params["dsn"], "password": new_params["password"]}
 
             if new_params["password"]:
-                new_params["dsn"] = make_conninfo(
-                    new_params["dsn"], password=new_params.pop("password")
-                )
+                new_params["dsn"] = make_conninfo(new_params["dsn"], password=new_params.pop("password"))
 
         conn_params.update({k: v for k, v in new_params.items() if v})
 
@@ -262,11 +256,7 @@ class PGExecute:
         self.extra_args = kwargs
 
         if not self.host:
-            self.host = (
-                "pgbouncer"
-                if self.is_virtual_database()
-                else self.get_socket_directory()
-            )
+            self.host = "pgbouncer" if self.is_virtual_database() else self.get_socket_directory()
 
         self.pid = conn.info.backend_pid
         self.superuser = conn.info.parameter_status("is_superuser") in ("on", "1")
@@ -306,10 +296,7 @@ class PGExecute:
 
     def valid_transaction(self):
         status = self.conn.info.transaction_status
-        return (
-            status == psycopg.pq.TransactionStatus.ACTIVE
-            or status == psycopg.pq.TransactionStatus.INTRANS
-        )
+        return status == psycopg.pq.TransactionStatus.ACTIVE or status == psycopg.pq.TransactionStatus.INTRANS
 
     def run(
         self,
@@ -649,9 +636,7 @@ class PGExecute:
 
     def get_socket_directory(self):
         with self.conn.cursor() as cur:
-            _logger.debug(
-                "Socket directory Query. sql: %r", self.socket_directory_query
-            )
+            _logger.debug("Socket directory Query. sql: %r", self.socket_directory_query)
             cur.execute(self.socket_directory_query)
             result = cur.fetchone()
             return result[0] if result else ""
@@ -889,8 +874,6 @@ class PGExecute:
             return cur.fetchone()[0]
 
     def set_timezone(self, timezone: str):
-        query = psycopg.sql.SQL("set time zone {}").format(
-            psycopg.sql.Identifier(timezone)
-        )
+        query = psycopg.sql.SQL("set time zone {}").format(psycopg.sql.Identifier(timezone))
         with self.conn.cursor() as cur:
             cur.execute(query)

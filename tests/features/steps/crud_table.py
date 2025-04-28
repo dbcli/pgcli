@@ -34,9 +34,7 @@ def step_update_table(context):
     """
     Send insert into table.
     """
-    context.cli.sendline(
-        f"""update a set x = '{UPDATED_DATA}' where x = '{INITIAL_DATA}';"""
-    )
+    context.cli.sendline(f"""update a set x = '{UPDATED_DATA}' where x = '{INITIAL_DATA}';""")
 
 
 @when("we select from table")

@@ -3,16 +3,9 @@ from collections import namedtuple
 from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML, Punctuation
 
-TableReference = namedtuple(
-    "TableReference", ["schema", "name", "alias", "is_function"]
-)
+TableReference = namedtuple("TableReference", ["schema", "name", "alias", "is_function"])
 TableReference.ref = property(
-    lambda self: self.alias
-    or (
-        self.name
-        if self.name.islower() or self.name[0] == '"'
-        else '"' + self.name + '"'
-    )
+    lambda self: self.alias or (self.name if self.name.islower() or self.name[0] == '"' else '"' + self.name + '"')
 )
 
 
@@ -53,11 +46,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             # Also 'SELECT * FROM abc JOIN def' will trigger this elif
             # condition. So we need to ignore the keyword JOIN and its variants
             # INNER JOIN, FULL OUTER JOIN, etc.
-            elif (
-                item.ttype is Keyword
-                and (not item.value.upper() == "FROM")
-                and (not item.value.upper().endswith("JOIN"))
-            ):
+            elif item.ttype is Keyword and (not item.value.upper() == "FROM") and (not item.value.upper().endswith("JOIN")):
                 tbl_prefix_seen = False
             else:
                 yield item
@@ -116,15 +105,11 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                     try:
                         schema_name = identifier.get_parent_name()
                         real_name = identifier.get_real_name()
-                        is_function = allow_functions and _identifier_is_function(
-                            identifier
-                        )
+                        is_function = allow_functions and _identifier_is_function(identifier)
                     except AttributeError:
                         continue
                     if real_name:
-                        yield TableReference(
-                            schema_name, real_name, identifier.get_alias(), is_function
-                        )
+                        yield TableReference(schema_name, real_name, identifier.get_alias(), is_function)
             elif isinstance(item, Identifier):
                 schema_name, real_name, alias = parse_identifier(item)
                 is_function = allow_functions and _identifier_is_function(item)

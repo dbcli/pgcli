@@ -29,9 +29,7 @@ def is_destructive(queries, keywords):
     for query in sqlparse.split(queries):
         if query:
             formatted_sql = sqlparse.format(query.lower(), strip_comments=True).strip()
-            if "unconditional_update" in keywords and query_is_unconditional_update(
-                formatted_sql
-            ):
+            if "unconditional_update" in keywords and query_is_unconditional_update(formatted_sql):
                 return True
             if query_starts_with(formatted_sql, keywords):
                 return True

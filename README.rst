@@ -158,6 +158,7 @@ get this running in a development setup.
 https://github.com/dbcli/pgcli/blob/main/CONTRIBUTING.rst
 
 Please feel free to reach out to us if you need help.
+
 * Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
 * Irina, pgcli maintainer: i.chernyavska@gmail.com, Twitter: `@irinatruong <http://twitter.com/irinatruong>`_
 

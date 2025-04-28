@@ -37,9 +37,7 @@ def test_init_command_option(dummy_exec):
     "Test that --init-command triggers execution of the command."
     runner = CliRunner()
     # Use a custom init command and --ping to exit the CLI after init commands
-    result = runner.invoke(
-        cli, ["--init-command", "SELECT foo", "--ping", "db", "user"]
-    )
+    result = runner.invoke(cli, ["--init-command", "SELECT foo", "--ping", "db", "user"])
     assert result.exit_code == 0
     # Should print the init command
     assert "Running init commands: SELECT foo" in result.output
@@ -55,15 +53,11 @@ def test_init_commands_from_config(dummy_exec, tmp_path):
     """
     # Create a temporary config file with init-commands
     config_file = tmp_path / "pgclirc_test"
-    config_file.write_text(
-        "[main]\n[init-commands]\nfirst = SELECT foo;\nsecond = SELECT bar;\n"
-    )
+    config_file.write_text("[main]\n[init-commands]\nfirst = SELECT foo;\nsecond = SELECT bar;\n")
 
     runner = CliRunner()
     # Use --ping to exit the CLI after init commands
-    result = runner.invoke(
-        cli, ["--pgclirc", str(config_file.absolute()), "--ping", "testdb", "user"]
-    )
+    result = runner.invoke(cli, ["--pgclirc", str(config_file.absolute()), "--ping", "testdb", "user"])
     assert result.exit_code == 0
     # Should print both init commands in order (note trailing semicolons cause double ';;')
     assert "Running init commands: SELECT foo;; SELECT bar;" in result.output

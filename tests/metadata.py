@@ -23,16 +23,12 @@ def completion(display_meta, text, pos=0):
 
 
 def function(text, pos=0, display=None):
-    return Completion(
-        text, display=display or text, start_position=pos, display_meta="function"
-    )
+    return Completion(text, display=display or text, start_position=pos, display_meta="function")
 
 
 def get_result(completer, text, position=None):
     position = len(text) if position is None else position
-    return completer.get_completions(
-        Document(text=text, cursor_position=position), Mock()
-    )
+    return completer.get_completions(Document(text=text, cursor_position=position), Mock())
 
 
 def result_set(completer, text, position=None):
@@ -73,10 +69,7 @@ class MetaData:
         return [keyword(kw, pos) for kw in self.completer.keywords_tree.keys()]
 
     def specials(self, pos=0):
-        return [
-            Completion(text=k, start_position=pos, display_meta=v.description)
-            for k, v in self.completer.pgspecial.commands.items()
-        ]
+        return [Completion(text=k, start_position=pos, display_meta=v.description) for k, v in self.completer.pgspecial.commands.items()]
 
     def columns(self, tbl, parent="public", typ="tables", pos=0):
         if typ == "functions":
@@ -87,42 +80,23 @@ class MetaData:
         return [column(escape(col), pos) for col in cols]
 
     def datatypes(self, parent="public", pos=0):
-        return [
-            datatype(escape(x), pos)
-            for x in self.metadata.get("datatypes", {}).get(parent, [])
-        ]
+        return [datatype(escape(x), pos) for x in self.metadata.get("datatypes", {}).get(parent, [])]
 
     def tables(self, parent="public", pos=0):
-        return [
-            table(escape(x), pos)
-            for x in self.metadata.get("tables", {}).get(parent, [])
-        ]
+        return [table(escape(x), pos) for x in self.metadata.get("tables", {}).get(parent, [])]
 
     def views(self, parent="public", pos=0):
-        return [
-            view(escape(x), pos) for x in self.metadata.get("views", {}).get(parent, [])
-        ]
+        return [view(escape(x), pos) for x in self.metadata.get("views", {}).get(parent, [])]
 
     def functions(self, parent="public", pos=0):
         return [
             function(
                 escape(x[0])
                 + "("
-                + ", ".join(
-                    arg_name + " := "
-                    for (arg_name, arg_mode) in zip(x[1], x[3])
-                    if arg_mode in ("b", "i")
-                )
+                + ", ".join(arg_name + " := " for (arg_name, arg_mode) in zip(x[1], x[3]) if arg_mode in ("b", "i"))
                 + ")",
                 pos,
-                escape(x[0])
-                + "("
-                + ", ".join(
-                    arg_name
-                    for (arg_name, arg_mode) in zip(x[1], x[3])
-                    if arg_mode in ("b", "i")
-                )
-                + ")",
+                escape(x[0]) + "(" + ", ".join(arg_name for (arg_name, arg_mode) in zip(x[1], x[3]) if arg_mode in ("b", "i")) + ")",
             )
             for x in self.metadata.get("functions", {}).get(parent, [])
         ]
@@ -132,24 +106,14 @@ class MetaData:
         return [schema(escape(s), pos=pos) for s in schemas]
 
     def functions_and_keywords(self, parent="public", pos=0):
-        return (
-            self.functions(parent, pos)
-            + self.builtin_functions(pos)
-            + self.keywords(pos)
-        )
+        return self.functions(parent, pos) + self.builtin_functions(pos) + self.keywords(pos)
 
     # Note that the filtering parameters here only apply to the columns
     def columns_functions_and_keywords(self, tbl, parent="public", typ="tables", pos=0):
-        return self.functions_and_keywords(pos=pos) + self.columns(
-            tbl, parent, typ, pos
-        )
+        return self.functions_and_keywords(pos=pos) + self.columns(tbl, parent, typ, pos)
 
     def from_clause_items(self, parent="public", pos=0):
-        return (
-            self.functions(parent, pos)
-            + self.views(parent, pos)
-            + self.tables(parent, pos)
-        )
+        return self.functions(parent, pos) + self.views(parent, pos) + self.tables(parent, pos)
 
     def schemas_and_from_clause_items(self, parent="public", pos=0):
         return self.from_clause_items(parent, pos) + self.schemas(pos)
@@ -205,9 +169,7 @@ class MetaData:
         from pgcli.pgcompleter import PGCompleter
         from pgspecial import PGSpecial
 
-        comp = PGCompleter(
-            smart_completion=True, settings=settings, pgspecial=PGSpecial()
-        )
+        comp = PGCompleter(smart_completion=True, settings=settings, pgspecial=PGSpecial())
 
         schemata, tables, tbl_cols, views, view_cols = [], [], [], [], []
 
@@ -226,20 +188,12 @@ class MetaData:
                 view_cols.extend([self._make_col(sch, tbl, col) for col in cols])
 
         functions = [
-            FunctionMetadata(sch, *func_meta, arg_defaults=None)
-            for sch, funcs in metadata["functions"].items()
-            for func_meta in funcs
+            FunctionMetadata(sch, *func_meta, arg_defaults=None) for sch, funcs in metadata["functions"].items() for func_meta in funcs
         ]
 
-        datatypes = [
-            (sch, typ)
-            for sch, datatypes in metadata["datatypes"].items()
-            for typ in datatypes
-        ]
+        datatypes = [(sch, typ) for sch, datatypes in metadata["datatypes"].items() for typ in datatypes]
 
-        foreignkeys = [
-            ForeignKey(*fk) for fks in metadata["foreignkeys"].values() for fk in fks
-        ]
+        foreignkeys = [ForeignKey(*fk) for fks in metadata["foreignkeys"].values() for fk in fks]
 
         comp.extend_schemata(schemata)
         comp.extend_relations(tables, kind="tables")

@@ -40,18 +40,14 @@ class CompletionRefresher:
             )
             self._completer_thread.daemon = True
             self._completer_thread.start()
-            return [
-                (None, None, None, "Auto-completion refresh started in the background.")
-            ]
+            return [(None, None, None, "Auto-completion refresh started in the background.")]
 
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
 
     def _bg_refresh(self, pgexecute, special, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer = PGCompleter(
-            smart_completion=True, pgspecial=special, settings=settings
-        )
+        completer = PGCompleter(smart_completion=True, pgspecial=special, settings=settings)
 
         if settings.get("single_connection"):
             executor = pgexecute

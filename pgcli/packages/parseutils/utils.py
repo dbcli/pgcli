@@ -79,9 +79,7 @@ def find_prev_keyword(sql, n_skip=0):
     logical_operators = ("AND", "OR", "NOT", "BETWEEN")
 
     for t in reversed(flattened):
-        if t.value == "(" or (
-            t.is_keyword and (t.value.upper() not in logical_operators)
-        ):
+        if t.value == "(" or (t.is_keyword and (t.value.upper() not in logical_operators)):
             # Find the location of token t in the original parsed statement
             # We can't use parsed.token_index(t) because t may be a child token
             # inside a TokenList, in which case token_index throws an error

@@ -26,9 +26,7 @@ def keyring_initialize(keyring_enabled, *, logger):
 
         try:
             keyring = importlib.import_module("keyring")
-        except (
-            ModuleNotFoundError
-        ) as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
+        except ModuleNotFoundError as e:  # ImportError for Python 2, ModuleNotFoundError for Python 3
             logger.warning("import keyring failed: %r.", e)
 
 
@@ -40,9 +38,7 @@ def keyring_get_password(key):
         passwd = keyring.get_password("pgcli", key) or ""
     except Exception as e:
         click.secho(
-            keyring_error_message.format(
-                "Load your password from keyring returned:", str(e)
-            ),
+            keyring_error_message.format("Load your password from keyring returned:", str(e)),
             err=True,
             fg="red",
         )
