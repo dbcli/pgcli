@@ -1,41 +1,37 @@
-from collections import OrderedDict, defaultdict, namedtuple
-from itertools import chain, count
 import json
 import logging
-import operator
 import re
-
+from itertools import count, chain
+import operator
+from collections import namedtuple, defaultdict, OrderedDict
 from cli_helpers.tabular_output import TabularOutputFormatter
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion, PathCompleter
 from prompt_toolkit.document import Document
-
-from .packages.parseutils.meta import ColumnMetadata, ForeignKey
-from .packages.parseutils.tables import TableReference
-from .packages.parseutils.utils import last_word
-from .packages.pgliterals.main import get_literals
-from .packages.prioritization import PrevalenceCounter
-from .packages import llm
 from .packages.sqlcompletion import (
-    Alias,
-    Column,
-    Database,
-    Datatype,
     FromClauseItem,
-    Function,
-    Join,
-    JoinCondition,
-    Keyword,
-    Llm,
-    NamedQuery,
-    Path,
-    Schema,
+    suggest_type,
     Special,
+    Database,
+    Schema,
     Table,
     TableFormat,
+    Function,
+    Column,
     View,
-    suggest_type,
+    Keyword,
+    NamedQuery,
+    Datatype,
+    Alias,
+    Path,
+    JoinCondition,
+    Join,
 )
+from .packages.parseutils.meta import ColumnMetadata, ForeignKey
+from .packages.parseutils.utils import last_word
+from .packages.parseutils.tables import TableReference
+from .packages.pgliterals.main import get_literals
+from .packages.prioritization import PrevalenceCounter
 
 _logger = logging.getLogger(__name__)
 
@@ -460,6 +456,7 @@ class PGCompleter(Completer):
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
+
         if smart_completion is None:
             smart_completion = self.smart_completion
 
@@ -883,7 +880,6 @@ class PGCompleter(Completer):
         Datatype: get_datatype_matches,
         NamedQuery: get_namedquery_matches,
         Path: get_path_matches,
-        Llm: llm.get_completions,
     }
 
     def populate_scoped_cols(self, scoped_tbls, local_tbls=()):
