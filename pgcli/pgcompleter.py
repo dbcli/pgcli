@@ -26,12 +26,14 @@ from .packages.sqlcompletion import (
     Path,
     JoinCondition,
     Join,
+    Llm,
 )
 from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
 from .packages.prioritization import PrevalenceCounter
+from .packages import llm
 
 _logger = logging.getLogger(__name__)
 
@@ -474,10 +476,22 @@ class PGCompleter(Completer):
             suggestion_type = type(suggestion)
             _logger.debug("Suggestion type: %r", suggestion_type)
 
-            # Map suggestion type to method
-            # e.g. 'table' -> self.get_table_matches
-            matcher = self.suggestion_matchers[suggestion_type]
-            matches.extend(matcher(self, suggestion, word_before_cursor))
+            if suggestion_type == Llm:
+                if not word_before_cursor:
+                    tokens = document.text.split()[1:]
+                else:
+                    tokens = document.text.split()[1:-1]
+                possible_entries = llm.get_completions(tokens)
+                subcommands = self.find_matches(
+                    word_before_cursor,
+                    possible_entries,
+                )
+                matches.extend(subcommands)
+            else:
+                # Map suggestion type to method
+                # e.g. 'table' -> self.get_table_matches
+                matcher = self.suggestion_matchers[suggestion_type]
+                matches.extend(matcher(self, suggestion, word_before_cursor))
 
         # Sort matches so highest priorities are first
         matches = sorted(matches, key=operator.attrgetter("priority"), reverse=True)
