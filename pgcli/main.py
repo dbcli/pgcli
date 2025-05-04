@@ -72,6 +72,7 @@ from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
 from .packages.parseutils import is_destructive
 from .packages.parseutils import parse_destructive_warning
+from .packages.llm import handle_llm, is_llm_command, FinishIteration
 from .__init__ import __version__
 
 click.disable_unicode_literals_warning = True
@@ -934,6 +935,36 @@ class PGCli:
                     logger.error("sql: %r, error: %r", text, e)
                     logger.error("traceback: %r", traceback.format_exc())
                     click.secho(str(e), err=True, fg="red")
+                    continue
+
+                # LLM command support
+                while is_llm_command(text):
+                    try:
+                        cur = self.pgexecute.conn.cursor()
+                        context, sql, duration = handle_llm(text, cur)
+                        if context:
+                            click.echo("LLM Response:")
+                            click.echo(context)
+                            click.echo("---")
+                        click.echo(f"Time: {duration:.2f} seconds")
+                        text = self.prompt_app.prompt(default=sql)
+                    except KeyboardInterrupt:
+                        text = ""
+                        break
+                    except FinishIteration as e:
+                        if e.results:
+                            for _title, _cur, _headers, result in e.results:
+                                click.echo(result)
+                        text = ""
+                        break
+                    except RuntimeError as e:
+                        logger.error("sql: %r, error: %r", text, e)
+                        logger.error("traceback: %r", traceback.format_exc())
+                        click.secho(str(e), err=True, fg="red")
+                        text = ""
+                        break
+
+                if not text.strip():
                     continue
 
                 try:
