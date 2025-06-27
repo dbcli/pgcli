@@ -45,6 +45,10 @@ def prevent_inefficient_queries(query, pgcli):
 
 def analyze_query(query, pgcli):
     """Analyze query execution plan for inefficient patterns."""
+    # Skip processing for backslash commands and special commands
+    if query.startswith('\\') or query.startswith('show'):
+        return True
+
     try:
         # Get the execution plan
         warnings = []
