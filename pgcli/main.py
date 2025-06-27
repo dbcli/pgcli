@@ -914,7 +914,7 @@ class PGCli:
 
         if not self.less_chatty:
             print("Server: PostgreSQL", self.pgexecute.server_version)
-            print("Version:", __version__)
+            print(f"Version: {__version__} DEVELOPMENT")
             print("Home: http://pgcli.com")
 
         try:
@@ -1449,7 +1449,7 @@ def cli(
     log_file: str,
 ):
     if version:
-        print("Version:", __version__)
+        print(f"Version: {__version__} DEVELOPMENT")
         sys.exit(0)
 
     config_dir = os.path.dirname(config_location())
