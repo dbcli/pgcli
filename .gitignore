@@ -74,3 +74,4 @@ venv/
 .ropeproject/
 uv.lock
 
+structure.sql
