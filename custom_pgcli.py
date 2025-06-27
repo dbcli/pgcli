@@ -90,18 +90,44 @@ def get_db_structure(pgcli):
         print(f"Error getting database structure: {e}")
         return {}
 
+class LLMContext:
+    def __init__(self):
+        self.context_id = None
+        self.db_structure_hash = None
+
 def get_llm_recommendation(query, db_structure):
     """Get query optimization recommendations from Gemma LLM."""
     try:
-        context = f"""You are a PostgreSQL query optimization expert. You have access to the following database structure:
+        # Get or create context for this database structure
+        if not hasattr(get_llm_recommendation, '_context'):
+            get_llm_recommendation._context = LLMContext()
+
+        # Check if DB structure has changed
+        current_hash = hash(json.dumps(db_structure, sort_keys=True))
+        ctx = get_llm_recommendation._context
+
+        if ctx.db_structure_hash != current_hash:
+            # Load new context with DB structure
+            context_prompt = f"""You are a PostgreSQL query optimization expert. You have access to the following database structure:
 
 {json.dumps(db_structure, indent=2)}
 
 Keep this structure in mind when analyzing queries. Focus only on practical suggestions specific to this schema."""
-        
-        prompt = f"""{context}
 
-Analyze this query for performance improvements:
+            response = requests.post(
+                'http://localhost:11434/api/chat',
+                json={
+                    'model': 'gemma3:4b',
+                    'messages': [{'role': 'system', 'content': context_prompt}],
+                    'stream': False
+                }
+            )
+            if response.status_code == 200:
+                ctx.context_id = response.json().get('context', [])
+                ctx.db_structure_hash = current_hash
+
+        # Use existing context for query analysis
+        prompt = """Analyze this query for performance improvements:
 {query}
 
 Provide a concise response with:
@@ -111,17 +137,17 @@ Provide a concise response with:
 
 Be brief and focus only on the most impactful changes."""
 
-
         response = requests.post(
-            'http://localhost:11434/api/generate',
+            'http://localhost:11434/api/chat',
             json={
                 'model': 'gemma3:4b',
-                'prompt': prompt,
+                'messages': [{'role': 'user', 'content': prompt.format(query=query)}],
+                'context': ctx.context_id,
                 'stream': False
             }
         )
         if response.status_code == 200:
-            return response.json()['response']
+            return response.json()['message']['content']
         return "Could not get LLM recommendations. Is Ollama running?"
     except Exception as e:
         return f"Error getting LLM recommendations: {e}"
