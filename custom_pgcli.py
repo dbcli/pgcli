@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import click
-import ollama
+import json
+import requests
 from pgcli.main import PGCli
 
 def prevent_drops(query):
@@ -42,6 +43,88 @@ def prevent_inefficient_queries(query, pgcli):
         return response.lower() == 'y'
 
     return True
+
+def get_db_structure(pgcli):
+    """Get database structure including tables, columns, and indexes."""
+    structure = {}
+    try:
+        # Get tables and their columns
+        table_query = """
+        SELECT 
+            t.table_name,
+            array_agg(DISTINCT c.column_name) as columns
+        FROM information_schema.tables t
+        JOIN information_schema.columns c ON c.table_name = t.table_name
+        WHERE t.table_schema = 'public'
+        GROUP BY t.table_name;
+        """
+        # Get indexes
+        index_query = """
+        SELECT 
+            tablename as table_name,
+            indexname as index_name,
+            indexdef as index_definition
+        FROM pg_indexes
+        WHERE schemaname = 'public';
+        """
+        
+        for title, rows, headers, status, sql, success, is_special in pgcli.pgexecute.run(table_query):
+            if rows:
+                for row in rows:
+                    structure[row[0]] = {
+                        'columns': row[1],
+                        'indexes': []
+                    }
+                    
+        for title, rows, headers, status, sql, success, is_special in pgcli.pgexecute.run(index_query):
+            if rows:
+                for row in rows:
+                    if row[0] in structure:
+                        structure[row[0]]['indexes'].append({
+                            'name': row[1],
+                            'definition': row[2]
+                        })
+                        
+        return structure
+    except Exception as e:
+        print(f"Error getting database structure: {e}")
+        return {}
+
+def get_llm_recommendation(query, db_structure):
+    """Get query optimization recommendations from Gemma LLM."""
+    try:
+        context = f"""You are a PostgreSQL query optimization expert. You have access to the following database structure:
+
+{json.dumps(db_structure, indent=2)}
+
+Keep this structure in mind when analyzing queries. Focus only on practical suggestions specific to this schema."""
+        
+        prompt = f"""{context}
+
+Analyze this query for performance improvements:
+{query}
+
+Provide a concise response with:
+1. Specific indexes that would help this query
+2. Query rewrites that would improve performance
+3. Brief explanation of why each change helps
+
+Be brief and focus only on the most impactful changes."""
+
+
+        response = requests.post(
+            'http://localhost:11434/api/generate',
+            json={
+                'model': 'gemma3:4b',
+                'prompt': prompt,
+                'stream': False
+            }
+        )
+        if response.status_code == 200:
+            return response.json()['response']
+        return "Could not get LLM recommendations. Is Ollama running?"
+    except Exception as e:
+        return f"Error getting LLM recommendations: {e}"
 
 def analyze_query(query, pgcli):
     """Analyze query execution plan for inefficient patterns."""
@@ -92,8 +175,15 @@ def analyze_query(query, pgcli):
             if has_nested_loop:
                 print("\nTip: Add appropriate JOIN conditions or indexes")
             
-            response = input("\nDo you want to proceed? [y/N]: ")
-            return response.lower() == 'y'
+            print("\nWould you like AI recommendations to improve this query? [y/N]: ", end='')
+            if input().lower() == 'y':
+                db_structure = get_db_structure(pgcli)
+                recommendations = get_llm_recommendation(query, db_structure)
+                print("\n🤖 AI Recommendations:")
+                print(recommendations)
+                
+            print("\nDo you want to proceed with the query? [y/N]: ", end='')
+            return input().lower() == 'y'
 
         return True
 
