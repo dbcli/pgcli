@@ -17,6 +17,11 @@ Internal:
   * Update dev requirements and replace requirements-dev.txt with pyproject.toml
   * Use ruff instead of black
 
+Bug fixes:
+----------
+
+* Improve display of larger durations when passed as floats
+
 4.3.0 (2025-03-22)
 ==================
 

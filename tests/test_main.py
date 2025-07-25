@@ -565,9 +565,11 @@ def test_application_name_db_uri(tmpdir):
         (60, "1 minute"),
         (61, "1 minute 1 second"),
         (123, "2 minutes 3 seconds"),
+        (124.4, "2 minutes 4 seconds"),
         (3600, "1 hour"),
         (7235, "2 hours 35 seconds"),
         (9005, "2 hours 30 minutes 5 seconds"),
+        (9006.7, "2 hours 30 minutes 6 seconds"),
         (86401, "24 hours 1 second"),
     ],
 )

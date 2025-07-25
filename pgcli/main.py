@@ -1926,12 +1926,12 @@ def duration_in_words(duration_in_seconds: float) -> str:
     components = []
     hours, remainder = divmod(duration_in_seconds, 3600)
     if hours > 1:
-        components.append(f"{hours} hours")
+        components.append(f"{int(hours)} hours")
     elif hours == 1:
         components.append("1 hour")
     minutes, seconds = divmod(remainder, 60)
     if minutes > 1:
-        components.append(f"{minutes} minutes")
+        components.append(f"{int(minutes)} minutes")
     elif minutes == 1:
         components.append("1 minute")
     if seconds >= 2:
