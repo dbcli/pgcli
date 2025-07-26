@@ -7,6 +7,7 @@ Features:
     * Command line option `--init-command`
     * Provide `init-command` in the config file
     * Support dsn specific init-command in the config file
+* Add suggestion when setting the search_path
 
 Internal:
 ---------

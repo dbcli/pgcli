@@ -372,7 +372,15 @@ def suggest_based_on_last_token(token, stmt):
         # We're probably in a function argument list
         return _suggest_expression(token_v, stmt)
     elif token_v == "set":
+        # "set" for changing a run-time parameter
+        p = sqlparse.parse(stmt.text_before_cursor)[0]
+        is_first_token = p.token_first().value.upper() == token_v.upper()
+        if is_first_token:
+            return (Keyword(token_v.upper()),)
+
+        # E.g. 'UPDATE foo SET'
         return (Column(table_refs=stmt.get_tables(), local_tables=stmt.local_tables),)
+
     elif token_v in ("select", "where", "having", "order by", "distinct"):
         return _suggest_expression(token_v, stmt)
     elif token_v == "as":
@@ -494,6 +502,9 @@ def suggest_based_on_last_token(token, stmt):
         return tuple(suggestions)
     elif token_v in {"alter", "create", "drop"}:
         return (Keyword(token_v.upper()),)
+    elif token_v == "to":
+        # E.g. 'SET search_path TO'
+        return (Schema(),)
     elif token.is_keyword:
         # token is a keyword we haven't implemented any special handling for
         # go backwards in the query until we find one we do recognize
