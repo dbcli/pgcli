@@ -227,7 +227,7 @@
         "ROWS": [],
         "SELECT": [],
         "SESSION": [],
-        "SET": [],
+        "SET": ["SEARCH_PATH TO"],
         "SHARE": [],
         "SHOW": [],
         "SIZE": [],
