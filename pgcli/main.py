@@ -290,6 +290,7 @@ class PGCli:
 
         self.prompt_app = None
 
+        self.dsn_ssh_tunnel_config = c.get("dsn ssh tunnels")
         self.ssh_tunnel_config = c.get("ssh tunnels")
         self.ssh_tunnel_url = ssh_tunnel_url
         self.ssh_tunnel = None
@@ -642,6 +643,12 @@ class PGCli:
                 host = parsed_dsn["host"]
             if "port" in parsed_dsn:
                 port = parsed_dsn["port"]
+
+        if self.dsn_alias and self.dsn_ssh_tunnel_config and not self.ssh_tunnel_url:
+            for dsn_regex, tunnel_url in self.dsn_ssh_tunnel_config.items():
+                if re.search(dsn_regex, self.dsn_alias):
+                    self.ssh_tunnel_url = tunnel_url
+                    break
 
         if self.ssh_tunnel_config and not self.ssh_tunnel_url:
             for db_host_regex, tunnel_url in self.ssh_tunnel_config.items():
@@ -1540,8 +1547,8 @@ def cli(
                 fg="red",
             )
             sys.exit(1)
-        pgcli.connect_uri(dsn_config)
         pgcli.dsn_alias = dsn
+        pgcli.connect_uri(dsn_config)
     elif "://" in database:
         pgcli.connect_uri(database)
     elif "=" in database and service is None:

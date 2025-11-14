@@ -258,3 +258,12 @@ float = ""
 [column_date_formats]
 # use strftime format, e.g.
 # created = "%Y-%m-%d"
+
+# Per host ssh tunnel configuration
+[ssh tunnels]
+# ^example.*\.host$ = myuser:mypasswd@my.tunnel.com:4000
+# .*\.net = another.tunnel.com
+
+# Per dsn_alias ssh tunnel configuration
+[dsn ssh tunnels]
+# ^example_dsn$  = myuser:mypasswd@my.tunnel.com:4000
