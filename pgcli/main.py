@@ -911,6 +911,23 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
+        # Handle single command mode (-c flag) - similar to psql behavior
+        if hasattr(self, 'single_command') and self.single_command:
+            try:
+                logger.debug("Running single command: %s", self.single_command)
+                # Execute the command using the same logic as interactive mode
+                self.handle_watch_command(self.single_command)
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # Exit successfully after executing the command
+            sys.exit(0)
+
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
             history_file = config_location() + "history"
@@ -1426,6 +1443,12 @@ class PGCli:
     type=str,
     help="SQL statement to execute after connecting.",
 )
+@click.option(
+    "-c",
+    "--command",
+    default="",
+    help="run only single command (SQL or internal) and exit.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1454,6 +1477,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    command: str,
 ):
     if version:
         print("Version:", __version__)
@@ -1513,6 +1537,9 @@ def cli(
         ssh_tunnel_url=ssh_tunnel,
         log_file=log_file,
     )
+
+    # Store single command for -c option
+    pgcli.single_command = command if command else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
