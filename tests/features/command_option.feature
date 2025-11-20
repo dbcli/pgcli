@@ -26,3 +26,13 @@ Feature: run the cli with -c/--command option,
      When we run pgcli with -c "SELECT 1; SELECT 2"
       then we see both query results
       and pgcli exits successfully
+
+  Scenario: run pgcli with multiple -c options
+     When we run pgcli with multiple -c options
+      then we see all command outputs
+      and pgcli exits successfully
+
+  Scenario: run pgcli with mixed -c and --command options
+     When we run pgcli with mixed -c and --command
+      then we see all command outputs
+      and pgcli exits successfully
