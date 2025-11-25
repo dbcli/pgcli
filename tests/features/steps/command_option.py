@@ -67,7 +67,7 @@ def step_see_query_result(context):
     # Check for common query result indicators
     assert any([
         "SELECT" in output,
-        "test_column" in output,
+        "test_diego_column" in output,
         "greeting" in output,
         "hello" in output,
         "+-" in output,  # table border

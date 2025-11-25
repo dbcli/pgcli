@@ -3,7 +3,7 @@ Feature: run the cli with -c/--command option,
   and exit
 
   Scenario: run pgcli with -c and a SQL query
-     When we run pgcli with -c "SELECT 1 as test_column"
+     When we run pgcli with -c "SELECT 1 as test_diego_column"
       then we see the query result
       and pgcli exits successfully
 
