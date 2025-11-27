@@ -16,6 +16,10 @@ Features:
     * Command line option `-f` or `--file`.
     * You can specify multiple times.
     * Similar to psql's `-f` option.
+* Add support for forcing destructive commands without confirmation.
+    * Command line option `-y` or `--yes`.
+    * Skips the destructive command confirmation prompt when enabled.
+    * Useful for automated scripts and CI/CD pipelines.
 
 Internal:
 ---------
