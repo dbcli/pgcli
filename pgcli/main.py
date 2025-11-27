@@ -658,6 +658,14 @@ class PGCli:
                     break
 
         if self.ssh_tunnel_url:
+            if not SSH_TUNNEL_SUPPORT:
+                click.secho(
+                    "SSH tunnel requires sshtunnel package. Install it with: pip install sshtunnel",
+                    err=True,
+                    fg="red",
+                )
+                sys.exit(1)
+
             # We add the protocol as urlparse doesn't find it by itself
             if "://" not in self.ssh_tunnel_url:
                 self.ssh_tunnel_url = f"ssh://{self.ssh_tunnel_url}"
