@@ -9,6 +9,7 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Add hostaddr to handle .pgpass with ssh tunnels
 
 Internal:
 ---------
