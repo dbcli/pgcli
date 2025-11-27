@@ -74,3 +74,4 @@ venv/
 .ropeproject/
 uv.lock
 
+pgcli/__init__.py

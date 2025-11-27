@@ -447,8 +447,10 @@ def test_missing_rc_dir(tmpdir):
 def test_quoted_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri("postgres://bar%5E:%5Dfoo@baz.com/testdb%5B")
-    mock_connect.assert_called_with(database="testdb[", host="baz.com", user="bar^", passwd="]foo")
+        uri = "postgres://bar%5E:%5Dfoo@baz.com/testdb%5B"
+        cli.connect_uri(uri)
+    # connect_uri now passes the original URI as dsn for .pgpass support
+    mock_connect.assert_called_with(dsn=uri, database="testdb[", host="baz.com", user="bar^", passwd="]foo")
 
 
 def test_pg_service_file(tmpdir):
@@ -507,10 +509,10 @@ def test_pg_service_file(tmpdir):
 def test_ssl_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri(
-            "postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem"
-        )
+        uri = "postgres://bar%5E:%5Dfoo@baz.com/testdb%5B?sslmode=verify-full&sslcert=m%79.pem&sslkey=my-key.pem&sslrootcert=c%61.pem"
+        cli.connect_uri(uri)
     mock_connect.assert_called_with(
+        dsn=uri,
         database="testdb[",
         host="baz.com",
         user="bar^",
@@ -525,15 +527,18 @@ def test_ssl_db_uri(tmpdir):
 def test_port_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri("postgres://bar:foo@baz.com:2543/testdb")
-    mock_connect.assert_called_with(database="testdb", host="baz.com", user="bar", passwd="foo", port="2543")
+        uri = "postgres://bar:foo@baz.com:2543/testdb"
+        cli.connect_uri(uri)
+    mock_connect.assert_called_with(dsn=uri, database="testdb", host="baz.com", user="bar", passwd="foo", port="2543")
 
 
 def test_multihost_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri("postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb")
+        uri = "postgres://bar:foo@baz1.com:2543,baz2.com:2543,baz3.com:2543/testdb"
+        cli.connect_uri(uri)
     mock_connect.assert_called_with(
+        dsn=uri,
         database="testdb",
         host="baz1.com,baz2.com,baz3.com",
         user="bar",
@@ -546,8 +551,10 @@ def test_application_name_db_uri(tmpdir):
     with mock.patch.object(PGExecute, "__init__") as mock_pgexecute:
         mock_pgexecute.return_value = None
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
-        cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
-    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow")
+        uri = "postgres://bar@baz.com/?application_name=cow"
+        cli.connect_uri(uri)
+    # connect_uri now passes the URI as dsn
+    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", uri, notify_callback, application_name="cow")
 
 
 @pytest.mark.parametrize(

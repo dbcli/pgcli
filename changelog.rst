@@ -20,6 +20,7 @@ Features:
     * Command line option `-y` or `--yes`.
     * Skips the destructive command confirmation prompt when enabled.
     * Useful for automated scripts and CI/CD pipelines.
+* Add hostaddr to handle .pgpass with ssh tunnels
 
 Internal:
 ---------

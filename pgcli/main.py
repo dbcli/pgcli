@@ -599,7 +599,8 @@ class PGCli:
         kwargs = conninfo_to_dict(uri)
         remap = {"dbname": "database", "password": "passwd"}
         kwargs = {remap.get(k, k): v for k, v in kwargs.items()}
-        self.connect(**kwargs)
+        # Pass the original URI as dsn parameter for .pgpass support with SSH tunnels
+        self.connect(dsn=uri, **kwargs)
 
     def connect(self, database="", host="", user="", port="", passwd="", dsn="", **kwargs):
         # Connect to the database.
@@ -662,6 +663,14 @@ class PGCli:
                     break
 
         if self.ssh_tunnel_url:
+            if not SSH_TUNNEL_SUPPORT:
+                click.secho(
+                    "SSH tunnel requires sshtunnel package. Install it with: pip install sshtunnel",
+                    err=True,
+                    fg="red",
+                )
+                sys.exit(1)
+
             # We add the protocol as urlparse doesn't find it by itself
             if "://" not in self.ssh_tunnel_url:
                 self.ssh_tunnel_url = f"ssh://{self.ssh_tunnel_url}"
@@ -672,6 +681,9 @@ class PGCli:
                 "remote_bind_address": (host, int(port or 5432)),
                 "ssh_address_or_host": (tunnel_info.hostname, tunnel_info.port or 22),
                 "logger": self.logger,
+                "ssh_config_file": "~/.ssh/config",  # Use SSH config for host settings
+                "allow_agent": True,  # Allow SSH agent for authentication
+                "compression": False,  # Disable compression for better performance
             }
             if tunnel_info.username:
                 params["ssh_username"] = tunnel_info.username
@@ -692,11 +704,16 @@ class PGCli:
             self.logger.handlers = logger_handlers
 
             atexit.register(self.ssh_tunnel.stop)
-            host = "127.0.0.1"
+            # Preserve original host for .pgpass lookup and SSL certificate verification
+            # Use hostaddr to specify the actual connection endpoint (SSH tunnel)
+            hostaddr = "127.0.0.1"
             port = self.ssh_tunnel.local_bind_ports[0]
 
             if dsn:
-                dsn = make_conninfo(dsn, host=host, port=port)
+                dsn = make_conninfo(dsn, host=host, hostaddr=hostaddr, port=port)
+            else:
+                # For non-DSN connections, pass hostaddr via kwargs
+                kwargs["hostaddr"] = hostaddr
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection

@@ -41,6 +41,8 @@ dependencies = [
     # so we'll only install it if we're not in Windows.
     "setproctitle >= 1.1.9; sys_platform != 'win32' and 'CYGWIN' not in sys_platform",
     "tzlocal >= 5.2",
+    "sshtunnel >= 0.4.0",
+    "paramiko >= 3.0, < 4.0",  # paramiko 4.0+ breaks sshtunnel 0.4.0 (DSSKey removed)
 ]
 dynamic = ["version"]
 
@@ -50,7 +52,10 @@ pgcli = "pgcli.main:cli"
 
 [project.optional-dependencies]
 keyring = ["keyring >= 12.2.0"]
-sshtunnel = ["sshtunnel >= 0.4.0"]
+sshtunnel = [
+    "sshtunnel >= 0.4.0",
+    "paramiko >= 3.0, < 4.0",  # paramiko 4.0+ breaks sshtunnel 0.4.0 (DSSKey removed)
+]
 dev = [
     "behave>=1.2.4",
     "coverage>=7.2.7",
@@ -61,6 +66,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.11.7",
     "sshtunnel>=0.4.0",
+    "paramiko >= 3.0, < 4.0",  # paramiko 4.0+ breaks sshtunnel 0.4.0 (DSSKey removed)
     "tox>=1.9.2",
 ]
 
