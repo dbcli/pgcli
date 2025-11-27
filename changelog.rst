@@ -12,6 +12,10 @@ Features:
 * Add support for `single-command` to run a SQL command and exit.
     * Command line option `-c` or `--command`.
     * You can specify multiple times.
+* Add support for `file` to execute commands from a file and exit.
+    * Command line option `-f` or `--file`.
+    * You can specify multiple times.
+    * Similar to psql's `-f` option.
 
 Internal:
 ---------

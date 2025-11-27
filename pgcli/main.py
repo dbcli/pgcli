@@ -911,14 +911,33 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
-        # Handle command mode (-c flag) - similar to psql behavior
-        # Multiple -c options are executed sequentially
-        if hasattr(self, 'commands') and self.commands:
+        # Handle command mode (-c flag) and/or file mode (-f flag)
+        # Similar to psql behavior: execute commands/files and exit
+        has_commands = hasattr(self, 'commands') and self.commands
+        has_input_files = hasattr(self, 'input_files') and self.input_files
+
+        if has_commands or has_input_files:
             try:
-                for command in self.commands:
-                    logger.debug("Running command: %s", command)
-                    # Execute the command using the same logic as interactive mode
-                    self.handle_watch_command(command)
+                # Execute -c commands first, if any
+                if has_commands:
+                    for command in self.commands:
+                        logger.debug("Running command: %s", command)
+                        self.handle_watch_command(command)
+
+                # Then execute commands from files, if provided
+                # Multiple -f options are executed sequentially
+                if has_input_files:
+                    for input_file in self.input_files:
+                        logger.debug("Reading commands from file: %s", input_file)
+                        with open(input_file, 'r', encoding='utf-8') as f:
+                            file_content = f.read()
+
+                        # Execute the entire file content as a single command
+                        # This matches psql behavior where the file is treated as one unit
+                        if file_content.strip():
+                            logger.debug("Executing commands from file: %s", input_file)
+                            self.handle_watch_command(file_content)
+
             except PgCliQuitError:
                 # Normal exit from quit command
                 sys.exit(0)
@@ -1297,8 +1316,10 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        # Disable pager for -c/--command mode and \watch command
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or (hasattr(self, 'commands') and self.commands):
+        # Disable pager for -c/--command mode, -f/--file mode, and \watch command
+        has_commands = hasattr(self, 'commands') and self.commands
+        has_input_files = hasattr(self, 'input_files') and self.input_files
+        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or has_commands or has_input_files:
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1453,6 +1474,14 @@ class PGCli:
     multiple=True,
     help="run command (SQL or internal) and exit. Multiple -c options are allowed.",
 )
+@click.option(
+    "-f",
+    "--file",
+    "input_files",
+    multiple=True,
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    help="execute commands from file, then exit. Multiple -f options are allowed.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1482,6 +1511,7 @@ def cli(
     init_command: str,
     log_file: str,
     commands: tuple,
+    input_files: tuple,
 ):
     if version:
         print("Version:", __version__)
@@ -1544,6 +1574,9 @@ def cli(
 
     # Store commands for -c option (can be multiple)
     pgcli.commands = commands if commands else None
+
+    # Store file paths for -f option (can be multiple)
+    pgcli.input_files = input_files if input_files else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
