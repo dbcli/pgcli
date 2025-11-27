@@ -9,6 +9,9 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Add support for `single-command` to run a SQL command and exit.
+    * Command line option `-c` or `--command`.
+    * You can specify multiple times.
 
 Internal:
 ---------
