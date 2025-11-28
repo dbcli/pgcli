@@ -620,7 +620,7 @@ class PGCli:
         if self.force_passwd_prompt and not passwd:
             passwd = click.prompt("Password for %s" % user, hide_input=True, show_default=False, type=str)
 
-        key = f"{user}@{host}"
+        key = f"{user}@{host}@{port}"
 
         if not passwd and auth.keyring:
             passwd = auth.keyring_get_password(key)
