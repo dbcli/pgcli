@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.9
 
 COPY . /app
 RUN cd /app && pip install -e .
