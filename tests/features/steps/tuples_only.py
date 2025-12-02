@@ -92,20 +92,3 @@ def step_see_multiple_data_rows(context):
 
     # Should not have table formatting
     assert "+-" not in output, f"Expected no table borders, but got: {output}"
-
-
-@then("we see the command output")
-def step_see_command_output(context):
-    """Verify that the special command output is present."""
-    output = context.cmd_output.decode('utf-8')
-    # For special commands like \dt, just verify it didn't error
-    assert context.exit_code == 0, f"Expected exit code 0, but got: {context.exit_code}"
-
-
-@then("pgcli exits successfully")
-def step_pgcli_exits_successfully(context):
-    """Verify that pgcli exited with code 0."""
-    assert context.exit_code == 0, f"Expected exit code 0, but got: {context.exit_code}. Output: {context.cmd_output.decode('utf-8')}"
-    # Clean up
-    context.cmd_output = None
-    context.exit_code = None
