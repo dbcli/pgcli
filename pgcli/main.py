@@ -117,7 +117,7 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     "OutputSettings",
-    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output max_field_width",
+    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output max_field_width tuples_only",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -130,6 +130,7 @@ OutputSettings.__new__.__defaults__ = (
     lambda x: x,
     None,
     DEFAULT_MAX_FIELD_WIDTH,
+    False,
 )
 
 
@@ -179,6 +180,7 @@ class PGCli:
         application_name="pgcli",
         single_connection=False,
         less_chatty=None,
+        tuples_only=None,
         prompt=None,
         prompt_dsn=None,
         auto_vertical_output=False,
@@ -237,7 +239,13 @@ class PGCli:
 
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
-        self.table_format = c["main"]["table_format"]
+        # Override table_format if tuples_only is specified
+        if tuples_only:
+            self.table_format = tuples_only
+            self.tuples_only = True
+        else:
+            self.table_format = c["main"]["table_format"]
+            self.tuples_only = False
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
@@ -875,7 +883,7 @@ class PGCli:
             except KeyboardInterrupt:
                 pass
 
-            if self.pgspecial.timing_enabled:
+            if self.pgspecial.timing_enabled and not self.tuples_only:
                 # Only add humanized time display if > 1 second
                 if query.total_time > 1:
                     print(
@@ -1198,6 +1206,7 @@ class PGCli:
                 case_function=(self.completer.case if self.settings["case_column_headers"] else lambda x: x),
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
+                tuples_only=self.tuples_only,
             )
             execution = time() - start
             formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
@@ -1447,6 +1456,15 @@ class PGCli:
     default=False,
     help="Skip intro on startup and goodbye on exit.",
 )
+@click.option(
+    "-t",
+    "--tuples-only",
+    "tuples_only",
+    is_flag=False,
+    flag_value="csv-noheader",
+    default=None,
+    help="Print rows only (default: csv-noheader). Optionally specify a format (e.g., -t minimal).",
+)
 @click.option("--prompt", help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option(
     "--prompt-dsn",
@@ -1533,6 +1551,7 @@ def cli(
     row_limit,
     application_name,
     less_chatty,
+    tuples_only,
     prompt,
     prompt_dsn,
     list_databases,
@@ -1598,6 +1617,7 @@ def cli(
         application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
+        tuples_only=tuples_only,
         prompt=prompt,
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
@@ -1992,8 +2012,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         output = itertools.chain(output, formatted)
 
-    # Only print the status if it's not None
-    if status:
+    # Only print the status if it's not None and tuples_only is not enabled
+    if status and not settings.tuples_only:
         output = itertools.chain(output, [format_status(cur, status)])
 
     return output

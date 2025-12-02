@@ -124,6 +124,9 @@ show_bottom_toolbar = True
 # textile, moinmoin, jira, vertical, tsv, csv, sql-insert, sql-update,
 # sql-update-1, sql-update-2 (formatter with sql-* prefix can format query
 # output to executable insertion or updating sql).
+# Additional formats: minimal (aligned columns without headers or borders),
+# csv-noheader (CSV without headers), tsv_noheader (TSV without headers),
+# csv-tab-noheader (same as tsv_noheader).
 # Recommended: psql, fancy_grid and grid.
 table_format = psql
 
