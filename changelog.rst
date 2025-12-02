@@ -50,6 +50,7 @@ Bug fixes:
 ----------
 
 * Improve display of larger durations when passed as floats
+* Fix `--yes` flag to suppress "Your call!" message when auto-confirming destructive commands
 
 4.3.0 (2025-03-22)
 ==================

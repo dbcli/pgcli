@@ -829,7 +829,7 @@ class PGCli:
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
-                elif destroy:
+                elif destroy and not self.force_destructive:
                     click.secho("Your call!")
 
             output, query = self._evaluate_command(text)

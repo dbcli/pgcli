@@ -150,9 +150,11 @@ def step_see_command_executed_without_prompt(context):
     # Should NOT contain the destructive warning prompt
     assert "Do you want to proceed?" not in output, \
         f"Expected no confirmation prompt, but found one in output: {output}"
+    # Should NOT contain "Your call!" when using --yes
+    assert "Your call!" not in output, \
+        f"Expected no 'Your call!' message with --yes flag, but found it in output: {output}"
     # Should contain success indicators
     assert any([
-        "Your call!" in output,  # Message when destructive command proceeds
         "ALTER TABLE" in output,
         "DROP" in output,
         "SET" in output,
@@ -166,8 +168,11 @@ def step_see_both_commands_executed(context):
     # Should NOT contain confirmation prompts
     assert "Do you want to proceed?" not in output, \
         f"Expected no confirmation prompt, but found one in output: {output}"
+    # Should NOT contain "Your call!" when using --yes
+    assert "Your call!" not in output, \
+        f"Expected no 'Your call!' message with --yes flag, but found it in output: {output}"
     # Should contain indicators from both commands
-    assert output.count("ALTER TABLE") >= 2 or "Your call!" in output, \
+    assert output.count("ALTER TABLE") >= 2, \
         f"Expected indicators from both ALTER TABLE commands, but got: {output}"
 
 
@@ -186,10 +191,11 @@ def step_see_command_not_executed(context):
 def step_see_table_dropped(context):
     """Verify that the table was successfully dropped."""
     output = context.cmd_output.decode('utf-8')
-    assert any([
-        "DROP TABLE" in output,
-        "Your call!" in output,
-    ]), f"Expected DROP TABLE confirmation in output, but got: {output}"
+    # Should NOT contain "Your call!" when using --yes
+    assert "Your call!" not in output, \
+        f"Expected no 'Your call!' message with --yes flag, but found it in output: {output}"
+    assert "DROP TABLE" in output, \
+        f"Expected DROP TABLE confirmation in output, but got: {output}"
     context.table_created = False  # Mark as not needing cleanup
 
 
