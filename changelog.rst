@@ -3,6 +3,12 @@ Upcoming (TBD)
 
 Features:
 ---------
+* Add support for `tuples-only` option to print rows without extra output.
+    * Command line option `-t` or `--tuples-only`.
+    * Without value, defaults to `csv-noheader` format.
+    * Optionally specify a table format (e.g., `-t minimal`).
+    * Suppresses status messages (SELECT X) and timing information.
+    * Similar to psql's `-t` flag, useful for scripting and automation.
 * Add support for `init-command` to run when the connection is established.
     * Command line option `--init-command`
     * Provide `init-command` in the config file
@@ -21,6 +27,15 @@ Features:
     * Skips the destructive command confirmation prompt when enabled.
     * Useful for automated scripts and CI/CD pipelines.
 * Add hostaddr to handle .pgpass with ssh tunnels
+
+Documentation:
+--------------
+
+* Document previously undocumented table formats in config file:
+    * `csv-noheader` - CSV format without headers
+    * `tsv_noheader` - TSV format without headers
+    * `csv-tab-noheader` - Alias for tsv_noheader
+    * `minimal` - Aligned columns without headers or borders
 
 Internal:
 ---------
