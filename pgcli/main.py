@@ -561,15 +561,21 @@ class PGCli:
             # Use TimedRotatingFileHandler for daily log rotation
             # Rotates at midnight, keeps 30 days of logs
             expanded_log_file = os.path.expanduser(log_file)
+
+            # Remove .log extension if present to avoid pgcli.log.log pattern
+            base_log_file = expanded_log_file
+            if base_log_file.endswith('.log'):
+                base_log_file = base_log_file[:-4]
+
             handler = logging.handlers.TimedRotatingFileHandler(
-                expanded_log_file,
+                base_log_file,
                 when='midnight',
                 interval=1,
                 backupCount=30,
                 encoding='utf-8'
             )
-            # Format: pgcli.log.2025-12-02
-            handler.suffix = "%Y-%m-%d"
+            # Format: pgcli.YYYY-MM-DD.log
+            handler.suffix = ".%Y-%m-%d.log"
 
         level_map = {
             "CRITICAL": logging.CRITICAL,
