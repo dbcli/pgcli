@@ -9,6 +9,7 @@ import re
 import sys
 import traceback
 import logging
+import logging.handlers
 import threading
 import shutil
 import functools
@@ -550,7 +551,18 @@ class PGCli:
     def initialize_logging(self):
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
-            log_file = config_location() + "log"
+            # Try /var/log/pgcli first, fallback to user config dir if no permissions
+            default_system_log = "/var/log/pgcli/pgcli.log"
+            try:
+                os.makedirs(os.path.dirname(default_system_log), exist_ok=True)
+                # Test if we can write to /var/log/pgcli
+                with open(default_system_log, "a"):
+                    pass
+                log_file = default_system_log
+            except (OSError, PermissionError):
+                # Fallback to user's config directory if no system permissions
+                log_file = config_location() + "log"
+
         ensure_dir_exists(log_file)
         log_level = self.config["main"]["log_level"]
 
@@ -559,7 +571,18 @@ class PGCli:
         if log_level.upper() == "NONE":
             handler = logging.NullHandler()
         else:
-            handler = logging.FileHandler(os.path.expanduser(log_file))
+            # Use TimedRotatingFileHandler for daily log rotation
+            # Rotates at midnight, keeps 30 days of logs
+            expanded_log_file = os.path.expanduser(log_file)
+            handler = logging.handlers.TimedRotatingFileHandler(
+                expanded_log_file,
+                when='midnight',
+                interval=1,
+                backupCount=30,
+                encoding='utf-8'
+            )
+            # Format: pgcli.log.2025-12-02
+            handler.suffix = "%Y-%m-%d"
 
         level_map = {
             "CRITICAL": logging.CRITICAL,

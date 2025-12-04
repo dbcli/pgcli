@@ -66,9 +66,12 @@ generate_aliases = False
 alias_map_file =
 
 # log_file location.
-# In Unix/Linux: ~/.config/pgcli/log
-# In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\log
-# %USERPROFILE% is typically C:\Users\{username}
+# Default behavior:
+#   - Tries /var/log/pgcli/pgcli.log first (if running with permissions)
+#   - Falls back to ~/.config/pgcli/log (Unix/Linux) or %USERPROFILE%\AppData\Local\dbcli\pgcli\log (Windows)
+# Log rotation: Daily at midnight, keeps 30 days of logs
+# Format: pgcli.log.YYYY-MM-DD
+# You can specify a custom path here if needed
 log_file = default
 
 # keyword casing preference. Possible values: "lower", "upper", "auto"
