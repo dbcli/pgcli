@@ -18,6 +18,8 @@ Internal:
   * Use github trusted publisher for pypi release
   * Update dev requirements and replace requirements-dev.txt with pyproject.toml
   * Use ruff instead of black
+* Implement daily log rotation at midnight with 30-day retention using TimedRotatingFileHandler
+* Change default log location to /var/log/pgcli/pgcli.log (with automatic fallback to ~/.config/pgcli/log if no permissions)
 
 Bug fixes:
 ----------
