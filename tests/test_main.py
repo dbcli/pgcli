@@ -394,6 +394,136 @@ def test_logfile_unwriteable_file(executor):
 
 
 @dbtest
+def test_log_rotation_day_of_week(executor):
+    """Test log rotation by day of week (Mon-Sun)"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Mock config with day-of-week rotation
+        config = {
+            "main": {
+                "log_file": "default",
+                "log_rotation_mode": "day-of-week",
+                "log_destination": tmpdir,
+                "log_level": "INFO"
+            }
+        }
+
+        with mock.patch("pgcli.main.config_location", return_value=tmpdir + "/"):
+            cli = PGCli(pgexecute=executor)
+            cli.config = config
+            cli.initialize_logging()
+
+        # Check that log file has day-of-week naming (uses system locale)
+        day_name = datetime.datetime.now().strftime("%a")
+        expected_log = os.path.join(tmpdir, f"pgcli-{day_name}.log")
+
+        assert os.path.exists(expected_log)
+
+
+@dbtest
+def test_log_rotation_day_of_month(executor):
+    """Test log rotation by day of month (01-31)"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Mock config with day-of-month rotation
+        config = {
+            "main": {
+                "log_file": "default",
+                "log_rotation_mode": "day-of-month",
+                "log_destination": tmpdir,
+                "log_level": "INFO"
+            }
+        }
+
+        with mock.patch("pgcli.main.config_location", return_value=tmpdir + "/"):
+            cli = PGCli(pgexecute=executor)
+            cli.config = config
+            cli.initialize_logging()
+
+        # Check that log file has day-of-month naming
+        day_num = datetime.datetime.now().strftime("%d")
+        expected_log = os.path.join(tmpdir, f"pgcli-{day_num}.log")
+
+        assert os.path.exists(expected_log)
+
+
+@dbtest
+def test_log_rotation_date(executor):
+    """Test log rotation by date (YYYYMMDD)"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Mock config with date rotation
+        config = {
+            "main": {
+                "log_file": "default",
+                "log_rotation_mode": "date",
+                "log_destination": tmpdir,
+                "log_level": "INFO"
+            }
+        }
+
+        with mock.patch("pgcli.main.config_location", return_value=tmpdir + "/"):
+            cli = PGCli(pgexecute=executor)
+            cli.config = config
+            cli.initialize_logging()
+
+        # Check that log file has date naming
+        date_str = datetime.datetime.now().strftime("%Y%m%d")
+        expected_log = os.path.join(tmpdir, f"pgcli-{date_str}.log")
+
+        assert os.path.exists(expected_log)
+
+
+@dbtest
+def test_log_rotation_none_backwards_compatible(executor):
+    """Test that 'none' rotation mode maintains backwards compatibility"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Mock config with no rotation (default)
+        config = {
+            "main": {
+                "log_file": "default",
+                "log_rotation_mode": "none",
+                "log_destination": tmpdir,
+                "log_level": "INFO"
+            }
+        }
+
+        with mock.patch("pgcli.main.config_location", return_value=tmpdir + "/"):
+            cli = PGCli(pgexecute=executor)
+            cli.config = config
+            cli.initialize_logging()
+
+        # Check that log file has standard naming (backwards compatible)
+        expected_log = os.path.join(tmpdir, "pgcli.log")
+
+        assert os.path.exists(expected_log)
+
+
+@dbtest
+def test_log_destination_custom(executor):
+    """Test custom log destination"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        custom_log_dir = os.path.join(tmpdir, "custom_logs")
+        os.makedirs(custom_log_dir)
+
+        config = {
+            "main": {
+                "log_file": "default",
+                "log_rotation_mode": "none",
+                "log_destination": custom_log_dir,
+                "log_level": "INFO"
+            }
+        }
+
+        with mock.patch("pgcli.main.config_location", return_value=tmpdir + "/"):
+            cli = PGCli(pgexecute=executor)
+            cli.config = config
+            cli.initialize_logging()
+
+        # Check that log file is in custom directory
+        expected_log = os.path.join(custom_log_dir, "pgcli.log")
+
+        assert os.path.exists(expected_log)
+
+
+@dbtest
 def test_watch_works(executor):
     cli = PGCli(pgexecute=executor)
 

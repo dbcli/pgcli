@@ -71,6 +71,21 @@ alias_map_file =
 # %USERPROFILE% is typically C:\Users\{username}
 log_file = default
 
+# Log rotation mode. Determines how log files are rotated.
+# Possible values:
+#   "none"         - No rotation, single log file (default, backwards compatible)
+#   "day-of-week"  - Rotate by day name (Mon-Sun), overwrites weekly
+#   "day-of-month" - Rotate by day number (01-31), overwrites monthly
+#   "date"         - Rotate by date (YYYYMMDD), never overwrites
+log_rotation_mode = none
+
+# log_destination - Directory where log files are stored.
+# By default uses the same location as log_file (typically ~/.config/pgcli/log)
+# You can specify a different directory if desired
+# Example: log_destination = /var/log/pgcli
+# Leave as "default" to use the standard config location
+log_destination = default
+
 # keyword casing preference. Possible values: "lower", "upper", "auto"
 keyword_casing = auto
 

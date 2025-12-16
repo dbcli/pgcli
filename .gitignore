@@ -74,3 +74,6 @@ venv/
 .ropeproject/
 uv.lock
 
+# Don't track pgcli/__init__.py version changes
+pgcli/__init__.py
+

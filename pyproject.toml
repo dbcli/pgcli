@@ -50,7 +50,10 @@ pgcli = "pgcli.main:cli"
 
 [project.optional-dependencies]
 keyring = ["keyring >= 12.2.0"]
-sshtunnel = ["sshtunnel >= 0.4.0"]
+sshtunnel = [
+    "sshtunnel >= 0.4.0",
+    "paramiko >= 3.0, < 4.0",  # sshtunnel 0.4.0 is incompatible with paramiko 4.x
+]
 dev = [
     "behave>=1.2.4",
     "coverage>=7.2.7",
