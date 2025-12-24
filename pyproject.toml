@@ -6,7 +6,6 @@ description = "CLI for Postgres Database. With auto-completion and syntax highli
 readme = "README.rst"
 classifiers = [
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: Unix",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
