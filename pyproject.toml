@@ -84,6 +84,7 @@ pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 [tool.ruff]
 target-version = 'py39'
 line-length = 140
+show-fixes = true
 
 [tool.ruff.lint]
 select = [
