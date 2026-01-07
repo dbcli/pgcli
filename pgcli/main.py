@@ -208,6 +208,10 @@ class PGCli:
         self.output_file = None
         self.pgspecial = PGSpecial()
 
+        self.hide_named_query_text = (
+            "hide_named_query_text" in c["main"]
+            and c["main"].as_bool("hide_named_query_text")
+        )
         self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
@@ -307,7 +311,32 @@ class PGCli:
     def quit(self):
         raise PgCliQuitError
 
+    def toggle_named_query_quiet(self):
+        """Toggle hiding of named query text"""
+        self.hide_named_query_text = not self.hide_named_query_text
+        status = "ON" if self.hide_named_query_text else "OFF"
+        message = f"Named query quiet mode: {status}"
+        return [(None, None, None, message)]
+
+    def _is_named_query_execution(self, text):
+        """Check if the command is a named query execution (\n <name>)."""
+        text = text.strip()
+        return (
+            text.startswith("\\n ")
+            and not text.startswith("\\ns ")
+            and not text.startswith("\\nd ")
+        )
+
     def register_special_commands(self):
+        self.pgspecial.register(
+            self.toggle_named_query_quiet,
+            "\\nq",
+            "\\nq",
+            "Toggle named query quiet mode (hide query text)",
+            arg_type=NO_QUERY,
+            case_sensitive=True,
+        )
+
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -828,7 +857,14 @@ class PGCli:
                 if self.output_file and not text.startswith(("\\o ", "\\log-file", "\\? ", "\\echo ")):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
-                            click.echo(text, file=f)
+                            should_hide = (
+                                self.hide_named_query_text
+                                and query.is_special
+                                and query.successful
+                                and self._is_named_query_execution(text)
+                            )
+                            if not should_hide:
+                                click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
                     except OSError as e:
@@ -842,7 +878,14 @@ class PGCli:
                     try:
                         with open(self.log_file, "a", encoding="utf-8") as f:
                             click.echo(dt.datetime.now().isoformat(), file=f)  # timestamp log
-                            click.echo(text, file=f)
+                            should_hide = (
+                                self.hide_named_query_text
+                                and query.is_special
+                                and query.successful
+                                and self._is_named_query_execution(text)
+                            )
+                            if not should_hide:
+                                click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
                     except OSError as e:
@@ -1136,6 +1179,18 @@ class PGCli:
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
             )
+
+            # Hide query text for named queries in quiet mode
+            if (
+                self.hide_named_query_text
+                and is_special
+                and success
+                and self._is_named_query_execution(text)
+                and title
+                and title.startswith("> ")
+            ):
+                title = None
+
             execution = time() - start
             formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
 

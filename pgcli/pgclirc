@@ -116,6 +116,11 @@ search_path_filter = False
 # Timing of sql statements and table rendering.
 timing = True
 
+# Hide the query text when executing named queries (\n <name>).
+# Only the query results will be displayed.
+# Can be toggled at runtime with \nq command.
+hide_named_query_text = False
+
 # Show/hide the informational toolbar with function keymap at the footer.
 show_bottom_toolbar = True
 
