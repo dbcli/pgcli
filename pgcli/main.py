@@ -208,10 +208,7 @@ class PGCli:
         self.output_file = None
         self.pgspecial = PGSpecial()
 
-        self.hide_named_query_text = (
-            "hide_named_query_text" in c["main"]
-            and c["main"].as_bool("hide_named_query_text")
-        )
+        self.hide_named_query_text = "hide_named_query_text" in c["main"] and c["main"].as_bool("hide_named_query_text")
         self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
@@ -321,11 +318,7 @@ class PGCli:
     def _is_named_query_execution(self, text):
         """Check if the command is a named query execution (\n <name>)."""
         text = text.strip()
-        return (
-            text.startswith("\\n ")
-            and not text.startswith("\\ns ")
-            and not text.startswith("\\nd ")
-        )
+        return text.startswith("\\n ") and not text.startswith("\\ns ") and not text.startswith("\\nd ")
 
     def register_special_commands(self):
         self.pgspecial.register(
