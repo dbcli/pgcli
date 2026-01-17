@@ -560,7 +560,42 @@ class PGCli:
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
             log_file = config_location() + "log"
-        ensure_dir_exists(log_file)
+
+        # Get log rotation mode and destination
+        log_rotation_mode = self.config["main"].get("log_rotation_mode", "none")
+        log_destination = self.config["main"].get("log_destination", "default")
+
+        # Handle log_destination
+        if log_destination == "default":
+            # Use same location as log_file
+            if log_file == "default" or log_file.endswith("log"):
+                log_dir = os.path.dirname(log_file) if os.path.dirname(log_file) else config_location()
+            else:
+                log_dir = log_file if os.path.isdir(log_file) else os.path.dirname(log_file)
+        else:
+            log_dir = os.path.expanduser(log_destination)
+
+        ensure_dir_exists(log_dir)
+
+        # Determine log filename based on rotation mode
+        if log_rotation_mode == "day-of-week":
+            # Rotate by day name (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+            # Use %a format which gives abbreviated weekday name from system locale
+            day_name = dt.datetime.now().strftime("%a")
+            log_filename = f"pgcli-{day_name}.log"
+        elif log_rotation_mode == "day-of-month":
+            # Rotate by day number (01-31)
+            day_num = dt.datetime.now().strftime("%d")
+            log_filename = f"pgcli-{day_num}.log"
+        elif log_rotation_mode == "date":
+            # Rotate by date (YYYYMMDD), never overwrites
+            date_str = dt.datetime.now().strftime("%Y%m%d")
+            log_filename = f"pgcli-{date_str}.log"
+        else:  # "none" or any other value - backwards compatible
+            log_filename = "pgcli.log"
+
+        log_file_path = os.path.join(log_dir, log_filename)
+
         log_level = self.config["main"]["log_level"]
 
         # Disable logging if value is NONE by switching to a no-op handler.
@@ -568,7 +603,7 @@ class PGCli:
         if log_level.upper() == "NONE":
             handler = logging.NullHandler()
         else:
-            handler = logging.FileHandler(os.path.expanduser(log_file))
+            handler = logging.FileHandler(os.path.expanduser(log_file_path))
 
         level_map = {
             "CRITICAL": logging.CRITICAL,
@@ -590,7 +625,8 @@ class PGCli:
         root_logger.setLevel(log_level)
 
         root_logger.debug("Initializing pgcli logging.")
-        root_logger.debug("Log file %r.", log_file)
+        root_logger.debug("Log file %r.", log_file_path)
+        root_logger.debug("Log rotation mode: %r.", log_rotation_mode)
 
         pgspecial_logger = logging.getLogger("pgspecial")
         pgspecial_logger.addHandler(handler)

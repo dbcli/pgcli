@@ -9,6 +9,13 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Add log rotation support with multiple modes (inspired by PostgreSQL `log_filename`).
+    * Config option `log_rotation_mode`: `none` (default), `day-of-week`, `day-of-month`, `date`
+    * Config option `log_destination`: customize log directory location
+    * Day-of-week mode creates files like `pgcli-Mon.log`, overwrites weekly
+    * Day-of-month mode creates files like `pgcli-01.log`, overwrites monthly
+    * Date mode creates files like `pgcli-20250127.log`, never overwrites
+    * Backward compatible: defaults to single `pgcli.log` file when `log_rotation_mode = none`
 
 Internal:
 ---------
