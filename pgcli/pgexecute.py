@@ -212,7 +212,11 @@ class PGExecute:
         new_params.update(kwargs)
 
         if new_params["dsn"]:
-            new_params = {"dsn": new_params["dsn"], "password": new_params["password"]}
+            # Preserve hostaddr when using DSN (needed for SSH tunnels with .pgpass)
+            preserved_params = {"dsn": new_params["dsn"], "password": new_params["password"]}
+            if "hostaddr" in new_params:
+                preserved_params["hostaddr"] = new_params["hostaddr"]
+            new_params = preserved_params
 
             if new_params["password"]:
                 new_params["dsn"] = make_conninfo(new_params["dsn"], password=new_params.pop("password"))

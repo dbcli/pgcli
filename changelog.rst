@@ -9,6 +9,11 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Enable .pgpass support for SSH tunnel connections
+    * Preserve original hostname for .pgpass lookup when using SSH tunnels
+    * Use PostgreSQL's `hostaddr` parameter to specify tunnel endpoint
+    * Add SSH configuration options (ssh_config_file, allow_agent, compression)
+    * `.pgpass` file now works seamlessly with `--ssh-tunnel` option
 
 Internal:
 ---------
