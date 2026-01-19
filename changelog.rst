@@ -9,6 +9,12 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Add support for `--tuples-only` (`-t`) option to print rows without extra output.
+    * Similar to psql's `-t` flag
+    * Command line option `-t` or `--tuples-only`
+    * Defaults to `csv-noheader` format when used as flag
+    * Can specify custom format: `-t minimal`, `-t tsv`, etc.
+    * Suppresses status messages and timing information
 
 Internal:
 ---------
