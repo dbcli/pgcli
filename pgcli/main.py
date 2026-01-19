@@ -947,6 +947,25 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
+        # Handle command mode (-c flag) - similar to psql behavior
+        # Multiple -c options are executed sequentially
+        if hasattr(self, 'commands') and self.commands:
+            try:
+                for command in self.commands:
+                    logger.debug("Running command: %s", command)
+                    # Execute the command using the same logic as interactive mode
+                    self.handle_watch_command(command)
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # Exit successfully after executing all commands
+            sys.exit(0)
+
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
             history_file = config_location() + "history"
@@ -1326,7 +1345,8 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
+        # Disable pager for -c/--command mode and \watch command
+        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or (hasattr(self, 'commands') and self.commands):
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1474,6 +1494,13 @@ class PGCli:
     type=str,
     help="SQL statement to execute after connecting.",
 )
+@click.option(
+    "-c",
+    "--command",
+    "commands",
+    multiple=True,
+    help="run command (SQL or internal) and exit. Multiple -c options are allowed.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1502,6 +1529,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    commands: tuple,
 ):
     if version:
         print("Version:", __version__)
@@ -1561,6 +1589,9 @@ def cli(
         ssh_tunnel_url=ssh_tunnel,
         log_file=log_file,
     )
+
+    # Store commands for -c option (can be multiple)
+    pgcli.commands = commands if commands else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
