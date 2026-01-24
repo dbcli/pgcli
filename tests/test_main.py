@@ -596,7 +596,7 @@ def test_get_prompt_with_transaction_status(transaction_indicator, expected):
     cli.pgexecute.port = 5432
     cli.pgexecute.pid = 12345
     cli.pgexecute.superuser = False
-    type(cli.pgexecute).transaction_indicator = mock.PropertyMock(return_value=transaction_indicator)
+    cli.pgexecute.transaction_indicator = transaction_indicator
 
     result = cli.get_prompt("\\T\\u")
     assert result == expected
@@ -612,7 +612,7 @@ def test_get_prompt_transaction_status_in_full_prompt():
     cli.pgexecute.port = 5432
     cli.pgexecute.pid = 12345
     cli.pgexecute.superuser = False
-    type(cli.pgexecute).transaction_indicator = mock.PropertyMock(return_value="*")
+    cli.pgexecute.transaction_indicator = "*"
 
     result = cli.get_prompt("\\T\\u@\\h:\\d> ")
     assert result == "*user@db.example.com:mydb> "
