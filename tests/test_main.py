@@ -583,7 +583,7 @@ def test_duration_in_words(duration_in_seconds, words):
         ("*", "*testuser"),  # valid transaction
         ("!", "!testuser"),  # failed transaction
         ("?", "?testuser"),  # connection closed
-        ("", "testuser"),  # idle
+        ("", "testuser"),    # idle
     ],
 )
 def test_get_prompt_with_transaction_status(transaction_indicator, expected):
