@@ -298,6 +298,19 @@ class PGExecute:
         status = self.conn.info.transaction_status
         return status == psycopg.pq.TransactionStatus.ACTIVE or status == psycopg.pq.TransactionStatus.INTRANS
 
+    def is_connection_closed(self):
+        return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.UNKNOWN
+
+    @property
+    def transaction_indicator(self):
+        if self.is_connection_closed():
+            return "?"
+        if self.failed_transaction():
+            return "!"
+        if self.valid_transaction():
+            return "*"
+        return ""
+
     def run(
         self,
         statement,

@@ -1307,6 +1307,7 @@ class PGCli:
         string = string.replace("\\i", str(self.pgexecute.pid) or "(none)")
         string = string.replace("\\#", "#" if self.pgexecute.superuser else ">")
         string = string.replace("\\n", "\n")
+        string = string.replace("\\T", self.pgexecute.transaction_indicator)
         return string
 
     def get_last_query(self):

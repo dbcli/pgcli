@@ -1,3 +1,10 @@
+Upcoming (TBD)
+==============
+
+Features:
+---------
+* Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
+
 4.4.0 (2025-12-24)
 ==================
 
