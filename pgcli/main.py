@@ -179,6 +179,7 @@ class PGCli:
         application_name="pgcli",
         single_connection=False,
         less_chatty=None,
+        tuples_only=None,
         prompt=None,
         prompt_dsn=None,
         auto_vertical_output=False,
@@ -236,7 +237,10 @@ class PGCli:
 
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
-        self.table_format = c["main"]["table_format"]
+        if tuples_only:
+            self.table_format = "csv-noheader"
+        else:
+            self.table_format = c["main"]["table_format"]
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
@@ -1430,6 +1434,14 @@ class PGCli:
     default=False,
     help="Skip intro on startup and goodbye on exit.",
 )
+@click.option(
+    "-t",
+    "--tuples-only",
+    "tuples_only",
+    is_flag=True,
+    default=False,
+    help="Print rows only, using csv-noheader format. Same as \\T csv-noheader.",
+)
 @click.option("--prompt", help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option(
     "--prompt-dsn",
@@ -1493,6 +1505,7 @@ def cli(
     row_limit,
     application_name,
     less_chatty,
+    tuples_only,
     prompt,
     prompt_dsn,
     list_databases,
@@ -1555,6 +1568,7 @@ def cli(
         application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
+        tuples_only=tuples_only,
         prompt=prompt,
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
