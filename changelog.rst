@@ -16,6 +16,9 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
+* Add support for executing SQL commands from file and exit.
+    * Command line option `-f` or `--file`.
+    * Multiple files can be specified.
 
 Internal:
 ---------
