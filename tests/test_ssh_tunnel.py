@@ -50,15 +50,13 @@ def test_ssh_tunnel(mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicM
     mock_pgexecute.assert_called_once()
 
     call_args, call_kwargs = mock_pgexecute.call_args
-    assert call_args == (
-        db_params["database"],
-        db_params["user"],
-        db_params["passwd"],
-        "127.0.0.1",
-        pgcli.ssh_tunnel.local_bind_ports[0],
-        "",
-        notify_callback,
-    )
+    # Original host is preserved for .pgpass lookup, hostaddr has tunnel endpoint
+    assert call_args[0] == db_params["database"]  # database
+    assert call_args[1] == db_params["user"]  # user
+    assert call_args[2] == db_params["passwd"]  # passwd
+    assert call_args[3] == db_params["host"]  # original host preserved
+    assert call_args[4] == pgcli.ssh_tunnel.local_bind_ports[0]  # tunnel port
+    assert call_kwargs.get("hostaddr") == "127.0.0.1"  # tunnel endpoint via hostaddr
     mock_ssh_tunnel_forwarder.reset_mock()
     mock_pgexecute.reset_mock()
 
@@ -86,15 +84,10 @@ def test_ssh_tunnel(mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicM
     mock_pgexecute.assert_called_once()
 
     call_args, call_kwargs = mock_pgexecute.call_args
-    assert call_args == (
-        db_params["database"],
-        db_params["user"],
-        db_params["passwd"],
-        "127.0.0.1",
-        pgcli.ssh_tunnel.local_bind_ports[0],
-        "",
-        notify_callback,
-    )
+    # Original host is preserved, hostaddr has tunnel endpoint
+    assert call_args[3] == db_params["host"]  # original host preserved
+    assert call_args[4] == pgcli.ssh_tunnel.local_bind_ports[0]  # tunnel port
+    assert call_kwargs.get("hostaddr") == "127.0.0.1"
     mock_ssh_tunnel_forwarder.reset_mock()
     mock_pgexecute.reset_mock()
 
@@ -104,13 +97,78 @@ def test_ssh_tunnel(mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicM
     pgcli = PGCli(ssh_tunnel_url=tunnel_url)
     pgcli.connect(dsn=dsn)
 
-    expected_dsn = f"user={db_params['user']} password={db_params['passwd']} host=127.0.0.1 port={pgcli.ssh_tunnel.local_bind_ports[0]}"
-
     mock_ssh_tunnel_forwarder.assert_called_once_with(**expected_tunnel_params)
     mock_pgexecute.assert_called_once()
 
     call_args, call_kwargs = mock_pgexecute.call_args
-    assert expected_dsn in call_args
+    # DSN should contain original host AND hostaddr for tunnel
+    dsn_arg = call_args[5]  # dsn is 6th positional arg
+    assert f"host={db_params['host']}" in dsn_arg
+    assert "hostaddr=127.0.0.1" in dsn_arg
+    assert f"port={pgcli.ssh_tunnel.local_bind_ports[0]}" in dsn_arg
+
+
+def test_ssh_tunnel_preserves_original_host_for_pgpass(
+    mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock
+) -> None:
+    """Verify that the original hostname is preserved for .pgpass lookup."""
+    tunnel_url = "bastion.example.com"
+    original_host = "production.db.example.com"
+
+    pgcli = PGCli(ssh_tunnel_url=tunnel_url)
+    pgcli.connect(database="mydb", host=original_host, user="dbuser", passwd="dbpass")
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    # host parameter should be the original, not 127.0.0.1
+    assert call_args[3] == original_host
+    # hostaddr should be the tunnel endpoint
+    assert call_kwargs.get("hostaddr") == "127.0.0.1"
+
+
+def test_ssh_tunnel_with_dsn_preserves_host(
+    mock_ssh_tunnel_forwarder: MagicMock, mock_pgexecute: MagicMock
+) -> None:
+    """DSN connections should include hostaddr for tunnel while preserving host."""
+    tunnel_url = "bastion.example.com"
+    dsn = "host=production.db.example.com port=5432 dbname=mydb user=dbuser"
+
+    pgcli = PGCli(ssh_tunnel_url=tunnel_url)
+    pgcli.connect(dsn=dsn)
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    dsn_arg = call_args[5]
+    assert "host=production.db.example.com" in dsn_arg
+    assert "hostaddr=127.0.0.1" in dsn_arg
+
+
+def test_no_ssh_tunnel_does_not_set_hostaddr(mock_pgexecute: MagicMock) -> None:
+    """Without SSH tunnel, hostaddr should not be set."""
+    pgcli = PGCli()
+    pgcli.connect(database="mydb", host="localhost", user="user", passwd="pass")
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    assert "hostaddr" not in call_kwargs
+
+
+def test_connect_uri_without_ssh_tunnel(mock_pgexecute: MagicMock) -> None:
+    """connect_uri should work normally without SSH tunnel."""
+    pgcli = PGCli()
+    pgcli.connect_uri("postgresql://user:pass@localhost/mydb")
+
+    mock_pgexecute.assert_called_once()
+    call_args, call_kwargs = mock_pgexecute.call_args
+    assert "hostaddr" not in call_kwargs
+
+
+def test_connect_uri_passes_dsn(mock_pgexecute: MagicMock) -> None:
+    """connect_uri should pass the URI as dsn parameter."""
+    uri = "postgresql://user:pass@localhost/mydb"
+    pgcli = PGCli()
+    pgcli.connect_uri(uri)
+
+    call_args, call_kwargs = mock_pgexecute.call_args
+    # dsn is passed as the 6th positional arg to PGExecute.__init__
+    assert call_args[5] == uri
 
 
 def test_cli_with_tunnel() -> None:
