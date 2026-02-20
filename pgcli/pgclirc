@@ -176,6 +176,7 @@ verbose_errors = False
 # \i - Postgres PID
 # \# - "@" sign if logged in as superuser, '>' in other case
 # \n - Newline
+# \T - Transaction status: '*' if in a valid transaction, '!' if in a failed transaction, '?' if disconnected, empty otherwise
 # \dsn_alias - name of dsn connection string alias if -D option is used (empty otherwise)
 # \x1b[...m - insert ANSI escape sequence
 # eg: prompt = '\x1b[35m\u@\x1b[32m\h:\x1b[36m\d>'
