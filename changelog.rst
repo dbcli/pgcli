@@ -4,6 +4,10 @@ Upcoming (TBD)
 Features:
 ---------
 * Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
+* Add ``-t``/``--tuples-only`` CLI option to set table format at startup.
+    * Sets table format to ``csv-noheader`` (rows only, no headers)
+    * CLI shortcut equivalent to ``\T csv-noheader``
+    * Does not suppress timing or status messages (use ``\pset`` for that)
 
 4.4.0 (2025-12-24)
 ==================
