@@ -185,12 +185,14 @@ class PGCli:
         warn=None,
         ssh_tunnel_url: Optional[str] = None,
         log_file: Optional[str] = None,
+        force_destructive: bool = False,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
         self.dsn_alias = None
         self.watch_command = None
+        self.force_destructive = force_destructive
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -506,7 +508,10 @@ class PGCli:
             ):
                 message = "Destructive statements must be run within a transaction. Command execution stopped."
                 return [(None, None, None, message)]
-            destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias)
+            if self.force_destructive:
+                destroy = True
+            else:
+                destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias)
             if destroy is False:
                 message = "Wise choice. Command execution stopped."
                 return [(None, None, None, message)]
@@ -814,11 +819,14 @@ class PGCli:
                 ):
                     click.secho("Destructive statements must be run within a transaction.")
                     raise KeyboardInterrupt
-                destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias)
+                if self.force_destructive:
+                    destroy = True
+                else:
+                    destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias)
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
-                elif destroy:
+                elif destroy and not self.force_destructive:
                     click.secho("Your call!")
 
             output, query = self._evaluate_command(text)
@@ -1475,6 +1483,14 @@ class PGCli:
     type=str,
     help="SQL statement to execute after connecting.",
 )
+@click.option(
+    "-y",
+    "--yes",
+    "force_destructive",
+    is_flag=True,
+    default=False,
+    help="Force destructive commands without confirmation prompt.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1503,6 +1519,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    force_destructive: bool,
 ):
     if version:
         print("Version:", __version__)
@@ -1561,6 +1578,7 @@ def cli(
         warn=warn,
         ssh_tunnel_url=ssh_tunnel,
         log_file=log_file,
+        force_destructive=force_destructive,
     )
 
     # Choose which ever one has a valid value.
