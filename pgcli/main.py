@@ -709,11 +709,15 @@ class PGCli:
             self.logger.handlers = logger_handlers
 
             atexit.register(self.ssh_tunnel.stop)
-            host = "127.0.0.1"
+            # Preserve original host for .pgpass lookup and SSL certificate verification.
+            # Use hostaddr to specify the actual connection endpoint (SSH tunnel).
+            hostaddr = "127.0.0.1"
             port = self.ssh_tunnel.local_bind_ports[0]
 
             if dsn:
-                dsn = make_conninfo(dsn, host=host, port=port)
+                dsn = make_conninfo(dsn, host=host, hostaddr=hostaddr, port=port)
+            else:
+                kwargs["hostaddr"] = hostaddr
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection

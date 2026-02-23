@@ -4,6 +4,10 @@ Upcoming (TBD)
 Features:
 ---------
 * Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
+* Enable ``.pgpass`` support for SSH tunnel connections.
+    * Preserve original hostname for ``.pgpass`` lookup using PostgreSQL's ``hostaddr`` parameter
+    * SSH tunnel endpoint (``127.0.0.1``) is passed via ``hostaddr``, keeping ``host`` for ``.pgpass``
+    * Works with both DSN and host/port connection styles
 
 4.4.0 (2025-12-24)
 ==================
