@@ -48,6 +48,7 @@ from prompt_toolkit.layout.processors import (
 )
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.cursor_shapes import ModalCursorShapeConfig
 from pygments.lexers.sql import PostgresLexer
 
 from pgspecial.main import PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT
@@ -1087,6 +1088,7 @@ class PGCli:
                 enable_suspend=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
                 search_ignore_case=True,
+                cursor=ModalCursorShapeConfig(),
             )
 
             return prompt_app
