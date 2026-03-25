@@ -53,9 +53,13 @@ class PrevalenceCounter:
         self.name_counts = defaultdict(int)
 
     def update_keywords(self, text):
+        found_keywords = []
         for keyword, regex in keyword_regexs.items():
             for _ in regex.finditer(text):
                 self.keyword_counts[keyword] += 1
+                found_keywords.append(keyword)
+        if self.smart_completion_freq and self._history_freq_manager and found_keywords:
+            self._history_freq_manager.record_keywords_batch(found_keywords)
 
     def keyword_count(self, keyword):
         session_count = self.keyword_counts[keyword]

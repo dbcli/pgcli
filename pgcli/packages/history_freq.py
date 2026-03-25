@@ -91,8 +91,23 @@ class HistoryFrequencyManager:
     def record_keywords_batch(self, keywords):
         if not keywords:
             return
+        keyword_counts = defaultdict(int)
         for keyword in keywords:
-            self.record_keyword_usage(keyword)
+            if keyword and isinstance(keyword, str):
+                kw = keyword.upper().strip()
+                if kw:
+                    keyword_counts[kw] += 1
+        if not keyword_counts:
+            return
+        with self._get_cursor() as cursor:
+            for keyword, count in keyword_counts.items():
+                cursor.execute("""
+                    INSERT INTO keyword_frequency (keyword, frequency, last_used)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(keyword) DO UPDATE SET 
+                        frequency = frequency + ?,
+                        last_used = CURRENT_TIMESTAMP
+                """, (keyword, count, count))
 
     def get_keyword_frequency(self, keyword):
         if not keyword:

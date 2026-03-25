@@ -282,6 +282,7 @@ class PGCli:
             "less_chatty": less_chatty,
             "keyword_casing": keyword_casing,
             "alias_map_file": c["main"]["alias_map_file"] or None,
+            "smart_completion_freq": c["main"].as_bool("smart_completion_freq"),
         }
 
         completer = PGCompleter(smart_completion, pgspecial=self.pgspecial, settings=self.settings)
