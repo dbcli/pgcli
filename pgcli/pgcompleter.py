@@ -106,8 +106,10 @@ class PGCompleter(Completer):
         super().__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
-        self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        # Use history-based frequency sorting when smart_completion is enabled
+        # History frequency data is persisted across sessions in ~/.config/pgcli/history_freq.db
+        self.prioritizer = PrevalenceCounter(use_history=self.smart_completion)
         self.signature_arg_style = settings.get("signature_arg_style", "{arg_name} {arg_type}")
         self.call_arg_style = settings.get("call_arg_style", "{arg_name: <{max_arg_len}} := {arg_default}")
         self.call_arg_display_style = settings.get("call_arg_display_style", "{arg_name}")
@@ -306,6 +308,12 @@ class PGCompleter(Completer):
 
     def set_search_path(self, search_path):
         self.search_path = self.escaped_names(search_path)
+
+    def set_smart_completion(self, enabled):
+        """Enable or disable smart completion (including history-based sorting)."""
+        self.smart_completion = enabled
+        # Recreate prioritizer with the new setting
+        self.prioritizer = PrevalenceCounter(use_history=self.smart_completion)
 
     def reset_completions(self):
         self.databases = []

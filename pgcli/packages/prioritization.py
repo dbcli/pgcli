@@ -3,6 +3,7 @@ import sqlparse
 from sqlparse.tokens import Name
 from collections import defaultdict
 from .pgliterals.main import get_literals
+from .history_freq import HistoryFrequency
 
 
 white_space_regex = re.compile("\\s+", re.MULTILINE)
@@ -20,9 +21,11 @@ keyword_regexs = {kw: _compile_regex(kw) for kw in keywords}
 
 
 class PrevalenceCounter:
-    def __init__(self):
+    def __init__(self, use_history=False):
         self.keyword_counts = defaultdict(int)
         self.name_counts = defaultdict(int)
+        self.use_history = use_history
+        self.history_freq = HistoryFrequency() if use_history else None
 
     def update(self, text):
         self.update_keywords(text)
@@ -32,7 +35,10 @@ class PrevalenceCounter:
         for parsed in sqlparse.parse(text):
             for token in parsed.flatten():
                 if token.ttype in Name:
-                    self.name_counts[token.value] += 1
+                    value = token.value
+                    self.name_counts[value] += 1
+                    if self.use_history and self.history_freq:
+                        self.history_freq.increment_name(value)
 
     def clear_names(self):
         self.name_counts = defaultdict(int)
@@ -43,9 +49,15 @@ class PrevalenceCounter:
         for keyword, regex in keyword_regexs.items():
             for _ in regex.finditer(text):
                 self.keyword_counts[keyword] += 1
+                if self.use_history and self.history_freq:
+                    self.history_freq.increment_keyword(keyword)
 
     def keyword_count(self, keyword):
+        if self.use_history and self.history_freq:
+            return self.keyword_counts[keyword] + self.history_freq.get_keyword_frequency(keyword)
         return self.keyword_counts[keyword]
 
     def name_count(self, name):
+        if self.use_history and self.history_freq:
+            return self.name_counts[name] + self.history_freq.get_name_frequency(name)
         return self.name_counts[name]

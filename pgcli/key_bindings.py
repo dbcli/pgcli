@@ -24,7 +24,8 @@ def pgcli_bindings(pgcli):
     def _(event):
         """Enable/Disable SmartCompletion Mode."""
         _logger.debug("Detected F2 key.")
-        pgcli.completer.smart_completion = not pgcli.completer.smart_completion
+        new_state = not pgcli.completer.smart_completion
+        pgcli.completer.set_smart_completion(new_state)
 
     @kb.add("f3")
     def _(event):
