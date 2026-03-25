@@ -284,8 +284,7 @@ class PGCli:
             "alias_map_file": c["main"]["alias_map_file"] or None,
         }
 
-        completer = PGCompleter(smart_completion, pgspecial=self.pgspecial, settings=self.settings)
-        self.completer = completer
+        self.completer = PGCompleter(smart_completion, pgspecial=self.pgspecial, settings=self.settings)
         self._completer_lock = threading.Lock()
         self.register_special_commands()
 
