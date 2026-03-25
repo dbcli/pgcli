@@ -3,7 +3,9 @@
 
 # Enables context sensitive auto-completion. If this is disabled, all
 # possible completions will be listed.
-smart_completion = True
+# Also enables history-based frequency sorting when enabled (uses SQLite database
+# to persist completion frequency data across sessions in ~/.config/pgcli/history_freq.db)
+smart_completion = False
 
 # Display the completions in several columns. (More completions will be
 # visible.)
