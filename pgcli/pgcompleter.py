@@ -106,8 +106,9 @@ class PGCompleter(Completer):
         super().__init__()
         self.smart_completion = smart_completion
         self.pgspecial = pgspecial
-        self.prioritizer = PrevalenceCounter()
         settings = settings or {}
+        self.smart_completion_freq = settings.get("smart_completion_freq", False)
+        self.prioritizer = PrevalenceCounter(smart_completion_freq=self.smart_completion_freq)
         self.signature_arg_style = settings.get("signature_arg_style", "{arg_name} {arg_type}")
         self.call_arg_style = settings.get("call_arg_style", "{arg_name: <{max_arg_len}} := {arg_default}")
         self.call_arg_display_style = settings.get("call_arg_display_style", "{arg_name}")
@@ -158,6 +159,10 @@ class PGCompleter(Completer):
 
     def escaped_names(self, names):
         return [self.escape_name(name) for name in names]
+
+    def set_smart_completion_freq(self, enabled):
+        self.smart_completion_freq = enabled
+        self.prioritizer.set_smart_completion_freq(enabled)
 
     def extend_database_names(self, databases):
         self.databases.extend(databases)
