@@ -633,7 +633,13 @@ class PGCli:
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
         if not self.force_passwd_prompt and not passwd:
-            passwd = os.environ.get("PGPASSWORD", "")
+            if dsn:
+                # Check if DSN contains a password - if so, don't use PGPASSWORD
+                parsed_dsn = conninfo_to_dict(dsn)
+                if "password" not in parsed_dsn:
+                    passwd = os.environ.get("PGPASSWORD", "")
+            else:
+                passwd = os.environ.get("PGPASSWORD", "")
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
