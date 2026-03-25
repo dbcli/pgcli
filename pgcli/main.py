@@ -415,6 +415,13 @@ class PGCli:
             "Toggle verbose errors.",
         )
 
+        self.pgspecial.register(
+            self.set_config_option,
+            "\\set",
+            "\\set <option> <value>",
+            "Set a configuration option (e.g., \\set smart_completion_freq on)",
+        )
+
     def toggle_verbose_errors(self, pattern, **_):
         flag = pattern.strip()
 
@@ -427,6 +434,32 @@ class PGCli:
 
         message = "Verbose errors " + "on." if self.verbose_errors else "off."
         return [(None, None, None, message)]
+
+    def set_config_option(self, pattern, **_):
+        pattern = pattern.strip()
+        if not pattern:
+            yield (None, None, None, "Usage: \\set <option> <value>")
+            return
+
+        parts = pattern.split(None, 1)
+        if len(parts) < 2:
+            yield (None, None, None, f"Current value: {self.config['main'].get(parts[0], 'not set')}")
+            return
+
+        option, value = parts[0], parts[1].strip()
+        if option == "smart_completion_freq":
+            if value.lower() in ("on", "true", "1", "yes"):
+                self.completer.set_smart_completion_freq(True)
+                self.config["main"]["smart_completion_freq"] = "True"
+                yield (None, None, None, "smart_completion_freq is now ON")
+            elif value.lower() in ("off", "false", "0", "no"):
+                self.completer.set_smart_completion_freq(False)
+                self.config["main"]["smart_completion_freq"] = "False"
+                yield (None, None, None, "smart_completion_freq is now OFF")
+            else:
+                yield (None, None, None, f"Invalid value '{value}'. Use 'on' or 'off'.")
+        else:
+            yield (None, None, None, f"Unknown option: {option}")
 
     def echo(self, pattern, **_):
         return [(None, None, None, pattern)]

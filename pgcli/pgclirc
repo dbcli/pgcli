@@ -5,6 +5,11 @@
 # possible completions will be listed.
 smart_completion = True
 
+# Enables frequency-based smart completion sorting. When enabled, SQL keywords
+# are sorted based on usage frequency stored in ~/.config/pgcli/history_freq.db
+# This feature can be toggled at runtime with \set smart_completion_freq on/off
+smart_completion_freq = False
+
 # Display the completions in several columns. (More completions will be
 # visible.)
 wider_completion_menu = False
