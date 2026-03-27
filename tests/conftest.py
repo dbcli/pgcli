@@ -1,4 +1,5 @@
 import os
+import platform
 import pytest
 from utils import (
     POSTGRES_HOST,
@@ -11,6 +12,13 @@ from utils import (
 )
 import pgcli.main
 import pgcli.pgexecute
+
+
+# Fix Windows test failures related to click 8.2 encoding issues
+# Windows uses CP1252 encoding by default, which can't handle Unicode characters
+# Set PYTHONIOENCODING=utf-8 to ensure proper Unicode handling
+if platform.system() == "Windows":
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 
 @pytest.fixture(scope="function")
