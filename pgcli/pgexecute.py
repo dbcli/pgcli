@@ -298,6 +298,19 @@ class PGExecute:
         status = self.conn.info.transaction_status
         return status == psycopg.pq.TransactionStatus.ACTIVE or status == psycopg.pq.TransactionStatus.INTRANS
 
+    def is_connection_closed(self):
+        return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.UNKNOWN
+
+    @property
+    def transaction_indicator(self):
+        if self.is_connection_closed():
+            return "?"
+        if self.failed_transaction():
+            return "!"
+        if self.valid_transaction():
+            return "*"
+        return ""
+
     def run(
         self,
         statement,
@@ -492,7 +505,8 @@ class PGExecute:
             else:
                 template = "CREATE OR REPLACE VIEW {name} AS \n{stmt}"
             return (
-                psycopg.sql.SQL(template)
+                psycopg.sql
+                .SQL(template)
                 .format(
                     name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),

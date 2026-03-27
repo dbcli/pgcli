@@ -3,6 +3,16 @@ Upcoming (TBD)
 
 Features:
 ---------
+* Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
+* Add cursor shape support for vi mode. When ``vi = True``, the terminal cursor now
+  reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
+  Uses prompt_toolkit's ``ModalCursorShapeConfig``.
+
+4.4.0 (2025-12-24)
+==================
+
+Features:
+---------
 * Add support for `init-command` to run when the connection is established.
     * Command line option `--init-command`
     * Provide `init-command` in the config file

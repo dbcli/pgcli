@@ -116,6 +116,11 @@ search_path_filter = False
 # Timing of sql statements and table rendering.
 timing = True
 
+# Hide the query text when executing named queries (\n <name>).
+# Only the query results will be displayed.
+# Can be toggled at runtime with \nq command.
+hide_named_query_text = False
+
 # Show/hide the informational toolbar with function keymap at the footer.
 show_bottom_toolbar = True
 
@@ -171,6 +176,7 @@ verbose_errors = False
 # \i - Postgres PID
 # \# - "@" sign if logged in as superuser, '>' in other case
 # \n - Newline
+# \T - Transaction status: '*' if in a valid transaction, '!' if in a failed transaction, '?' if disconnected, empty otherwise
 # \dsn_alias - name of dsn connection string alias if -D option is used (empty otherwise)
 # \x1b[...m - insert ANSI escape sequence
 # eg: prompt = '\x1b[35m\u@\x1b[32m\h:\x1b[36m\d>'

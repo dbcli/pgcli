@@ -577,6 +577,47 @@ def test_duration_in_words(duration_in_seconds, words):
     assert duration_in_words(duration_in_seconds) == words
 
 
+@pytest.mark.parametrize(
+    "transaction_indicator,expected",
+    [
+        ("*", "*testuser"),  # valid transaction
+        ("!", "!testuser"),  # failed transaction
+        ("?", "?testuser"),  # connection closed
+        ("", "testuser"),  # idle
+    ],
+)
+def test_get_prompt_with_transaction_status(transaction_indicator, expected):
+    cli = PGCli()
+    cli.pgexecute = mock.MagicMock()
+    cli.pgexecute.user = "testuser"
+    cli.pgexecute.dbname = "testdb"
+    cli.pgexecute.host = "localhost"
+    cli.pgexecute.short_host = "localhost"
+    cli.pgexecute.port = 5432
+    cli.pgexecute.pid = 12345
+    cli.pgexecute.superuser = False
+    cli.pgexecute.transaction_indicator = transaction_indicator
+
+    result = cli.get_prompt("\\T\\u")
+    assert result == expected
+
+
+def test_get_prompt_transaction_status_in_full_prompt():
+    cli = PGCli()
+    cli.pgexecute = mock.MagicMock()
+    cli.pgexecute.user = "user"
+    cli.pgexecute.dbname = "mydb"
+    cli.pgexecute.host = "db.example.com"
+    cli.pgexecute.short_host = "db.example.com"
+    cli.pgexecute.port = 5432
+    cli.pgexecute.pid = 12345
+    cli.pgexecute.superuser = False
+    cli.pgexecute.transaction_indicator = "*"
+
+    result = cli.get_prompt("\\T\\u@\\h:\\d> ")
+    assert result == "*user@db.example.com:mydb> "
+
+
 @dbtest
 def test_notifications(executor):
     run(executor, "listen chan1")

@@ -6,7 +6,6 @@ description = "CLI for Postgres Database. With auto-completion and syntax highli
 readme = "README.rst"
 classifiers = [
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: Unix",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -25,7 +24,8 @@ urls = { Homepage = "https://pgcli.com" }
 requires-python = ">=3.9"
 dependencies = [
     "pgspecial>=2.0.0",
-    "click >= 4.1,<8.1.8",
+    # Click 8.1.8 through 8.3.0 have broken pager invocation for multi-argument PAGER values, which causes behave test failures.
+    "click >= 4.1, != 8.1.8, != 8.2.*, != 8.3.0, < 9",
     "Pygments>=2.0",       # Pygments has to be Capitalcased.
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
@@ -85,6 +85,7 @@ pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 [tool.ruff]
 target-version = 'py39'
 line-length = 140
+show-fixes = true
 
 [tool.ruff.lint]
 select = [
