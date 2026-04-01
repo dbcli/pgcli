@@ -1,0 +1,91 @@
+name: Codex Review
+
+on:
+  pull_request_target:
+    types: [opened, labeled, reopened, ready_for_review]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - 'LICENSE.txt'
+      - 'doc/**/*.txt'
+      - '**/AUTHORS'
+      - '**/SPONSORS'
+      - '**/TIPS'
+      - 'pgcli-completion.bash'
+      - 'sanity_checks.txt'
+      - 'post-install'
+      - 'post-remove'
+      - 'screenshots/**'
+
+jobs:
+  codex-review:
+    if: github.event.pull_request.draft == false || (github.event.action == 'labeled' && contains(github.event.pull_request.labels.*.name, 'codex'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+
+    steps:
+      - name: Check out PR merge commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+
+      - name: Fetch base and head refs
+        run: |
+          git fetch --no-tags origin \
+            ${{ github.event.pull_request.base.ref }} \
+            +refs/pull/${{ github.event.pull_request.number }}/head
+
+      - name: Run Codex review
+        id: run_codex
+        uses: openai/codex-action@v1
+        env:
+          # Use env variables to handle untrusted metadata safely
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are reviewing PR #${{ github.event.pull_request.number }} for ${{ github.repository }}.
+
+            Only review changes introduced by this PR:
+            git log --oneline ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+
+            Focus on:
+            - correctness bugs and regressions
+            - security concerns
+            - missing tests or edge cases
+
+            Keep feedback concise and actionable.
+
+            Pull request title and body:
+            ----
+            $PR_TITLE
+            $PR_BODY
+
+  post-feedback:
+    runs-on: ubuntu-latest
+    needs: codex-review
+    if: needs.codex-review.outputs.final_message != ''
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Post Codex review as PR comment
+        uses: actions/github-script@v8
+        env:
+          CODEX_FINAL_MESSAGE: |
+            ${{ format('## Codex Review
+            {0}', needs.codex-review.outputs.final_message) }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
