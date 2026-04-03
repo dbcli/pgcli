@@ -3,6 +3,7 @@ Upcoming (TBD)
 
 Features:
 ---------
+* Move log and history files to ``$XDG_STATE_HOME`` (default ``~/.local/state/pgcli/``) per the XDG Base Directory Specification. Existing files at the old location (``~/.config/pgcli/``) are automatically migrated on first launch.
 * Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
 * Add cursor shape support for vi mode. When ``vi = True``, the terminal cursor now
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.

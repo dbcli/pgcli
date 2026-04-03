@@ -64,6 +64,8 @@ from .config import (
     get_casing_file,
     load_config,
     config_location,
+    state_location,
+    migrate_file,
     ensure_dir_exists,
     get_config,
     get_config_filename,
@@ -560,7 +562,8 @@ class PGCli:
     def initialize_logging(self):
         log_file = self.config["main"]["log_file"]
         if log_file == "default":
-            log_file = config_location() + "log"
+            log_file = state_location() + "log"
+            migrate_file(config_location() + "log", log_file)
         ensure_dir_exists(log_file)
         log_level = self.config["main"]["log_level"]
 
@@ -950,7 +953,8 @@ class PGCli:
 
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
-            history_file = config_location() + "history"
+            history_file = state_location() + "history"
+            migrate_file(config_location() + "history", history_file)
         history = FileHistory(os.path.expanduser(history_file))
         self.refresh_completions(history=history, persist_priorities="none")
 
