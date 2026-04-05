@@ -7,6 +7,7 @@ Features:
 * Add cursor shape support for vi mode. When ``vi = True``, the terminal cursor now
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
+* Add the option to force-quit pgcli when a transaction is in progress.
 
 4.4.0 (2025-12-24)
 ==================
