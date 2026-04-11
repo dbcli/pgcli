@@ -10,7 +10,7 @@ Features:
 
 Bug fixes:
 ----------
-* Add `VERSION` to builtin function completion so `SELECT VERSION();` is suggested.
+* Add `VERSION` to built-in function completion so `SELECT VERSION();` is suggested.
 
 4.4.0 (2025-12-24)
 ==================
