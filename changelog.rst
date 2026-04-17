@@ -8,6 +8,10 @@ Features:
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
 
+Bug fixes:
+----------
+* Add `VERSION` to built-in function completion so `SELECT VERSION();` is suggested.
+
 4.4.0 (2025-12-24)
 ==================
 
