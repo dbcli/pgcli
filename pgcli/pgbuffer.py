@@ -4,6 +4,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.application import get_app
 from .packages.parseutils.utils import is_open_quote
+import sqlparse
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +13,8 @@ def _is_complete(sql):
     # A complete command is an sql statement that ends with a semicolon, unless
     # there's an open quote surrounding it, as is common when writing a
     # CREATE FUNCTION command
-    return sql.endswith(";") and not is_open_quote(sql)
+    sql_for_check = sqlparse.format(sql, strip_comments=True)
+    return sql_for_check.endswith(";") and not is_open_quote(sql)
 
 
 """
