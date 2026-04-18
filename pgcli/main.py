@@ -1974,7 +1974,7 @@ def parse_service_info(service):
     with open(service_file, newline="") as f:
         skipped_lines = skip_initial_comment(f)
         try:
-            service_file_config = ConfigObj(f)
+            service_file_config = ConfigObj(f, comment_tokens=[])
         except ParseError as err:
             err.line_number += skipped_lines
             raise err
