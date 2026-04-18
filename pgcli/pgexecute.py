@@ -361,7 +361,7 @@ class PGExecute:
         # run each sql query
         for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
-            sql = sql.rstrip(";")
+            sql = sqlparse.format(sql, strip_comments=True).rstrip(";")
             sql = sqlparse.format(sql, strip_comments=False).strip()
             if not sql:
                 continue
