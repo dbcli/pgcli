@@ -504,6 +504,35 @@ def test_pg_service_file(tmpdir):
     del os.environ["PGSERVICEFILE"]
 
 
+def test_pg_service_file_password_with_hash(tmpdir):
+    with mock.patch.object(PGCli, "connect") as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+        with open(tmpdir.join(".pg_service.conf").strpath, "w") as service_conf:
+            service_conf.write(
+                """File begins with a comment
+            that is not a comment
+
+            [myservice]
+            host=a_host
+            user=a_user
+            port=5433
+            password=abc#123
+            dbname=a_dbname
+            """
+            )
+        os.environ["PGSERVICEFILE"] = tmpdir.join(".pg_service.conf").strpath
+        cli.connect_service("myservice", None)
+        mock_connect.assert_called_with(
+            database="a_dbname",
+            host="a_host",
+            user="a_user",
+            port="5433",
+            passwd="abc#123",
+        )
+
+    del os.environ["PGSERVICEFILE"]
+
+
 def test_ssl_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))

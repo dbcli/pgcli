@@ -1,9 +1,9 @@
-from zoneinfo import ZoneInfoNotFoundError
-from configobj import ConfigObj, ParseError
-from pgspecial.namedqueries import NamedQueries
-from .config import skip_initial_comment
-
 import atexit
+import configparser
+import datetime as dt
+import functools
+import io
+import itertools
 import os
 import re
 import sys
@@ -11,13 +11,11 @@ import traceback
 import logging
 import threading
 import shutil
-import functools
-import datetime as dt
-import itertools
 import pathlib
 import platform
 from time import time, sleep
 from typing import Optional
+from zoneinfo import ZoneInfoNotFoundError
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (
@@ -29,6 +27,7 @@ from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
 import tzlocal
+from pgspecial.namedqueries import NamedQueries
 
 try:
     import setproctitle
@@ -68,6 +67,7 @@ from .config import (
     get_config,
     get_config_filename,
 )
+from .config import skip_initial_comment
 from .key_bindings import pgcli_bindings
 from .packages.formatter.sqlformatter import register_new_formatter
 from .packages.prompt_utils import confirm, confirm_destructive_query
@@ -1973,14 +1973,11 @@ def parse_service_info(service):
         return None, service_file
     with open(service_file, newline="") as f:
         skipped_lines = skip_initial_comment(f)
-        try:
-            service_file_config = ConfigObj(f)
-        except ParseError as err:
-            err.line_number += skipped_lines
-            raise err
+        service_file_config = configparser.ConfigParser(interpolation=None)
+        service_file_config.read_file(io.StringIO("\n" * skipped_lines + f.read()), source=service_file)
     if service not in service_file_config:
         return None, service_file
-    service_conf = service_file_config.get(service)
+    service_conf = dict(service_file_config[service])
     return service_conf, service_file
 
 
