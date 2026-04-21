@@ -636,3 +636,51 @@ def test_notifications(executor):
     with mock.patch("pgcli.main.click.secho") as mock_secho:
         run(executor, "notify chan1, 'testing2'")
         mock_secho.assert_not_called()
+
+
+def test_force_destructive_flag():
+    """Test that PGCli can be initialized with force_destructive flag."""
+    cli = PGCli(force_destructive=True)
+    assert cli.force_destructive is True
+
+    cli = PGCli(force_destructive=False)
+    assert cli.force_destructive is False
+
+    cli = PGCli()
+    assert cli.force_destructive is False
+
+
+@dbtest
+def test_force_destructive_skips_confirmation(executor):
+    """Test that force_destructive=True skips confirmation for destructive commands."""
+    cli = PGCli(pgexecute=executor, force_destructive=True)
+    cli.destructive_warning = ["drop", "alter"]
+
+    # Mock confirm_destructive_query to ensure it's not called
+    with mock.patch("pgcli.main.confirm_destructive_query") as mock_confirm:
+        # Execute a destructive command
+        result = cli.execute_command("ALTER TABLE test_table ADD COLUMN test_col TEXT;")
+
+        # Verify that confirm_destructive_query was NOT called
+        mock_confirm.assert_not_called()
+
+        # Verify that the command was attempted (even if it fails due to missing table)
+        assert result is not None
+
+
+@dbtest
+def test_without_force_destructive_calls_confirmation(executor):
+    """Test that without force_destructive, confirmation is called for destructive commands."""
+    cli = PGCli(pgexecute=executor, force_destructive=False)
+    cli.destructive_warning = ["drop", "alter"]
+
+    # Mock confirm_destructive_query to return True (user confirms)
+    with mock.patch("pgcli.main.confirm_destructive_query", return_value=True) as mock_confirm:
+        # Execute a destructive command
+        result = cli.execute_command("ALTER TABLE test_table ADD COLUMN test_col TEXT;")
+
+        # Verify that confirm_destructive_query WAS called
+        mock_confirm.assert_called_once()
+
+        # Verify that the command was attempted
+        assert result is not None
