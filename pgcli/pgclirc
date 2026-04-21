@@ -66,7 +66,7 @@ generate_aliases = False
 alias_map_file =
 
 # log_file location.
-# In Unix/Linux: ~/.config/pgcli/log
+# In Unix/Linux: ~/.local/state/pgcli/log (respects $XDG_STATE_HOME if set)
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\log
 # %USERPROFILE% is typically C:\Users\{username}
 log_file = default
@@ -88,7 +88,7 @@ generate_casing_file = False
 case_column_headers = True
 
 # history_file location.
-# In Unix/Linux: ~/.config/pgcli/history
+# In Unix/Linux: ~/.local/state/pgcli/history (respects $XDG_STATE_HOME if set)
 # In Windows: %USERPROFILE%\AppData\Local\dbcli\pgcli\history
 # %USERPROFILE% is typically C:\Users\{username}
 history_file = default

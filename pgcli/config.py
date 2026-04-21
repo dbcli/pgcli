@@ -1,3 +1,4 @@
+import logging
 import shutil
 import os
 import platform
@@ -5,6 +6,8 @@ from os.path import expanduser, exists, dirname
 import re
 from typing import TextIO
 from configobj import ConfigObj
+
+logger = logging.getLogger(__name__)
 
 
 def config_location():
@@ -14,6 +17,16 @@ def config_location():
         return os.getenv("USERPROFILE") + "\\AppData\\Local\\dbcli\\pgcli\\"
     else:
         return expanduser("~/.config/pgcli/")
+
+
+def state_location():
+    if "XDG_STATE_HOME" in os.environ:
+        return "%s/pgcli/" % expanduser(os.environ["XDG_STATE_HOME"])
+    elif platform.system() == "Windows":
+        # No XDG equivalent on Windows; use the same directory as config.
+        return config_location()
+    else:
+        return expanduser("~/.local/state/pgcli/")
 
 
 def load_config(usr_cfg, def_cfg=None):
@@ -27,6 +40,24 @@ def load_config(usr_cfg, def_cfg=None):
         cfg = ConfigObj(expanduser(usr_cfg), interpolation=False, encoding="utf-8")
     cfg.filename = expanduser(usr_cfg)
     return cfg
+
+
+def migrate_file(old_path, new_path):
+    """Move old_path to new_path if old exists and new does not.
+
+    Silently does nothing if old_path does not exist or new_path already exists.
+    Logs an error if the move fails.
+    """
+    old_path = expanduser(old_path)
+    new_path = expanduser(new_path)
+    if not os.path.exists(old_path) or os.path.exists(new_path):
+        return
+    try:
+        ensure_dir_exists(new_path)
+        shutil.move(old_path, new_path)
+        logger.debug("Migrated %r to %r.", old_path, new_path)
+    except OSError as e:
+        logger.error("Failed to migrate %r to %r: %s", old_path, new_path, e)
 
 
 def ensure_dir_exists(path):
