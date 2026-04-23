@@ -7,6 +7,7 @@ Features:
 * Add cursor shape support for vi mode. When ``vi = True``, the terminal cursor now
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
+* Add support of Python 3.14.
 
 Bug fixes:
 ----------
