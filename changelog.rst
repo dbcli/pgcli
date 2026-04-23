@@ -8,6 +8,7 @@ Features:
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
 * Add support of Python 3.14.
+* Drop support of Python 3.9.
 
 Bug fixes:
 ----------
