@@ -1303,21 +1303,24 @@ class PGCli:
             return self.completer.get_completions(Document(text=text, cursor_position=cursor_positition), None)
 
     def get_prompt(self, string):
-        # should be before replacing \\d
-        string = string.replace("\\dsn_alias", self.dsn_alias or "")
-        string = string.replace("\\t", self.now.strftime("%x %X"))
-        string = string.replace("\\u", self.pgexecute.user or "(none)")
-        string = string.replace("\\H", self.pgexecute.host or "(none)")
-        string = string.replace("\\h", self.pgexecute.short_host or "(none)")
-        string = string.replace("\\d", self.pgexecute.dbname or "(none)")
+        # should be before replacing \d
+        def _to_str(val):
+            return val.decode("utf-8") if isinstance(val, bytes) else val or ""
+
+        string = string.replace("\dsn_alias", self.dsn_alias or "")
+        string = string.replace("\t", self.now.strftime("%x %X"))
+        string = string.replace("\u", _to_str(self.pgexecute.user) or "(none)")
+        string = string.replace("\H", _to_str(self.pgexecute.host) or "(none)")
+        string = string.replace("\h", _to_str(self.pgexecute.short_host) or "(none)")
+        string = string.replace("\d", _to_str(self.pgexecute.dbname) or "(none)")
         string = string.replace(
-            "\\p",
+            "\p",
             str(self.pgexecute.port) if self.pgexecute.port is not None else "5432",
         )
-        string = string.replace("\\i", str(self.pgexecute.pid) or "(none)")
-        string = string.replace("\\#", "#" if self.pgexecute.superuser else ">")
-        string = string.replace("\\n", "\n")
-        string = string.replace("\\T", self.pgexecute.transaction_indicator)
+        string = string.replace("\i", str(self.pgexecute.pid) or "(none)")
+        string = string.replace("\#", "#" if self.pgexecute.superuser else ">")
+        string = string.replace("\n", "\n")
+        string = string.replace("\T", _to_str(self.pgexecute.transaction_indicator))
         return string
 
     def get_last_query(self):

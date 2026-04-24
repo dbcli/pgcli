@@ -141,6 +141,8 @@ class PGCompleter(Completer):
         self.all_completions = set(self.keywords + self.functions)
 
     def escape_name(self, name):
+        if isinstance(name, bytes):
+            name = name.decode("utf-8")
         if name and ((not self.name_pattern.match(name)) or (name.upper() in self.reserved_words) or (name.upper() in self.functions)):
             name = '"%s"' % name
 
