@@ -267,6 +267,8 @@ class PGCli:
 
         self.query_history = []
 
+        self.auto_suggest = c["main"].as_bool("auto_suggest")
+
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
@@ -1076,7 +1078,7 @@ class PGCli:
                     # Render \t as 4 spaces instead of "^I"
                     TabsProcessor(char1=" ", char2=" "),
                 ],
-                auto_suggest=AutoSuggestFromHistory(),
+                auto_suggest=AutoSuggestFromHistory() if self.auto_suggest else None,
                 tempfile_suffix=".sql",
                 # N.b. pgcli's multi-line mode controls submit-on-Enter (which
                 # overrides the default behaviour of prompt_toolkit) and is
