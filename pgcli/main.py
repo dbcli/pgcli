@@ -1646,7 +1646,7 @@ def cli(
 
             if local_tz is None:
                 echo_error("No local time zone configuration found\n")
-            else:
+            elif local_tz != server_tz:
                 click.secho(
                     f"Using local time zone {local_tz} (server uses {server_tz})",
                     fg="green",
