@@ -17,7 +17,6 @@ import itertools
 import pathlib
 import platform
 from time import time, sleep
-from typing import Optional
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (
@@ -184,8 +183,8 @@ class PGCli:
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
-        ssh_tunnel_url: Optional[str] = None,
-        log_file: Optional[str] = None,
+        ssh_tunnel_url: str | None = None,
+        log_file: str | None = None,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt

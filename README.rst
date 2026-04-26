@@ -341,6 +341,7 @@ Pgcli dropped support for:
 
 * Python<3.8 as of 4.0.0.
 * Python<3.9 as of 4.2.0.
+* Python<10 as of 4.5.0.
 
 Thanks:
 -------
