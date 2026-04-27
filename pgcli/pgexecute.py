@@ -361,8 +361,11 @@ class PGExecute:
         # run each sql query
         for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
-            sql = sql.rstrip(";")
-            sql = sqlparse.format(sql, strip_comments=False).strip()
+            # Strip comments first so rstrip(";") works when there are
+            # trailing comments after the semicolon, e.g.:
+            #   vacuum freeze verbose t; -- 82% towards emergency
+            sql = sqlparse.format(sql, strip_comments=True).strip().rstrip(";")
+            sql = sql.strip()
             if not sql:
                 continue
             try:
