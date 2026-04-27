@@ -4,7 +4,6 @@ Verifies that statements with comments after the semicolon are handled
 correctly in both the input buffer (pgbuffer) and query execution (pgexecute).
 """
 
-import pytest
 from pgcli.pgbuffer import _is_complete
 
 
