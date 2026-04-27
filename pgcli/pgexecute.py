@@ -505,8 +505,7 @@ class PGExecute:
             else:
                 template = "CREATE OR REPLACE VIEW {name} AS \n{stmt}"
             return (
-                psycopg.sql
-                .SQL(template)
+                psycopg.sql.SQL(template)
                 .format(
                     name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),

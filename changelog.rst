@@ -8,6 +8,10 @@ Features:
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
 * Add support of Python 3.14.
+* Add ``-t``/``--tuples-only`` CLI option to set table format at startup.
+    * Sets table format to ``csv-noheader`` (rows only, no headers)
+    * CLI shortcut equivalent to ``\T csv-noheader``
+    * Does not suppress timing or status messages (use ``\pset`` for that)
 
 Bug fixes:
 ----------
