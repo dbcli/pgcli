@@ -212,7 +212,8 @@ class PGExecute:
         new_params.update(kwargs)
 
         if new_params["dsn"]:
-            new_params = {"dsn": new_params["dsn"], "password": new_params["password"]}
+            # When using DSN, only keep dsn, password, and hostaddr (for SSH tunnels)
+            new_params = {k: v for k, v in new_params.items() if k in ("dsn", "password", "hostaddr")}
 
             if new_params["password"]:
                 new_params["dsn"] = make_conninfo(new_params["dsn"], password=new_params.pop("password"))
@@ -505,8 +506,7 @@ class PGExecute:
             else:
                 template = "CREATE OR REPLACE VIEW {name} AS \n{stmt}"
             return (
-                psycopg.sql
-                .SQL(template)
+                psycopg.sql.SQL(template)
                 .format(
                     name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),
