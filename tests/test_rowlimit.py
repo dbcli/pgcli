@@ -44,9 +44,18 @@ def low_count():
     return low_count_cursor
 
 
-def test_row_limit_with_LIMIT_clause(LIMIT, over_limit):
+@pytest.mark.parametrize(
+    "stmt",
+    [
+        "SELECT * FROM students LIMIT 1000",
+        "SELECT * FROM students LIMIT\n    1000",
+        "SELECT * FROM students LIMIT\t1000",
+        "SELECT * FROM students limit 1000",
+        "SELECT * FROM students LiMiT 1000",
+    ],
+)
+def test_row_limit_with_LIMIT_clause(LIMIT, over_limit, stmt):
     cli = PGCli(row_limit=LIMIT)
-    stmt = "SELECT * FROM students LIMIT 1000"
 
     result = cli._should_limit_output(stmt, over_limit)
     assert result is False
@@ -54,6 +63,21 @@ def test_row_limit_with_LIMIT_clause(LIMIT, over_limit):
     cli = PGCli(row_limit=0)
     result = cli._should_limit_output(stmt, over_limit)
     assert result is False
+
+
+@pytest.mark.parametrize(
+    "stmt",
+    [
+        "SELECT 'LIMIT 1000' FROM students",
+        "SELECT * FROM students -- LIMIT 1000",
+        "SELECT * FROM students /* LIMIT 1000 */",
+    ],
+)
+def test_row_limit_ignores_LIMIT_in_comments_or_strings(LIMIT, over_limit, stmt):
+    cli = PGCli(row_limit=LIMIT)
+
+    result = cli._should_limit_output(stmt, over_limit)
+    assert result is True
 
 
 def test_row_limit_without_LIMIT_clause(LIMIT, over_limit):
