@@ -8,6 +8,13 @@ Features:
   reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
   Uses prompt_toolkit's ``ModalCursorShapeConfig``.
 * Add the option to force-quit pgcli when a transaction is in progress.
+* Add support of Python 3.14.
+* Drop support of Python 3.9.
+
+Bug fixes:
+----------
+* Add `VERSION` to built-in function completion so `SELECT VERSION();` is suggested.
+* Hide timezone notice at startup when local and server timezones are the same.
 
 4.4.0 (2025-12-24)
 ==================

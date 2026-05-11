@@ -40,7 +40,7 @@ def pgcli_line_magic(line):
         # from the sqlalchemy connection, so just grab the url and make a
         # new connection
         pgcli = PGCli()
-        u = conn.session.engine.url
+        u = conn.url
         _logger.debug("New pgcli: %r", str(u))
 
         pgcli.connect_uri(str(u._replace(drivername="postgres")))
