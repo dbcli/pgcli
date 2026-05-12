@@ -933,7 +933,7 @@ class PGCli:
         while 1:
             try:
                 choice = click.prompt(
-                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit, `force` to exit anyway.",
                     default="a",
                 )
             except click.Abort:
@@ -945,6 +945,8 @@ class PGCli:
             choice = choice.lower()
             if choice == "a":
                 return False  # do not quit
+            if choice == "force":
+                return True  # quit anyway
             if choice == "c":
                 query = self.execute_command("commit")
                 return query.successful  # quit only if query is successful
