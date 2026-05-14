@@ -10,6 +10,10 @@ Features:
 * Add the option to force-quit pgcli when a transaction is in progress.
 * Add support of Python 3.14.
 * Drop support of Python 3.9.
+* Add ``-t``/``--tuples-only`` CLI option to set table format at startup.
+    * Sets table format to ``csv-noheader`` (rows only, no headers)
+    * CLI shortcut equivalent to ``\T csv-noheader``
+    * Does not suppress timing or status messages (use ``\pset`` for that)
 
 Bug fixes:
 ----------
