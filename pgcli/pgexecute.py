@@ -19,8 +19,8 @@ _logger = logging.getLogger(__name__)
 ViewDef = namedtuple("ViewDef", "nspname relname relkind viewdef reloptions checkoption")
 
 
-# we added this funcion to strip beginning comments
-# because sqlparse didn't handle tem well.  It won't be needed if sqlparse
+# we added this function to strip beginning comments
+# because sqlparse didn't handle them well.  It won't be needed if sqlparse
 # does parsing of this situation better
 
 

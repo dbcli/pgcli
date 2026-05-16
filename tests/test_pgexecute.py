@@ -391,7 +391,7 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result[0].find("No help") >= 0
 
     # TODO: we probably don't want to do this but sqlparse is not parsing things well
-    # we relly want it to find help but right now, sqlparse isn't dropping the /*comment*/
+    # we really want it to find help but right now, sqlparse isn't dropping the /*comment*/
     # style comments after command
 
     statement = r"""/*comment1*/
