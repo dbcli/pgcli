@@ -17,6 +17,10 @@ Bug fixes:
 * Hide timezone notice at startup when local and server timezones are the same.
 * Let `sqlparse` accept arbitrarily-large queries.
 
+Internal:
+---------
+* Fix typos in code comments.
+
 4.4.0 (2025-12-24)
 ==================
 
