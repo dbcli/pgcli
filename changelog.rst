@@ -17,6 +17,12 @@ Bug fixes:
 * Hide timezone notice at startup when local and server timezones are the same.
 * Let `sqlparse` accept arbitrarily-large queries.
 
+Bug Fixes:
+----------
+* Fix trailing SQL comments preventing query submission and execution.
+    * ``SELECT 1; -- note`` now submits correctly in multiline mode
+    * ``rstrip(";")`` in ``pgexecute.py`` now handles comments after the semicolon
+
 4.4.0 (2025-12-24)
 ==================
 

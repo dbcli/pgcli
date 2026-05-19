@@ -384,24 +384,23 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     assert result[1].find("ALTER") >= 0
     assert result[1].find("ABORT") >= 0
 
+    # With strip_comments=True, trailing comments are removed and \h shows
+    # full help output (previously sqlparse left comments as arguments,
+    # causing "No help" — that was a bug, not intended behavior)
     statement = """\\h /*comment4 */"""
     result = run(executor, statement, pgspecial=pgspecial)
-    print(result)
     assert result is not None
-    assert result[0].find("No help") >= 0
-
-    # TODO: we probably don't want to do this but sqlparse is not parsing things well
-    # we relly want it to find help but right now, sqlparse isn't dropping the /*comment*/
-    # style comments after command
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
 
     statement = r"""/*comment1*/
     \h
     /*comment4 */"""
     result = run(executor, statement, pgspecial=pgspecial)
     assert result is not None
-    assert result[0].find("No help") >= 0
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
 
-    # TODO: same for this one
     statement = """/*comment1
     comment3
     comment2*/
@@ -411,7 +410,8 @@ def test_execute_commented_first_line_and_special(executor, pgspecial, tmpdir):
     comment6*/"""
     result = run(executor, statement, pgspecial=pgspecial)
     assert result is not None
-    assert result[0].find("No help") >= 0
+    assert result[1].find("ALTER") >= 0
+    assert result[1].find("ABORT") >= 0
 
 
 @dbtest
