@@ -9,6 +9,9 @@ import psycopg.sql
 from psycopg.conninfo import make_conninfo
 import sqlparse
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
+
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)

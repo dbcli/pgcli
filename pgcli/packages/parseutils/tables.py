@@ -3,6 +3,9 @@ from collections import namedtuple
 from sqlparse.sql import IdentifierList, Identifier, Function
 from sqlparse.tokens import Keyword, DML, Punctuation
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
+
 TableReference = namedtuple("TableReference", ["schema", "name", "alias", "is_function"])
 TableReference.ref = property(
     lambda self: self.alias or (self.name if self.name.islower() or self.name[0] == '"' else '"' + self.name + '"')
