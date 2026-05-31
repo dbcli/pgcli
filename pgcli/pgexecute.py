@@ -287,16 +287,6 @@ class PGExecute:
         short_host, _, _ = host.partition(".")
         return short_host
 
-    def _select_one(self, cur, sql):
-        """
-        Helper method to run a select and retrieve a single field value
-        :param cur: cursor
-        :param sql: string
-        :return: string
-        """
-        cur.execute(sql)
-        return cur.fetchone()
-
     def failed_transaction(self):
         return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.INERROR
 
