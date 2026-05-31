@@ -243,6 +243,16 @@ class PGExecute:
         # user, etc. we connected to. Let's read it.
         # Note: moved this after setting autocommit because of #664.
         dsn_parameters = conn.info.get_parameters()
+        # On some platforms (e.g., macOS with Homebrew psycopg, Python 3.13+),
+        # get_parameters() can return bytes values instead of str.
+        # Decode them to str to avoid TypeError: replace() argument 2 must be str, not bytes
+        # in main.py get_prompt() and TypeError: cannot use a string pattern on a bytes-like object
+        # in pgcompleter.py escape_name(). See issues #1518.
+        if dsn_parameters:
+            dsn_parameters = {
+                k: v.decode() if isinstance(v, bytes) else v
+                for k, v in dsn_parameters.items()
+            }
 
         if dsn_parameters:
             self.dbname = dsn_parameters.get("dbname")
@@ -481,7 +491,7 @@ class PGExecute:
             with self.conn.cursor() as cur:
                 _logger.debug("Search path query. sql: %r", self.search_path_query)
                 cur.execute(self.search_path_query)
-                return [x[0] for x in cur.fetchall()]
+                return [x[0].decode() if isinstance(x[0], bytes) else x[0] for x in cur.fetchall()]
         except psycopg.ProgrammingError:
             fallback = "SELECT * FROM current_schemas(true)"
             with self.conn.cursor() as cur:
