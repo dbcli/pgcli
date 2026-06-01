@@ -221,6 +221,11 @@ def test_distinct_suggests_cols(text):
             "SELECT * FROM tbl x JOIN tbl1 y ORDER BY ",
             "ORDER BY",
         ),
+        (
+            "SELECT * FROM tbl x JOIN tbl1 y GROUP BY ",
+            "SELECT * FROM tbl x JOIN tbl1 y GROUP BY ",
+            "GROUP BY",
+        ),
     ],
 )
 def test_distinct_and_order_by_suggestions_with_aliases(text, text_before, last_keyword):
@@ -246,6 +251,10 @@ def test_distinct_and_order_by_suggestions_with_aliases(text, text_before, last_
         (
             "SELECT * FROM tbl x JOIN tbl1 y ORDER BY x.",
             "SELECT * FROM tbl x JOIN tbl1 y ORDER BY x.",
+        ),
+        (
+            "SELECT * FROM tbl x JOIN tbl1 y GROUP BY x.",
+            "SELECT * FROM tbl x JOIN tbl1 y GROUP BY x.",
         ),
     ],
 )

@@ -383,7 +383,7 @@ def suggest_based_on_last_token(token, stmt):
         # E.g. 'UPDATE foo SET'
         return (Column(table_refs=stmt.get_tables(), local_tables=stmt.local_tables),)
 
-    elif token_v in ("select", "where", "having", "order by", "distinct"):
+    elif token_v in ("select", "where", "having", "group by", "order by", "distinct"):
         return _suggest_expression(token_v, stmt)
     elif token_v == "as":
         # Don't suggest anything for aliases
