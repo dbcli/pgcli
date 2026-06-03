@@ -80,6 +80,53 @@ def push_tags_to_github():
     run_step("git", "push", "--tags", "origin")
 
 
+def check_tag(ver):
+    """Verify that HEAD is on the expected tag."""
+    tag = "v{}".format(ver)
+    try:
+        current_tag = subprocess.check_output(
+            ["git", "describe", "--exact-match", "--tags", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except subprocess.CalledProcessError:
+        print("ERROR: HEAD is not on any tag. Expected tag '{}'.".format(tag))
+        sys.exit(1)
+    if current_tag != tag:
+        print("ERROR: HEAD is on tag '{}', expected '{}'.".format(current_tag, tag))
+        sys.exit(1)
+    print("OK: on tag '{}'".format(tag))
+
+
+def comment_on_released_prs(ver):
+    """Post a comment on all PRs included in this release."""
+    tag = "v{}".format(ver)
+    try:
+        previous_tag = subprocess.check_output(
+            ["git", "describe", "--abbrev=0", "--tags", "{}^".format(tag)],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except subprocess.CalledProcessError:
+        print("WARNING: Could not find previous tag. Skipping PR comments.")
+        return
+
+    log = subprocess.check_output(
+        ["git", "log", "--merges", "--oneline", "{}..{}".format(previous_tag, tag)]
+    ).decode()
+
+    pr_numbers = re.findall(r"#(\d+)", log)
+    pr_numbers = list(set(pr_numbers))
+
+    if not pr_numbers:
+        print("No PRs found between {} and {}.".format(previous_tag, tag))
+        return
+
+    print("Found PRs: {}".format(", ".join("#" + n for n in pr_numbers)))
+    message = "Released as part of {}.".format(ver)
+
+    for pr in pr_numbers:
+        run_step("gh", "pr", "comment", pr, "--body", message)
+
+
 def checklist(questions):
     for question in questions:
         if not click.confirm("--- {}".format(question), default=False):
@@ -126,7 +173,9 @@ if __name__ == "__main__":
 
     commit_for_release("pgcli/__init__.py", ver)
     create_git_tag("v{}".format(ver))
-    create_distribution_files()
     push_to_github()
     push_tags_to_github()
+    check_tag(ver)
+    create_distribution_files()
     upload_distribution_files()
+    comment_on_released_prs(ver)
