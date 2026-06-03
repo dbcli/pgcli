@@ -57,7 +57,8 @@ def get_merged_prs_since_last_tag():
     """Get list of PR numbers and titles merged since the last tag."""
     try:
         previous_tag = (
-            subprocess.check_output(
+            subprocess
+            .check_output(
                 ["git", "describe", "--abbrev=0", "--tags"],
                 stderr=subprocess.DEVNULL,
             )
@@ -117,7 +118,8 @@ def check_tag(ver):
     tag = "v{}".format(ver)
     try:
         current_tag = (
-            subprocess.check_output(
+            subprocess
+            .check_output(
                 ["git", "describe", "--exact-match", "--tags", "HEAD"],
                 stderr=subprocess.DEVNULL,
             )
@@ -138,7 +140,8 @@ def comment_on_released_prs(ver):
     tag = "v{}".format(ver)
     try:
         previous_tag = (
-            subprocess.check_output(
+            subprocess
+            .check_output(
                 ["git", "describe", "--abbrev=0", "--tags", "{}^".format(tag)],
                 stderr=subprocess.DEVNULL,
             )
