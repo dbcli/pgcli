@@ -53,10 +53,40 @@ def version(version_file):
     return ver
 
 
+def get_merged_prs_since_last_tag():
+    """Get list of PR numbers and titles merged since the last tag."""
+    try:
+        previous_tag = subprocess.check_output(
+            ["git", "describe", "--abbrev=0", "--tags"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except subprocess.CalledProcessError:
+        return []
+
+    log = subprocess.check_output(
+        ["git", "log", "--merges", "--oneline", "{}..HEAD".format(previous_tag)]
+    ).decode()
+
+    prs = re.findall(r"(.+\(#(\d+)\))", log)
+    seen = set()
+    result = []
+    for line, num in prs:
+        if num not in seen:
+            seen.add(num)
+            result.append(num)
+    return result
+
+
 def commit_for_release(version_file, ver):
+    pr_numbers = get_merged_prs_since_last_tag()
+    pr_list = ""
+    if pr_numbers:
+        pr_list = "\n\n" + "\n".join("- #{}".format(n) for n in pr_numbers)
+
+    message = "Releasing version {}{}".format(ver, pr_list)
     run_step("git", "reset")
     run_step("git", "add", "-u")
-    run_step("git", "commit", "--message", "Releasing version {}".format(ver))
+    run_step("git", "commit", "--message", message)
 
 
 def create_git_tag(tag_name):
