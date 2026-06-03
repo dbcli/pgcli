@@ -56,16 +56,18 @@ def version(version_file):
 def get_merged_prs_since_last_tag():
     """Get list of PR numbers and titles merged since the last tag."""
     try:
-        previous_tag = subprocess.check_output(
-            ["git", "describe", "--abbrev=0", "--tags"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        previous_tag = (
+            subprocess.check_output(
+                ["git", "describe", "--abbrev=0", "--tags"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except subprocess.CalledProcessError:
         return []
 
-    log = subprocess.check_output(
-        ["git", "log", "--merges", "--oneline", "{}..HEAD".format(previous_tag)]
-    ).decode()
+    log = subprocess.check_output(["git", "log", "--merges", "--oneline", "{}..HEAD".format(previous_tag)]).decode()
 
     prs = re.findall(r"(.+\(#(\d+)\))", log)
     seen = set()
@@ -114,10 +116,14 @@ def check_tag(ver):
     """Verify that HEAD is on the expected tag."""
     tag = "v{}".format(ver)
     try:
-        current_tag = subprocess.check_output(
-            ["git", "describe", "--exact-match", "--tags", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        current_tag = (
+            subprocess.check_output(
+                ["git", "describe", "--exact-match", "--tags", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except subprocess.CalledProcessError:
         print("ERROR: HEAD is not on any tag. Expected tag '{}'.".format(tag))
         sys.exit(1)
@@ -131,17 +137,19 @@ def comment_on_released_prs(ver):
     """Post a comment on all PRs included in this release."""
     tag = "v{}".format(ver)
     try:
-        previous_tag = subprocess.check_output(
-            ["git", "describe", "--abbrev=0", "--tags", "{}^".format(tag)],
-            stderr=subprocess.DEVNULL,
-        ).decode().strip()
+        previous_tag = (
+            subprocess.check_output(
+                ["git", "describe", "--abbrev=0", "--tags", "{}^".format(tag)],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
     except subprocess.CalledProcessError:
         print("WARNING: Could not find previous tag. Skipping PR comments.")
         return
 
-    log = subprocess.check_output(
-        ["git", "log", "--merges", "--oneline", "{}..{}".format(previous_tag, tag)]
-    ).decode()
+    log = subprocess.check_output(["git", "log", "--merges", "--oneline", "{}..{}".format(previous_tag, tag)]).decode()
 
     pr_numbers = re.findall(r"#(\d+)", log)
     pr_numbers = list(set(pr_numbers))
