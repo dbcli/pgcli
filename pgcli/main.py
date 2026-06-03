@@ -27,6 +27,8 @@ from cli_helpers.tabular_output.preprocessors import (
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+import sqlparse
+from sqlparse import tokens as sqlparse_tokens
 import tzlocal
 
 try:
@@ -1114,7 +1116,7 @@ class PGCli:
     def _has_limit(self, sql):
         if not sql:
             return False
-        return "limit " in sql.lower()
+        return any(token.match(sqlparse_tokens.Keyword, "LIMIT") for statement in sqlparse.parse(sql) for token in statement.flatten())
 
     def _limit_output(self, cur):
         limit = min(self.row_limit, cur.rowcount)

@@ -1,5 +1,5 @@
-Upcoming (TBD)
-==============
+4.5.0 (2026-06-02)
+==================
 
 Features:
 ---------
@@ -16,7 +16,11 @@ Bug fixes:
 * Add `VERSION` to built-in function completion so `SELECT VERSION();` is suggested.
 * Hide timezone notice at startup when local and server timezones are the same.
 * Let `sqlparse` accept arbitrarily-large queries.
-* Suggest columns after `GROUP BY`, like `ORDER BY` already does.
+* Respect user-specified `LIMIT` clauses when the limit value starts on a new line.
+* Fix trailing SQL comments preventing query submission and execution.
+    * ``SELECT 1; -- note`` now submits correctly in multiline mode
+    * ``rstrip(";")`` in ``pgexecute.py`` now handles comments after the semicolon
+* Suggest columns after `GROUP BY`, like `ORDER BY` already does.    
 
 4.4.0 (2025-12-24)
 ==================
