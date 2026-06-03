@@ -1,7 +1,7 @@
 [project]
 name = "pgcli"
 authors = [{ name = "Pgcli Core Team", email = "pgcli-dev@googlegroups.com" }]
-license = { text = "BSD" }
+license = "BSD-3-Clause"
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 readme = "README.rst"
 classifiers = [
@@ -72,9 +72,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = false
-
-[tool.setuptools.dynamic]
-version = { attr = "pgcli.__version__" }
 
 [tool.setuptools.packages]
 find = { namespaces = false }
