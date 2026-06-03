@@ -123,8 +123,14 @@ def comment_on_released_prs(ver):
     print("Found PRs: {}".format(", ".join("#" + n for n in pr_numbers)))
     message = "Released as part of {}.".format(ver)
 
-    for pr in pr_numbers:
-        run_step("gh", "pr", "comment", pr, "--body", message)
+    print("gh pr comment --body '{}' {}".format(message, " ".join(pr_numbers)))
+    if skip_step():
+        print("--- Skipping...")
+    elif DRY_RUN:
+        print("--- Pretending to run...")
+    else:
+        for pr in pr_numbers:
+            subprocess.check_output(["gh", "pr", "comment", pr, "--body", message])
 
 
 def checklist(questions):
