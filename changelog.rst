@@ -1,3 +1,11 @@
+4.5.1 (unreleased)
+==================
+
+Bug fixes:
+----------
+* Fix ``NoneType`` crash when completing functions with unnamed (variadic) arguments (#1204).
+
+
 4.5.0 (2026-06-02)
 ==================
 

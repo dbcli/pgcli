@@ -159,6 +159,6 @@ class FunctionMetadata:
 
         return [
             ColumnMetadata(name, typ, [])
-            for name, typ, mode in zip(self.arg_names, self.arg_types, self.arg_modes)
+            for name, typ, mode in zip(self.arg_names or [], self.arg_types or [], self.arg_modes)
             if mode in ("o", "b", "t")
         ]  # OUT, INOUT, TABLE
