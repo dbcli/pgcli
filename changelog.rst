@@ -6,6 +6,10 @@ Features:
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
+Bug fixes:
+----------
+* Fix ``NoneType`` crash when completing functions with unnamed (variadic) arguments (#1204).
+
 4.7.1 (2026-09-20)
 ==================
 
