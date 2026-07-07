@@ -1099,7 +1099,7 @@ class PGCli:
                 enable_suspend=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
                 search_ignore_case=True,
-                cursor=ModalCursorShapeConfig(),
+                cursor=ModalCursorShapeConfig() if self.vi_mode else None,
             )
 
             return prompt_app
