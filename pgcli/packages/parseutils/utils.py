@@ -3,6 +3,9 @@ import sqlparse
 from sqlparse.sql import Identifier
 from sqlparse.tokens import Token, Error
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
+
 cleanup_regex = {
     # This matches only alphanumerics and underscores.
     "alphanum_underscore": re.compile(r"(\w+)$"),

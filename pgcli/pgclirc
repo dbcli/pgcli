@@ -5,6 +5,9 @@
 # possible completions will be listed.
 smart_completion = True
 
+# Enable auto suggestions (like Fish shell).
+auto_suggest = True
+
 # Display the completions in several columns. (More completions will be
 # visible.)
 wider_completion_menu = False

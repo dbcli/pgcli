@@ -17,7 +17,6 @@ import itertools
 import pathlib
 import platform
 from time import time, sleep
-from typing import Optional
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (
@@ -28,6 +27,8 @@ from cli_helpers.tabular_output.preprocessors import (
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+import sqlparse
+from sqlparse import tokens as sqlparse_tokens
 import tzlocal
 
 try:
@@ -184,8 +185,8 @@ class PGCli:
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
-        ssh_tunnel_url: Optional[str] = None,
-        log_file: Optional[str] = None,
+        ssh_tunnel_url: str | None = None,
+        log_file: str | None = None,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -266,6 +267,8 @@ class PGCli:
         self.completion_refresher = CompletionRefresher()
 
         self.query_history = []
+
+        self.auto_suggest = c["main"].as_bool("auto_suggest")
 
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
@@ -633,7 +636,13 @@ class PGCli:
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
         if not self.force_passwd_prompt and not passwd:
-            passwd = os.environ.get("PGPASSWORD", "")
+            if dsn:
+                # Check if DSN contains a password - if so, don't use PGPASSWORD
+                parsed_dsn = conninfo_to_dict(dsn)
+                if "password" not in parsed_dsn:
+                    passwd = os.environ.get("PGPASSWORD", "")
+            else:
+                passwd = os.environ.get("PGPASSWORD", "")
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
@@ -643,7 +652,7 @@ class PGCli:
         if self.force_passwd_prompt and not passwd:
             passwd = click.prompt("Password for %s" % user, hide_input=True, show_default=False, type=str)
 
-        key = f"{user}@{host}"
+        key = f"{user}@{host}@{port}"
 
         if not passwd and auth.keyring:
             passwd = auth.keyring_get_password(key)
@@ -926,7 +935,7 @@ class PGCli:
         while 1:
             try:
                 choice = click.prompt(
-                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit, `force` to exit anyway.",
                     default="a",
                 )
             except click.Abort:
@@ -938,6 +947,8 @@ class PGCli:
             choice = choice.lower()
             if choice == "a":
                 return False  # do not quit
+            if choice == "force":
+                return True  # quit anyway
             if choice == "c":
                 query = self.execute_command("commit")
                 return query.successful  # quit only if query is successful
@@ -978,7 +989,7 @@ class PGCli:
         if not self.less_chatty:
             print("Server: PostgreSQL", self.pgexecute.server_version)
             print("Version:", __version__)
-            print("Home: http://pgcli.com")
+            print("Home: https://pgcli.com")
 
         try:
             while True:
@@ -1089,7 +1100,7 @@ class PGCli:
                     # Render \t as 4 spaces instead of "^I"
                     TabsProcessor(char1=" ", char2=" "),
                 ],
-                auto_suggest=AutoSuggestFromHistory(),
+                auto_suggest=AutoSuggestFromHistory() if self.auto_suggest else None,
                 tempfile_suffix=".sql",
                 # N.b. pgcli's multi-line mode controls submit-on-Enter (which
                 # overrides the default behaviour of prompt_toolkit) and is
@@ -1124,7 +1135,7 @@ class PGCli:
     def _has_limit(self, sql):
         if not sql:
             return False
-        return "limit " in sql.lower()
+        return any(token.match(sqlparse_tokens.Keyword, "LIMIT") for statement in sqlparse.parse(sql) for token in statement.flatten())
 
     def _limit_output(self, cur):
         limit = min(self.row_limit, cur.rowcount)
@@ -1671,7 +1682,7 @@ def cli(
 
             if local_tz is None:
                 echo_error("No local time zone configuration found\n")
-            else:
+            elif local_tz != server_tz:
                 click.secho(
                     f"Using local time zone {local_tz} (server uses {server_tz})",
                     fg="green",
