@@ -20,6 +20,7 @@ Bug fixes:
 * Fix trailing SQL comments preventing query submission and execution.
     * ``SELECT 1; -- note`` now submits correctly in multiline mode
     * ``rstrip(";")`` in ``pgexecute.py`` now handles comments after the semicolon
+* Fix completion crash when tables are created during refresh.
 * Suggest columns after `GROUP BY`, like `ORDER BY` already does.    
 
 4.4.0 (2025-12-24)
