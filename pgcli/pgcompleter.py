@@ -229,6 +229,8 @@ class PGCompleter(Completer):
                 has_default=has_default,
                 default=default,
             )
+            metadata.setdefault(schema, {})
+            metadata[schema].setdefault(relname, OrderedDict())
             metadata[schema][relname][colname] = column
             self.all_completions.add(colname)
 

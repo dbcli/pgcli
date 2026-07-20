@@ -439,6 +439,7 @@
         "TRUNC",
         "UNNEST",
         "UPPER",
+        "VERSION",
         "WIDTH",
         "WIDTH_BUCKET",
         "XMLAGG"

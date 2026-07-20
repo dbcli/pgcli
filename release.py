@@ -53,10 +53,43 @@ def version(version_file):
     return ver
 
 
+def get_merged_prs_since_last_tag():
+    """Get list of PR numbers and titles merged since the last tag."""
+    try:
+        previous_tag = (
+            subprocess
+            .check_output(
+                ["git", "describe", "--abbrev=0", "--tags"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        return []
+
+    log = subprocess.check_output(["git", "log", "--merges", "--oneline", "{}..HEAD".format(previous_tag)]).decode()
+
+    prs = re.findall(r"(.+\(#(\d+)\))", log)
+    seen = set()
+    result = []
+    for line, num in prs:
+        if num not in seen:
+            seen.add(num)
+            result.append(num)
+    return result
+
+
 def commit_for_release(version_file, ver):
+    pr_numbers = get_merged_prs_since_last_tag()
+    pr_list = ""
+    if pr_numbers:
+        pr_list = "\n\n" + "\n".join("- #{}".format(n) for n in pr_numbers)
+
+    message = "Releasing version {}{}".format(ver, pr_list)
     run_step("git", "reset")
     run_step("git", "add", "-u")
-    run_step("git", "commit", "--message", "Releasing version {}".format(ver))
+    run_step("git", "commit", "--message", message)
 
 
 def create_git_tag(tag_name):
@@ -78,6 +111,67 @@ def push_to_github():
 
 def push_tags_to_github():
     run_step("git", "push", "--tags", "origin")
+
+
+def check_tag(ver):
+    """Verify that HEAD is on the expected tag."""
+    tag = "v{}".format(ver)
+    try:
+        current_tag = (
+            subprocess
+            .check_output(
+                ["git", "describe", "--exact-match", "--tags", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        print("ERROR: HEAD is not on any tag. Expected tag '{}'.".format(tag))
+        sys.exit(1)
+    if current_tag != tag:
+        print("ERROR: HEAD is on tag '{}', expected '{}'.".format(current_tag, tag))
+        sys.exit(1)
+    print("OK: on tag '{}'".format(tag))
+
+
+def comment_on_released_prs(ver):
+    """Post a comment on all PRs included in this release."""
+    tag = "v{}".format(ver)
+    try:
+        previous_tag = (
+            subprocess
+            .check_output(
+                ["git", "describe", "--abbrev=0", "--tags", "{}^".format(tag)],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        print("WARNING: Could not find previous tag. Skipping PR comments.")
+        return
+
+    log = subprocess.check_output(["git", "log", "--merges", "--oneline", "{}..{}".format(previous_tag, tag)]).decode()
+
+    pr_numbers = re.findall(r"#(\d+)", log)
+    pr_numbers = list(set(pr_numbers))
+
+    if not pr_numbers:
+        print("No PRs found between {} and {}.".format(previous_tag, tag))
+        return
+
+    print("Found PRs: {}".format(", ".join("#" + n for n in pr_numbers)))
+    message = "Released as part of {}.".format(ver)
+
+    print("gh pr comment --body '{}' {}".format(message, " ".join(pr_numbers)))
+    if skip_step():
+        print("--- Skipping...")
+    elif DRY_RUN:
+        print("--- Pretending to run...")
+    else:
+        for pr in pr_numbers:
+            subprocess.check_output(["gh", "pr", "comment", pr, "--body", message])
 
 
 def checklist(questions):
@@ -126,7 +220,9 @@ if __name__ == "__main__":
 
     commit_for_release("pgcli/__init__.py", ver)
     create_git_tag("v{}".format(ver))
-    create_distribution_files()
     push_to_github()
     push_tags_to_github()
+    check_tag(ver)
+    create_distribution_files()
     upload_distribution_files()
+    comment_on_released_prs(ver)

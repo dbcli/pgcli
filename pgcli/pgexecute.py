@@ -9,6 +9,9 @@ import psycopg.sql
 from psycopg.conninfo import make_conninfo
 import sqlparse
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
+
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)
@@ -298,6 +301,19 @@ class PGExecute:
         status = self.conn.info.transaction_status
         return status == psycopg.pq.TransactionStatus.ACTIVE or status == psycopg.pq.TransactionStatus.INTRANS
 
+    def is_connection_closed(self):
+        return self.conn.info.transaction_status == psycopg.pq.TransactionStatus.UNKNOWN
+
+    @property
+    def transaction_indicator(self):
+        if self.is_connection_closed():
+            return "?"
+        if self.failed_transaction():
+            return "!"
+        if self.valid_transaction():
+            return "*"
+        return ""
+
     def run(
         self,
         statement,
@@ -348,8 +364,11 @@ class PGExecute:
         # run each sql query
         for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
-            sql = sql.rstrip(";")
-            sql = sqlparse.format(sql, strip_comments=False).strip()
+            # Strip comments first so rstrip(";") works when there are
+            # trailing comments after the semicolon, e.g.:
+            #   vacuum freeze verbose t; -- 82% towards emergency
+            sql = sqlparse.format(sql, strip_comments=True).strip().rstrip(";")
+            sql = sql.strip()
             if not sql:
                 continue
             try:
@@ -492,7 +511,8 @@ class PGExecute:
             else:
                 template = "CREATE OR REPLACE VIEW {name} AS \n{stmt}"
             return (
-                psycopg.sql.SQL(template)
+                psycopg.sql
+                .SQL(template)
                 .format(
                     name=psycopg.sql.Identifier(result.nspname, result.relname),
                     stmt=psycopg.sql.SQL(result.viewdef),

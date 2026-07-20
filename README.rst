@@ -28,9 +28,9 @@ A REPL for Postgres
 
 This is a postgres client that does auto-completion and syntax highlighting.
 
-Home Page: http://pgcli.com
+Home Page: https://pgcli.com
 
-MySQL Equivalent: http://mycli.net
+MySQL Equivalent: https://mycli.net
 
 .. image:: screenshots/pgcli.gif
 .. image:: screenshots/image01.png
@@ -159,8 +159,8 @@ https://github.com/dbcli/pgcli/blob/main/CONTRIBUTING.rst
 
 Please feel free to reach out to us if you need help.
 
-* Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <http://twitter.com/amjithr>`_
-* Irina, pgcli maintainer: i.chernyavska@gmail.com, Twitter: `@irinatruong <http://twitter.com/irinatruong>`_
+* Amjith, pgcli author: amjith.r@gmail.com, Twitter: `@amjithr <https://twitter.com/amjithr>`_
+* Irina, pgcli maintainer: i.chernyavska@gmail.com, Twitter: `@irinatruong <https://twitter.com/irinatruong>`_
 
 Detailed Installation Instructions:
 -----------------------------------
@@ -341,17 +341,18 @@ Pgcli dropped support for:
 
 * Python<3.8 as of 4.0.0.
 * Python<3.9 as of 4.2.0.
+* Python<10 as of 4.5.0.
 
 Thanks:
 -------
 
 A special thanks to `Jonathan Slenders <https://twitter.com/jonathan_s>`_ for
-creating `Python Prompt Toolkit <http://github.com/jonathanslenders/python-prompt-toolkit>`_,
+creating `Python Prompt Toolkit <https://github.com/jonathanslenders/python-prompt-toolkit>`_,
 which is quite literally the backbone library, that made this app possible.
 Jonathan has also provided valuable feedback and support during the development
 of this app.
 
-`Click <http://click.pocoo.org/>`_ is used for command line option parsing
+`Click <https://click.pocoo.org/>`_ is used for command line option parsing
 and printing error messages.
 
 Thanks to `psycopg <https://www.psycopg.org/>`_ for providing a rock solid
