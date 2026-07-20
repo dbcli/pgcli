@@ -17,7 +17,6 @@ import itertools
 import pathlib
 import platform
 from time import time, sleep
-from typing import Optional
 
 from cli_helpers.tabular_output import TabularOutputFormatter
 from cli_helpers.tabular_output.preprocessors import (
@@ -28,6 +27,8 @@ from cli_helpers.tabular_output.preprocessors import (
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+import sqlparse
+from sqlparse import tokens as sqlparse_tokens
 import tzlocal
 
 try:
@@ -48,6 +49,7 @@ from prompt_toolkit.layout.processors import (
 )
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.cursor_shapes import ModalCursorShapeConfig
 from pygments.lexers.sql import PostgresLexer
 
 from pgspecial.main import PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT
@@ -183,8 +185,8 @@ class PGCli:
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
-        ssh_tunnel_url: Optional[str] = None,
-        log_file: Optional[str] = None,
+        ssh_tunnel_url: str | None = None,
+        log_file: str | None = None,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
@@ -208,6 +210,7 @@ class PGCli:
         self.output_file = None
         self.pgspecial = PGSpecial()
 
+        self.hide_named_query_text = "hide_named_query_text" in c["main"] and c["main"].as_bool("hide_named_query_text")
         self.explain_mode = False
         self.multi_line = c["main"].as_bool("multi_line")
         self.multiline_mode = c["main"].get("multi_line_mode", "psql")
@@ -265,6 +268,8 @@ class PGCli:
 
         self.query_history = []
 
+        self.auto_suggest = c["main"].as_bool("auto_suggest")
+
         # Initialize completer
         smart_completion = c["main"].as_bool("smart_completion")
         keyword_casing = c["main"]["keyword_casing"]
@@ -307,7 +312,28 @@ class PGCli:
     def quit(self):
         raise PgCliQuitError
 
+    def toggle_named_query_quiet(self):
+        """Toggle hiding of named query text"""
+        self.hide_named_query_text = not self.hide_named_query_text
+        status = "ON" if self.hide_named_query_text else "OFF"
+        message = f"Named query quiet mode: {status}"
+        return [(None, None, None, message)]
+
+    def _is_named_query_execution(self, text):
+        """Check if the command is a named query execution (\n <name>)."""
+        text = text.strip()
+        return text.startswith("\\n ") and not text.startswith("\\ns ") and not text.startswith("\\nd ")
+
     def register_special_commands(self):
+        self.pgspecial.register(
+            self.toggle_named_query_quiet,
+            "\\nq",
+            "\\nq",
+            "Toggle named query quiet mode (hide query text)",
+            arg_type=NO_QUERY,
+            case_sensitive=True,
+        )
+
         self.pgspecial.register(
             self.change_db,
             "\\c",
@@ -610,7 +636,13 @@ class PGCli:
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
         if not self.force_passwd_prompt and not passwd:
-            passwd = os.environ.get("PGPASSWORD", "")
+            if dsn:
+                # Check if DSN contains a password - if so, don't use PGPASSWORD
+                parsed_dsn = conninfo_to_dict(dsn)
+                if "password" not in parsed_dsn:
+                    passwd = os.environ.get("PGPASSWORD", "")
+            else:
+                passwd = os.environ.get("PGPASSWORD", "")
 
         # Prompt for a password immediately if requested via the -W flag. This
         # avoids wasting time trying to connect to the database and catching a
@@ -828,7 +860,14 @@ class PGCli:
                 if self.output_file and not text.startswith(("\\o ", "\\log-file", "\\? ", "\\echo ")):
                     try:
                         with open(self.output_file, "a", encoding="utf-8") as f:
-                            click.echo(text, file=f)
+                            should_hide = (
+                                self.hide_named_query_text
+                                and query.is_special
+                                and query.successful
+                                and self._is_named_query_execution(text)
+                            )
+                            if not should_hide:
+                                click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
                     except OSError as e:
@@ -842,7 +881,14 @@ class PGCli:
                     try:
                         with open(self.log_file, "a", encoding="utf-8") as f:
                             click.echo(dt.datetime.now().isoformat(), file=f)  # timestamp log
-                            click.echo(text, file=f)
+                            should_hide = (
+                                self.hide_named_query_text
+                                and query.is_special
+                                and query.successful
+                                and self._is_named_query_execution(text)
+                            )
+                            if not should_hide:
+                                click.echo(text, file=f)
                             click.echo("\n".join(output), file=f)
                             click.echo("", file=f)  # extra newline
                     except OSError as e:
@@ -889,7 +935,7 @@ class PGCli:
         while 1:
             try:
                 choice = click.prompt(
-                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit.",
+                    "A transaction is ongoing. Choose `c` to COMMIT, `r` to ROLLBACK, `a` to abort exit, `force` to exit anyway.",
                     default="a",
                 )
             except click.Abort:
@@ -901,6 +947,8 @@ class PGCli:
             choice = choice.lower()
             if choice == "a":
                 return False  # do not quit
+            if choice == "force":
+                return True  # quit anyway
             if choice == "c":
                 query = self.execute_command("commit")
                 return query.successful  # quit only if query is successful
@@ -922,7 +970,7 @@ class PGCli:
         if not self.less_chatty:
             print("Server: PostgreSQL", self.pgexecute.server_version)
             print("Version:", __version__)
-            print("Home: http://pgcli.com")
+            print("Home: https://pgcli.com")
 
         try:
             while True:
@@ -1033,7 +1081,7 @@ class PGCli:
                     # Render \t as 4 spaces instead of "^I"
                     TabsProcessor(char1=" ", char2=" "),
                 ],
-                auto_suggest=AutoSuggestFromHistory(),
+                auto_suggest=AutoSuggestFromHistory() if self.auto_suggest else None,
                 tempfile_suffix=".sql",
                 # N.b. pgcli's multi-line mode controls submit-on-Enter (which
                 # overrides the default behaviour of prompt_toolkit) and is
@@ -1051,6 +1099,7 @@ class PGCli:
                 enable_suspend=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
                 search_ignore_case=True,
+                cursor=ModalCursorShapeConfig(),
             )
 
             return prompt_app
@@ -1067,7 +1116,7 @@ class PGCli:
     def _has_limit(self, sql):
         if not sql:
             return False
-        return "limit " in sql.lower()
+        return any(token.match(sqlparse_tokens.Keyword, "LIMIT") for statement in sqlparse.parse(sql) for token in statement.flatten())
 
     def _limit_output(self, cur):
         limit = min(self.row_limit, cur.rowcount)
@@ -1136,6 +1185,18 @@ class PGCli:
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
             )
+
+            # Hide query text for named queries in quiet mode
+            if (
+                self.hide_named_query_text
+                and is_special
+                and success
+                and self._is_named_query_execution(text)
+                and title
+                and title.startswith("> ")
+            ):
+                title = None
+
             execution = time() - start
             formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
 
@@ -1259,6 +1320,7 @@ class PGCli:
         string = string.replace("\\i", str(self.pgexecute.pid) or "(none)")
         string = string.replace("\\#", "#" if self.pgexecute.superuser else ">")
         string = string.replace("\\n", "\n")
+        string = string.replace("\\T", self.pgexecute.transaction_indicator)
         return string
 
     def get_last_query(self):
@@ -1589,7 +1651,7 @@ def cli(
 
             if local_tz is None:
                 echo_error("No local time zone configuration found\n")
-            else:
+            elif local_tz != server_tz:
                 click.secho(
                     f"Using local time zone {local_tz} (server uses {server_tz})",
                     fg="green",

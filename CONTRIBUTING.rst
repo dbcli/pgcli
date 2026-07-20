@@ -101,43 +101,6 @@ Within the project, create a file: .vscode\\launch.json like below.
         ]
     }
 
-Building RPM and DEB packages
------------------------------
-
-You will need Vagrant 1.7.2 or higher. In the project root there is a
-Vagrantfile that is setup to do multi-vm provisioning. If you're setting things
-up for the first time, then do:
-
-::
-
-    $ version=x.y.z vagrant up debian
-    $ version=x.y.z vagrant up centos
-
-If you already have those VMs setup and you're merely creating a new version of
-DEB or RPM package, then you can do:
-
-::
-
-    $ version=x.y.z vagrant provision
-
-That will create a .deb file and a .rpm file.
-
-The deb package can be installed as follows:
-
-::
-
-    $ sudo dpkg -i pgcli*.deb   # if dependencies are available.
-
-    or
-
-    $ sudo apt-get install -f pgcli*.deb  # if dependencies are not available.
-
-
-The rpm package can be installed as follows:
-
-::
-
-    $ sudo yum install pgcli*.rpm
 
 Running the integration tests
 -----------------------------

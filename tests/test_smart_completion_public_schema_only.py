@@ -161,6 +161,12 @@ def test_builtin_function_name_completion(completer):
 
 
 @parametrize("completer", completers())
+def test_builtin_version_function_completion(completer):
+    result = get_result(completer, "SELECT VE")
+    assert completions_to_set(result) == completions_to_set([function("VERSION", -2)])
+
+
+@parametrize("completer", completers())
 def test_builtin_function_matches_only_at_start(completer):
     text = "SELECT IN"
 

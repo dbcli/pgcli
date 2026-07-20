@@ -7,6 +7,8 @@ from .parseutils.tables import extract_tables
 from .parseutils.ctes import isolate_query_ctes
 from pgspecial.main import parse_special_command
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
 Special = namedtuple("Special", [])
 Database = namedtuple("Database", [])
@@ -270,7 +272,7 @@ def suggest_special(text):
                 return (Schema(), Function(schema=None, usage="special"))
             return (Schema(), rel_type(schema=None))
 
-    if cmd in ["\\n", "\\ns", "\\nd"]:
+    if cmd in ["\\n", "\\ns", "\\nd", "\\nq"]:
         return (NamedQuery(),)
 
     return (Keyword(), Special())
@@ -381,7 +383,7 @@ def suggest_based_on_last_token(token, stmt):
         # E.g. 'UPDATE foo SET'
         return (Column(table_refs=stmt.get_tables(), local_tables=stmt.local_tables),)
 
-    elif token_v in ("select", "where", "having", "order by", "distinct"):
+    elif token_v in ("select", "where", "having", "group by", "order by", "distinct"):
         return _suggest_expression(token_v, stmt)
     elif token_v == "as":
         # Don't suggest anything for aliases

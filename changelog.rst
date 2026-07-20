@@ -1,5 +1,30 @@
-Upcoming (TBD)
-==============
+4.5.0 (2026-06-02)
+==================
+
+Features:
+---------
+* Add support for `\\T` prompt escape sequence to display transaction status (similar to psql's `%x`).
+* Add cursor shape support for vi mode. When ``vi = True``, the terminal cursor now
+  reflects the current editing mode: beam in INSERT, block in NORMAL, underline in REPLACE.
+  Uses prompt_toolkit's ``ModalCursorShapeConfig``.
+* Add the option to force-quit pgcli when a transaction is in progress.
+* Add support of Python 3.14.
+* Drop support of Python 3.9.
+
+Bug fixes:
+----------
+* Add `VERSION` to built-in function completion so `SELECT VERSION();` is suggested.
+* Hide timezone notice at startup when local and server timezones are the same.
+* Let `sqlparse` accept arbitrarily-large queries.
+* Respect user-specified `LIMIT` clauses when the limit value starts on a new line.
+* Fix trailing SQL comments preventing query submission and execution.
+    * ``SELECT 1; -- note`` now submits correctly in multiline mode
+    * ``rstrip(";")`` in ``pgexecute.py`` now handles comments after the semicolon
+* Fix completion crash when tables are created during refresh.
+* Suggest columns after `GROUP BY`, like `ORDER BY` already does.    
+
+4.4.0 (2025-12-24)
+==================
 
 Features:
 ---------

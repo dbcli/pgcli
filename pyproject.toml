@@ -1,20 +1,19 @@
 [project]
 name = "pgcli"
 authors = [{ name = "Pgcli Core Team", email = "pgcli-dev@googlegroups.com" }]
-license = { text = "BSD" }
+license = "BSD-3-Clause"
 description = "CLI for Postgres Database. With auto-completion and syntax highlighting."
 readme = "README.rst"
 classifiers = [
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: Unix",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: SQL",
     "Topic :: Database",
     "Topic :: Database :: Front-Ends",
@@ -22,10 +21,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 urls = { Homepage = "https://pgcli.com" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "pgspecial>=2.0.0",
-    "click >= 4.1,<8.1.8",
+    # Click 8.1.8 through 8.3.0 have broken pager invocation for multi-argument PAGER values, which causes behave test failures.
+    "click >= 4.1, != 8.1.8, != 8.2.*, != 8.3.0, < 9",
     "Pygments>=2.0",       # Pygments has to be Capitalcased.
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
@@ -73,9 +73,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 include-package-data = false
 
-[tool.setuptools.dynamic]
-version = { attr = "pgcli.__version__" }
-
 [tool.setuptools.packages]
 find = { namespaces = false }
 
@@ -85,6 +82,7 @@ pgcli = ["pgclirc", "packages/pgliterals/pgliterals.json"]
 [tool.ruff]
 target-version = 'py39'
 line-length = 140
+show-fixes = true
 
 [tool.ruff.lint]
 select = [
