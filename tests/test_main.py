@@ -656,13 +656,14 @@ def test_force_destructive_skips_confirmation(executor):
     cli = PGCli(pgexecute=executor, force_destructive=True)
     cli.destructive_warning = ["drop", "alter"]
 
-    # Mock confirm_destructive_query to ensure it's not called
-    with mock.patch("pgcli.main.confirm_destructive_query") as mock_confirm:
+    # The proceed/abort decision lives inside confirm_destructive_query, which is
+    # told to force; what must not happen is the user being prompted.
+    with mock.patch("pgcli.packages.prompt_utils.confirm") as mock_prompt:
         # Execute a destructive command
         result = cli.execute_command("ALTER TABLE test_table ADD COLUMN test_col TEXT;")
 
-        # Verify that confirm_destructive_query was NOT called
-        mock_confirm.assert_not_called()
+        # Verify that the user was never prompted
+        mock_prompt.assert_not_called()
 
         # Verify that the command was attempted (even if it fails due to missing table)
         assert result is not None
