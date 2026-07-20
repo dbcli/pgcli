@@ -1,9 +1,12 @@
+import sqlparse
 from sqlparse import parse
 from sqlparse.tokens import Keyword, CTE, DML
 from sqlparse.sql import Identifier, IdentifierList, Parenthesis
 from collections import namedtuple
 from .meta import TableMetadata, ColumnMetadata
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
 # TableExpression is a namedtuple representing a CTE, used internally
 # name: cte alias assigned in the query

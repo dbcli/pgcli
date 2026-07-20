@@ -49,6 +49,13 @@ def test_function_name_completion(completer, complete_event):
     ])
 
 
+def test_version_function_name_completion(completer, complete_event):
+    text = "SELECT VE"
+    position = len(text)
+    result = completions_to_set(completer.get_completions(Document(text=text, cursor_position=position), complete_event))
+    assert result == completions_to_set([Completion(text="VERSION", start_position=-2)])
+
+
 def test_column_name_completion(completer, complete_event):
     text = "SELECT  FROM users"
     position = len("SELECT ")

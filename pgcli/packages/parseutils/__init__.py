@@ -1,5 +1,7 @@
 import sqlparse
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
 BASE_KEYWORDS = [
     "drop",
