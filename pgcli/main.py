@@ -486,10 +486,7 @@ class PGCli:
             ):
                 message = "Destructive statements must be run within a transaction. Command execution stopped."
                 return [(None, None, None, message)]
-            if self.force_destructive:
-                destroy = True
-            else:
-                destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias)
+            destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias, self.force_destructive)
             if destroy is False:
                 message = "Wise choice. Command execution stopped."
                 return [(None, None, None, message)]
@@ -797,10 +794,7 @@ class PGCli:
                 ):
                     click.secho("Destructive statements must be run within a transaction.")
                     raise KeyboardInterrupt
-                if self.force_destructive:
-                    destroy = True
-                else:
-                    destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias)
+                destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias, self.force_destructive)
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
