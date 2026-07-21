@@ -4,6 +4,8 @@ from sqlparse.tokens import Name
 from collections import defaultdict
 from .pgliterals.main import get_literals
 
+sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
+sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
 white_space_regex = re.compile("\\s+", re.MULTILINE)
 
