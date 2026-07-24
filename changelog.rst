@@ -1,9 +1,16 @@
 Upcoming (TBD)
-==============
 
 Bug fixes:
 ----------
 * Restore cursor shape behaviour for Emacs mode
+Upcoming
+
+Features:
+---------
+* Enable ``.pgpass`` support for SSH tunnel connections.
+    * Preserve original hostname for ``.pgpass`` lookup using PostgreSQL's ``hostaddr`` parameter
+    * SSH tunnel endpoint (``127.0.0.1``) is passed via ``hostaddr``, keeping ``host`` for ``.pgpass``
+    * Works with both DSN and host/port connection styles
 
 4.5.0 (2026-06-02)
 ==================
@@ -27,6 +34,8 @@ Bug fixes:
 * Fix trailing SQL comments preventing query submission and execution.
     * ``SELECT 1; -- note`` now submits correctly in multiline mode
     * ``rstrip(";")`` in ``pgexecute.py`` now handles comments after the semicolon
+* Fix completion crash when tables are created during refresh.
+* Suggest columns after `GROUP BY`, like `ORDER BY` already does.    
 
 4.4.0 (2025-12-24)
 ==================
