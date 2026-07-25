@@ -801,6 +801,23 @@ def test_alter_column_type_suggests_types():
 @pytest.mark.parametrize(
     "text",
     [
+        "SELECT type ",
+        "SELECT type, ",
+        "SELECT id, type, ",
+    ],
+)
+def test_column_named_type_still_suggests_columns(text):
+    # `type` is a non-reserved word, so sqlparse tags a column literally
+    # named "type" as the TYPE keyword; it must not switch the SELECT list
+    # over to datatype suggestions.
+    suggestions = suggest_type(text, text)
+    assert Column in {type(s) for s in suggestions}
+    assert Datatype(schema=None) not in suggestions
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
         "CREATE TABLE foo (bar ",
         "CREATE TABLE foo (bar DOU",
         "CREATE TABLE foo (bar INT, baz ",
