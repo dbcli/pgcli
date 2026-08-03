@@ -1,3 +1,24 @@
+Upcoming (TBD)
+==============
+
+Bug fixes:
+----------
+* Restore cursor shape behaviour for Emacs mode
+* Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
+  completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
+* Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
+
+Features:
+---------
+* Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
+  named query's SQL into ``$EDITOR``; on save it is written back to the
+  ``[named queries]`` section, creating it if it does not exist. Complements
+  ``\\ns`` (save) by making longer queries easier to edit ([issue 1430](https://github.com/dbcli/pgcli/issues/1430)).
+* Enable ``.pgpass`` support for SSH tunnel connections.
+    * Preserve original hostname for ``.pgpass`` lookup using PostgreSQL's ``hostaddr`` parameter
+    * SSH tunnel endpoint (``127.0.0.1``) is passed via ``hostaddr``, keeping ``host`` for ``.pgpass``
+    * Works with both DSN and host/port connection styles
+
 4.5.0 (2026-06-02)
 ==================
 

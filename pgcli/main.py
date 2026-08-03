@@ -321,6 +321,31 @@ class PGCli:
         message = f"Named query quiet mode: {status}"
         return [(None, None, None, message)]
 
+    def edit_named_query(self, pattern, **_):
+        r"""Edit (or create) a named query in the external editor (\ne name).
+
+        Loads the named query's SQL into ``$EDITOR``; on save, persists it back
+        to the ``[named queries]`` section. If the name does not exist, the
+        editor opens empty and saving creates it.
+        """
+        name = pattern.strip()
+        if not name:
+            return [(None, None, None, "Usage: \\ne <name>")]
+
+        existing = NamedQueries.instance.get(name)
+        sql, message = special.open_external_editor(sql=existing or "")
+        if message:
+            return [(None, None, None, message)]
+
+        sql = (sql or "").strip()
+        if not sql:
+            return [(None, None, None, f"{name}: empty query, not saved.")]
+        if existing is not None and sql == existing.strip():
+            return [(None, None, None, f"{name}: no changes.")]
+
+        NamedQueries.instance.save(name, sql)
+        return [(None, None, None, f"{name}: {'Created' if existing is None else 'Saved'}")]
+
     def _is_named_query_execution(self, text):
         """Check if the command is a named query execution (\n <name>)."""
         text = text.strip()
@@ -334,6 +359,13 @@ class PGCli:
             "Toggle named query quiet mode (hide query text)",
             arg_type=NO_QUERY,
             case_sensitive=True,
+        )
+
+        self.pgspecial.register(
+            self.edit_named_query,
+            "\\ne",
+            "\\ne name",
+            "Edit a named query in the external editor.",
         )
 
         self.pgspecial.register(
@@ -721,11 +753,15 @@ class PGCli:
             self.logger.handlers = logger_handlers
 
             atexit.register(self.ssh_tunnel.stop)
-            host = "127.0.0.1"
+            # Preserve original host for .pgpass lookup and SSL certificate verification.
+            # Use hostaddr to specify the actual connection endpoint (SSH tunnel).
+            hostaddr = "127.0.0.1"
             port = self.ssh_tunnel.local_bind_ports[0]
 
             if dsn:
-                dsn = make_conninfo(dsn, host=host, port=port)
+                dsn = make_conninfo(dsn, host=host, hostaddr=hostaddr, port=port)
+            else:
+                kwargs["hostaddr"] = hostaddr
 
         # Attempt to connect to the database.
         # Note that passwd may be empty on the first attempt. If connection
@@ -1101,7 +1137,7 @@ class PGCli:
                 enable_suspend=True,
                 editing_mode=EditingMode.VI if self.vi_mode else EditingMode.EMACS,
                 search_ignore_case=True,
-                cursor=ModalCursorShapeConfig(),
+                cursor=ModalCursorShapeConfig() if self.vi_mode else None,
             )
 
             return prompt_app
