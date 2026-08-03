@@ -10,6 +10,10 @@ Bug fixes:
 
 Features:
 ---------
+* Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
+  named query's SQL into ``$EDITOR``; on save it is written back to the
+  ``[named queries]`` section, creating it if it does not exist. Complements
+  ``\\ns`` (save) by making longer queries easier to edit ([issue 1430](https://github.com/dbcli/pgcli/issues/1430)).
 * Enable ``.pgpass`` support for SSH tunnel connections.
     * Preserve original hostname for ``.pgpass`` lookup using PostgreSQL's ``hostaddr`` parameter
     * SSH tunnel endpoint (``127.0.0.1``) is passed via ``hostaddr``, keeping ``host`` for ``.pgpass``

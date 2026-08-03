@@ -636,3 +636,48 @@ def test_notifications(executor):
     with mock.patch("pgcli.main.click.secho") as mock_secho:
         run(executor, "notify chan1, 'testing2'")
         mock_secho.assert_not_called()
+
+
+def test_edit_named_query():
+    """Test \\ne edits/creates a named query via the external editor."""
+    from pgspecial.namedqueries import NamedQueries
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = os.path.join(tmpdir, "config")
+        with open(config_file, "w") as f:
+            f.write("[main]\n")
+            f.write(f"log_file = {os.path.join(tmpdir, 'pgcli.log')}\n")
+
+        cli = PGCli(pgclirc_file=config_file)
+
+        # Create a new named query (editor returns SQL, no error).
+        with mock.patch("pgcli.main.special.open_external_editor", return_value=("select 1", None)):
+            out = cli.edit_named_query("foo")
+        assert "Created" in out[0][3]
+        assert NamedQueries.instance.get("foo") == "select 1"
+
+        # Update the existing one.
+        with mock.patch("pgcli.main.special.open_external_editor", return_value=("select 2", None)):
+            out = cli.edit_named_query("foo")
+        assert "Saved" in out[0][3]
+        assert NamedQueries.instance.get("foo") == "select 2"
+
+        # No changes -> not re-saved.
+        with mock.patch("pgcli.main.special.open_external_editor", return_value=("select 2", None)):
+            out = cli.edit_named_query("foo")
+        assert "no changes" in out[0][3]
+
+        # Empty editor result -> not saved, previous value kept.
+        with mock.patch("pgcli.main.special.open_external_editor", return_value=("", None)):
+            out = cli.edit_named_query("foo")
+        assert "not saved" in out[0][3]
+        assert NamedQueries.instance.get("foo") == "select 2"
+
+        # Editor reported an error -> surfaced, nothing saved.
+        with mock.patch("pgcli.main.special.open_external_editor", return_value=(None, "boom")):
+            out = cli.edit_named_query("foo")
+        assert out[0][3] == "boom"
+
+        # Missing name -> usage message.
+        out = cli.edit_named_query("")
+        assert "Usage" in out[0][3]
