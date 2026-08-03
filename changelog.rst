@@ -4,6 +4,8 @@ Upcoming (TBD)
 Bug fixes:
 ----------
 * Restore cursor shape behaviour for Emacs mode
+* Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
+  completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
 * Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
 
 Features:
