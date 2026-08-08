@@ -8,6 +8,7 @@ from pgcli.packages.sqlcompletion import (
     View,
     Function,
     Datatype,
+    Path,
 )
 
 
@@ -58,6 +59,16 @@ def test_leading_whitespace_ok():
     whitespace = "   "
     suggestions = suggest_type(whitespace + cmd, whitespace + cmd)
     assert suggestions == suggest_type(cmd, cmd)
+
+
+@pytest.mark.parametrize("command", [r"\i ", r"\e ", r"\ls "])
+def test_file_commands_suggest_paths(command):
+    assert suggest_type(command, command) == (Path(),)
+
+
+def test_cd_suggests_directories():
+    command = r"\cd "
+    assert suggest_type(command, command) == (Path(only_directories=True),)
 
 
 def test_dT_suggests_schema_or_datatypes():

@@ -45,7 +45,8 @@ NamedQuery = namedtuple("NamedQuery", [])
 Datatype = namedtuple("Datatype", ["schema"])
 Alias = namedtuple("Alias", ["aliases"])
 
-Path = namedtuple("Path", [])
+Path = namedtuple("Path", ["only_directories"])
+Path.__new__.__defaults__ = (False,)
 
 
 class SqlStatement:
@@ -124,8 +125,11 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-    if full_text.startswith("\\i "):
+    command_text = full_text.lstrip()
+    if command_text.startswith(("\\i ", "\\e ", "\\ls ")):
         return (Path(),)
+    if command_text.startswith("\\cd "):
+        return (Path(only_directories=True),)
 
     # This is a temporary hack; the exception handling
     # here should be removed once sqlparse has been fixed

@@ -840,8 +840,8 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, keywords, mode="strict", meta="keyword")
 
-    def get_path_matches(self, _, word_before_cursor):
-        completer = PathCompleter(expanduser=True)
+    def get_path_matches(self, suggestion, word_before_cursor):
+        completer = PathCompleter(expanduser=True, only_directories=suggestion.only_directories)
         document = Document(text=word_before_cursor, cursor_position=len(word_before_cursor))
         for c in completer.get_completions(document, None):
             yield Match(completion=c, priority=(0,))

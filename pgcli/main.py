@@ -411,6 +411,18 @@ class PGCli:
         )
         self.pgspecial.register(self.execute_from_file, "\\i", "\\i filename", "Execute commands from file.")
         self.pgspecial.register(
+            self.change_directory,
+            "\\cd",
+            "\\cd [directory]",
+            "Change the current working directory.",
+        )
+        self.pgspecial.register(
+            self.list_directory,
+            "\\ls",
+            "\\ls [path]",
+            "List files in a directory.",
+        )
+        self.pgspecial.register(
             self.write_to_file,
             "\\o",
             "\\o [filename]",
@@ -554,6 +566,27 @@ class PGCli:
             on_error_resume=on_error_resume,
             explain_mode=self.explain_mode,
         )
+
+    def change_directory(self, pattern, **_):
+        directory = pathlib.Path(pattern or "~").expanduser()
+        try:
+            os.chdir(directory)
+        except OSError as e:
+            return [(None, None, None, str(e), "", False, True)]
+
+        return [(None, None, None, str(pathlib.Path.cwd()), "", True, True)]
+
+    def list_directory(self, pattern, **_):
+        path = pathlib.Path(pattern or ".").expanduser()
+        try:
+            path.stat()
+            entries = list(path.iterdir()) if path.is_dir() else [path]
+            entries.sort(key=lambda entry: (not entry.is_dir(), entry.name.casefold()))
+            output = "\n".join(entry.name + (os.sep if entry.is_dir() else "") for entry in entries)
+        except OSError as e:
+            return [(None, None, None, str(e), "", False, True)]
+
+        return [(None, None, None, output, "", True, True)]
 
     def write_to_logfile(self, pattern, **_):
         if not pattern:
