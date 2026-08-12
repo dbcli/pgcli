@@ -10,6 +10,8 @@ Bug fixes:
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
   named query's SQL into ``$EDITOR``; on save it is written back to the
   ``[named queries]`` section, creating it if it does not exist. Complements

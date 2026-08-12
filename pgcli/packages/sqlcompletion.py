@@ -48,6 +48,9 @@ Alias = namedtuple("Alias", ["aliases"])
 Path = namedtuple("Path", ["only_directories"])
 Path.__new__.__defaults__ = (False,)
 
+PATH_COMMANDS = frozenset(("\\e", "\\i", "\\log-file", "\\ls", "\\o"))
+DIRECTORY_COMMANDS = frozenset(("\\cd",))
+
 
 class SqlStatement:
     def __init__(self, full_text, text_before_cursor):
@@ -125,11 +128,13 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-    command_text = full_text.lstrip()
-    if command_text.startswith(("\\i ", "\\e ", "\\ls ")):
-        return (Path(),)
-    if command_text.startswith("\\cd "):
-        return (Path(only_directories=True),)
+    command_text = text_before_cursor.lstrip()
+    command, _, _ = parse_special_command(command_text)
+    if command != command_text:
+        if command in PATH_COMMANDS:
+            return (Path(),)
+        if command in DIRECTORY_COMMANDS:
+            return (Path(only_directories=True),)
 
     # This is a temporary hack; the exception handling
     # here should be removed once sqlparse has been fixed

@@ -568,22 +568,23 @@ class PGCli:
         )
 
     def change_directory(self, pattern, **_):
-        directory = pathlib.Path(pattern or "~").expanduser()
         try:
+            directory = pathlib.Path(pattern or "~").expanduser()
             os.chdir(directory)
-        except OSError as e:
+        except (OSError, RuntimeError) as e:
             return [(None, None, None, str(e), "", False, True)]
 
         return [(None, None, None, str(pathlib.Path.cwd()), "", True, True)]
 
     def list_directory(self, pattern, **_):
-        path = pathlib.Path(pattern or ".").expanduser()
         try:
+            path = pathlib.Path(pattern or ".").expanduser()
             path.stat()
             entries = list(path.iterdir()) if path.is_dir() else [path]
-            entries.sort(key=lambda entry: (not entry.is_dir(), entry.name.casefold()))
-            output = "\n".join(entry.name + (os.sep if entry.is_dir() else "") for entry in entries)
-        except OSError as e:
+            entries_with_types = [(entry, entry.is_dir()) for entry in entries]
+            entries_with_types.sort(key=lambda item: (not item[1], item[0].name.casefold(), item[0].name))
+            output = "\n".join(entry.name + (os.sep if is_directory else "") for entry, is_directory in entries_with_types)
+        except (OSError, RuntimeError) as e:
             return [(None, None, None, str(e), "", False, True)]
 
         return [(None, None, None, output, "", True, True)]

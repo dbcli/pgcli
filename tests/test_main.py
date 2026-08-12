@@ -348,6 +348,27 @@ def test_change_directory(tmp_path, monkeypatch):
     assert result[0][3] == str(target)
 
 
+def test_change_directory_reports_missing_path(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(tmp_path / "missing"))
+
+    assert pathlib.Path.cwd() == tmp_path
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
+
+
+@pytest.mark.parametrize("command", ["change_directory", "list_directory"])
+def test_filesystem_commands_report_expanduser_errors(command):
+    cli = object.__new__(PGCli)
+    with mock.patch.object(pathlib.Path, "expanduser", side_effect=RuntimeError("unknown home")):
+        result = getattr(cli, command)("~missing")
+
+    assert result[0][3] == "unknown home"
+    assert result[0][5:] == (False, True)
+
+
 def test_list_directory(tmp_path):
     cli = object.__new__(PGCli)
     (tmp_path / "folder").mkdir()

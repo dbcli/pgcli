@@ -61,7 +61,7 @@ def test_leading_whitespace_ok():
     assert suggestions == suggest_type(cmd, cmd)
 
 
-@pytest.mark.parametrize("command", [r"\i ", r"\e ", r"\ls "])
+@pytest.mark.parametrize("command", [r"\i ", r"\e ", r"\ls ", r"\o ", r"\log-file "])
 def test_file_commands_suggest_paths(command):
     assert suggest_type(command, command) == (Path(),)
 
@@ -69,6 +69,10 @@ def test_file_commands_suggest_paths(command):
 def test_cd_suggests_directories():
     command = r"\cd "
     assert suggest_type(command, command) == (Path(only_directories=True),)
+
+
+def test_path_suggestion_uses_text_before_cursor():
+    assert suggest_type(r"\ls folder", r"\l") == (Special(),)
 
 
 def test_dT_suggests_schema_or_datatypes():

@@ -5,6 +5,7 @@ from itertools import count, chain
 import operator
 from collections import namedtuple, defaultdict, OrderedDict
 from cli_helpers.tabular_output import TabularOutputFormatter
+from pgspecial.main import parse_special_command
 from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion, PathCompleter
 from prompt_toolkit.document import Document
@@ -484,7 +485,8 @@ class PGCompleter(Completer):
             # Map suggestion type to method
             # e.g. 'table' -> self.get_table_matches
             matcher = self.suggestion_matchers[suggestion_type]
-            matches.extend(matcher(self, suggestion, word_before_cursor))
+            completion_text = document.text_before_cursor if suggestion_type is Path else word_before_cursor
+            matches.extend(matcher(self, suggestion, completion_text))
 
         # Sort matches so highest priorities are first
         matches = sorted(matches, key=operator.attrgetter("priority"), reverse=True)
@@ -840,9 +842,10 @@ class PGCompleter(Completer):
 
         return self.find_matches(word_before_cursor, keywords, mode="strict", meta="keyword")
 
-    def get_path_matches(self, suggestion, word_before_cursor):
+    def get_path_matches(self, suggestion, text_before_cursor):
+        _, _, path = parse_special_command(text_before_cursor.lstrip())
         completer = PathCompleter(expanduser=True, only_directories=suggestion.only_directories)
-        document = Document(text=word_before_cursor, cursor_position=len(word_before_cursor))
+        document = Document(text=path, cursor_position=len(path))
         for c in completer.get_completions(document, None):
             yield Match(completion=c, priority=(0,))
 
