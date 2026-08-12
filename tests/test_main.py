@@ -1,4 +1,5 @@
 import os
+import pathlib
 import platform
 import re
 import tempfile
@@ -333,6 +334,58 @@ def test_i_works(tmpdir, executor):
     cli = PGCli(pgexecute=executor, pgclirc_file=rcfile)
     statement = r"\i {0}".format(sqlfile)
     run(executor, statement, pgspecial=cli.pgspecial)
+
+
+def test_change_directory(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(target))
+
+    assert pathlib.Path.cwd() == target
+    assert result[0][3] == str(target)
+
+
+def test_change_directory_reports_missing_path(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(tmp_path / "missing"))
+
+    assert pathlib.Path.cwd() == tmp_path
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
+
+
+@pytest.mark.parametrize("command", ["change_directory", "list_directory"])
+def test_filesystem_commands_report_expanduser_errors(command):
+    cli = object.__new__(PGCli)
+    with mock.patch.object(pathlib.Path, "expanduser", side_effect=RuntimeError("unknown home")):
+        result = getattr(cli, command)("~missing")
+
+    assert result[0][3] == "unknown home"
+    assert result[0][5:] == (False, True)
+
+
+def test_list_directory(tmp_path):
+    cli = object.__new__(PGCli)
+    (tmp_path / "folder").mkdir()
+    (tmp_path / "query.sql").write_text("select 1")
+
+    result = cli.list_directory(str(tmp_path))
+
+    assert result[0][3].splitlines() == [f"folder{os.sep}", "query.sql"]
+
+
+def test_list_directory_reports_missing_path(tmp_path):
+    cli = object.__new__(PGCli)
+
+    result = cli.list_directory(str(tmp_path / "missing"))
+
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
 
 
 @dbtest

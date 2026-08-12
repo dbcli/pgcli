@@ -411,6 +411,18 @@ class PGCli:
         )
         self.pgspecial.register(self.execute_from_file, "\\i", "\\i filename", "Execute commands from file.")
         self.pgspecial.register(
+            self.change_directory,
+            "\\cd",
+            "\\cd [directory]",
+            "Change the current working directory.",
+        )
+        self.pgspecial.register(
+            self.list_directory,
+            "\\ls",
+            "\\ls [path]",
+            "List files in a directory.",
+        )
+        self.pgspecial.register(
             self.write_to_file,
             "\\o",
             "\\o [filename]",
@@ -554,6 +566,28 @@ class PGCli:
             on_error_resume=on_error_resume,
             explain_mode=self.explain_mode,
         )
+
+    def change_directory(self, pattern, **_):
+        try:
+            directory = pathlib.Path(pattern or "~").expanduser()
+            os.chdir(directory)
+        except (OSError, RuntimeError) as e:
+            return [(None, None, None, str(e), "", False, True)]
+
+        return [(None, None, None, str(pathlib.Path.cwd()), "", True, True)]
+
+    def list_directory(self, pattern, **_):
+        try:
+            path = pathlib.Path(pattern or ".").expanduser()
+            path.stat()
+            entries = list(path.iterdir()) if path.is_dir() else [path]
+            entries_with_types = [(entry, entry.is_dir()) for entry in entries]
+            entries_with_types.sort(key=lambda item: (not item[1], item[0].name.casefold(), item[0].name))
+            output = "\n".join(entry.name + (os.sep if is_directory else "") for entry, is_directory in entries_with_types)
+        except (OSError, RuntimeError) as e:
+            return [(None, None, None, str(e), "", False, True)]
+
+        return [(None, None, None, output, "", True, True)]
 
     def write_to_logfile(self, pattern, **_):
         if not pattern:
