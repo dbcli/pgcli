@@ -11,6 +11,8 @@ Bug fixes:
   issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
   bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
   installing the fixed release.
+* Detect an unconditional ``UPDATE`` with ``sqlparse`` rather than splitting on whitespace, so a
+  ``WHERE`` appearing inside a string literal no longer suppresses the destructive-statement warning.
 
 Features:
 ---------
