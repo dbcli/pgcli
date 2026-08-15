@@ -20,10 +20,25 @@ def query_starts_with(formatted_sql, prefixes):
     return bool(formatted_sql) and formatted_sql.split()[0] in prefixes
 
 
-def query_is_unconditional_update(formatted_sql):
-    """Check if the query starts with UPDATE and contains no WHERE."""
-    tokens = formatted_sql.split()
-    return bool(tokens) and tokens[0] == "update" and "where" not in tokens
+def query_is_unconditional_update(query):
+    """Check if the query starts with UPDATE and contains no top-level WHERE clause.
+
+    Uses sqlparse's parse tree (rather than naive whitespace splitting) so that
+    the word "where" appearing inside a string literal, comment, or a nested
+    subquery doesn't get mistaken for an actual WHERE clause.
+    """
+    statements = sqlparse.parse(query)
+    if not statements:
+        return False
+    statement = statements[0]
+
+    first_token = statement.token_first(skip_cm=True)
+    if first_token is None or first_token.ttype is not sqlparse.tokens.DML:
+        return False
+    if first_token.value.upper() != "UPDATE":
+        return False
+
+    return not any(isinstance(token, sqlparse.sql.Where) for token in statement.tokens)
 
 
 def is_destructive(queries, keywords):
@@ -31,7 +46,7 @@ def is_destructive(queries, keywords):
     for query in sqlparse.split(queries):
         if query:
             formatted_sql = sqlparse.format(query.lower(), strip_comments=True).strip()
-            if "unconditional_update" in keywords and query_is_unconditional_update(formatted_sql):
+            if "unconditional_update" in keywords and query_is_unconditional_update(query):
                 return True
             if query_starts_with(formatted_sql, keywords):
                 return True
