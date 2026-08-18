@@ -6,6 +6,7 @@ import datetime
 from unittest import mock
 
 import pytest
+from click.testing import CliRunner
 
 try:
     import setproctitle
@@ -13,6 +14,7 @@ except ImportError:
     setproctitle = None
 
 from pgcli.main import (
+    cli,
     obfuscate_process_password,
     duration_in_words,
     format_output,
@@ -23,6 +25,7 @@ from pgcli.main import (
     COLOR_CODE_REGEX,
 )
 from pgcli.pgexecute import PGExecute
+from psycopg.conninfo import conninfo_to_dict
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
@@ -701,3 +704,65 @@ def test_get_editor_precedence():
     # Nothing set -> None, so click uses its platform default.
     with mock.patch.dict(os.environ, {}, clear=True):
         assert get_editor() is None
+
+
+def _cli_conn_target(argv, tmpdir):
+    """Run cli() with argv and report which connect_* path it took."""
+    rc = tmpdir.join("rcfile")
+    rc.write("[main]\n")
+    runner = CliRunner()
+    with (
+        mock.patch.object(PGCli, "connect_uri", side_effect=RuntimeError("stop")) as mock_uri,
+        mock.patch.object(PGCli, "connect_dsn", side_effect=RuntimeError("stop")) as mock_dsn,
+        mock.patch.object(PGCli, "connect", side_effect=RuntimeError("stop")) as mock_plain,
+    ):
+        runner.invoke(cli, argv + ["--pgclirc", str(rc)])
+    if mock_uri.called:
+        return "uri", mock_uri.call_args
+    if mock_dsn.called:
+        return "dsn", mock_dsn.call_args
+    if mock_plain.called:
+        return "plain", mock_plain.call_args
+    return "none", None
+
+
+def test_list_databases_keeps_uri(tmpdir):
+    """-l must not discard a connection URI: doing so fell back to a local
+    socket connection as the OS user."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "-l"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_keeps_kv_conninfo(tmpdir):
+    """Same for a key=value conninfo string, which carries sslmode and friends."""
+    kv = "host=somehost port=6000 user=someuser dbname=somedb sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert call.args[0] == kv
+
+
+def test_ping_keeps_uri(tmpdir):
+    """--ping handles connection strings the same way as -l."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "--ping"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_conn_string_without_dbname_gets_postgres(tmpdir):
+    """A connection string naming no database gets "postgres" for the listing,
+    instead of libpq defaulting to the OS user name."""
+    kv = "host=somehost user=someuser sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert conninfo_to_dict(call.args[0])["dbname"] == "postgres"
+    assert conninfo_to_dict(call.args[0])["sslmode"] == "verify-ca"  # rest preserved
+
+
+def test_list_databases_discards_plain_dbname(tmpdir):
+    """A plain db name is still discarded by -l."""
+    path, call = _cli_conn_target(["mydb", "-l"], tmpdir)
+    assert path == "plain"
+    assert call.args[0] == "postgres"

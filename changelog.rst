@@ -3,6 +3,12 @@ Upcoming (TBD)
 
 Bug fixes:
 ----------
+* Fix ``-l``/``--list`` and ``--ping`` discarding the connection string. The
+  positional argument was unconditionally replaced with ``postgres``, which
+  also threw away a connection URI or ``key=value`` conninfo (host, user, port,
+  ``sslmode``, everything) and silently fell back to a local socket connection
+  as the OS user. Only a plain database name is discarded now; a connection
+  string that names no database gets ``postgres`` for the listing.
 * Restore cursor shape behaviour for Emacs mode
 * Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
   completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
