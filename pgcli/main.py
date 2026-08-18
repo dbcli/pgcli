@@ -1575,7 +1575,7 @@ def cli(
             )
     if list_dsn:
         try:
-            cfg = load_config(pgclirc, config_full_path)
+            cfg = get_config(pgclirc)
             for alias in cfg["alias_dsn"]:
                 click.secho(alias + " : " + cfg["alias_dsn"][alias])
             sys.exit(0)
@@ -1627,7 +1627,7 @@ def cli(
     if list_databases or ping_database:
         database = "postgres"
 
-    cfg = load_config(pgclirc, config_full_path)
+    cfg = get_config(pgclirc)
     if dsn != "":
         try:
             dsn_config = cfg["alias_dsn"][dsn]
