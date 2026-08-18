@@ -1,6 +1,15 @@
 Upcoming (TBD)
 ==============
 
+Internal:
+---------
+* Make the external-editor behave scenario less flaky: the ``expect_exact``
+  timeouts in ``tests/features/steps/iocommands.py`` were as low as 1-2
+  seconds, which intermittently expired on loaded CI runners and reported
+  ``Scenario: edit sql in file with external editor`` as an error. Raised to 10
+  seconds; passing runs are unaffected because pexpect returns as soon as the
+  expected text appears.
+
 Bug fixes:
 ----------
 * Restore cursor shape behaviour for Emacs mode
