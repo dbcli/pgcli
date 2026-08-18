@@ -10,6 +10,9 @@ Bug fixes:
 
 Features:
 ---------
+* Honor the ``PSQL_EDITOR`` environment variable when opening the external
+  editor (``\\e``, ``\\ev``, ``\\ef``, ``\\ne``), matching psql's precedence of
+  ``PSQL_EDITOR``, then ``EDITOR``, then ``VISUAL`` ([issue 1398](https://github.com/dbcli/pgcli/issues/1398)).
 * Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
   named query's SQL into ``$EDITOR``; on save it is written back to the
   ``[named queries]`` section, creating it if it does not exist. Complements
