@@ -7,6 +7,10 @@ Bug fixes:
 * Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
   completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
 * Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
+* Allow ``sqlparse`` 0.6.x. sqlparse 0.6.0 fixes several denial-of-service
+  issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
+  bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
+  installing the fixed release.
 
 Features:
 ---------
