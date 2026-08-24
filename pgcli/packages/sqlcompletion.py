@@ -278,6 +278,29 @@ def suggest_special(text):
     return (Keyword(), Special())
 
 
+def _is_datatype_keyword(token, stmt):
+    """Decide whether a `type` token is the SQL TYPE keyword or a column name.
+
+    `type` is a non-reserved word in postgres, so sqlparse tags a column
+    literally named "type" as a keyword. The TYPE keyword only introduces a
+    datatype in DDL contexts (`ALTER COLUMN bar TYPE`, `SET DATA TYPE`,
+    `CREATE TYPE`), never directly inside a DML select/insert/update list.
+    """
+    if isinstance(token, str):
+        # An explicit internal request for datatype suggestions, e.g. the
+        # parenthesized column list in `CREATE TABLE foo (bar <CURSOR>`.
+        return True
+
+    if not token.is_keyword:
+        return False
+
+    prev_keyword, _ = find_prev_keyword(stmt.text_before_cursor.rstrip(), n_skip=1)
+    if prev_keyword is None:
+        return False
+
+    return prev_keyword.ttype is not sqlparse.tokens.Keyword.DML
+
+
 def suggest_based_on_last_token(token, stmt):
     if isinstance(token, str):
         token_v = token.lower()
@@ -492,7 +515,7 @@ def suggest_based_on_last_token(token, stmt):
             return suggest_based_on_last_token(prev_keyword, stmt)
         else:
             return ()
-    elif token_v in ("type", "::"):
+    elif token_v == "::" or (token_v == "type" and _is_datatype_keyword(token, stmt)):
         #   ALTER TABLE foo SET DATA TYPE bar
         #   SELECT foo::bar
         # Note that tables are a form of composite type in postgresql, so
