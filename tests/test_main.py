@@ -16,6 +16,7 @@ from pgcli.main import (
     obfuscate_process_password,
     duration_in_words,
     format_output,
+    get_editor,
     notify_callback,
     PGCli,
     OutputSettings,
@@ -730,3 +731,22 @@ def test_edit_named_query():
         # Missing name -> usage message.
         out = cli.edit_named_query("")
         assert "Usage" in out[0][3]
+
+
+def test_get_editor_precedence():
+    """PSQL_EDITOR wins over EDITOR/VISUAL, like psql; None when nothing is set."""
+    env = {"PSQL_EDITOR": "psqled", "EDITOR": "myedit", "VISUAL": "myvisual"}
+    with mock.patch.dict(os.environ, env, clear=False):
+        assert get_editor() == "psqled"
+
+    # PSQL_EDITOR unset -> fall back to EDITOR.
+    with mock.patch.dict(os.environ, {"EDITOR": "myedit", "VISUAL": "myvisual"}, clear=True):
+        assert get_editor() == "myedit"
+
+    # Only VISUAL set.
+    with mock.patch.dict(os.environ, {"VISUAL": "myvisual"}, clear=True):
+        assert get_editor() == "myvisual"
+
+    # Nothing set -> None, so click uses its platform default.
+    with mock.patch.dict(os.environ, {}, clear=True):
+        assert get_editor() is None

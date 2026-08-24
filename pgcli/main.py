@@ -146,6 +146,17 @@ def notify_callback(notify: Notify):
     )
 
 
+def get_editor():
+    """Pick the external editor for ``\\e``/``\\ev``/``\\ef``/``\\ne``.
+
+    Mirrors psql, which checks ``PSQL_EDITOR`` first, then ``EDITOR``, then
+    ``VISUAL``. Returning ``None`` when none are set lets click fall back to
+    its platform default, so the behaviour is unchanged for anyone who wasn't
+    setting ``PSQL_EDITOR``.
+    """
+    return os.environ.get("PSQL_EDITOR") or os.environ.get("EDITOR") or os.environ.get("VISUAL") or None
+
+
 class PGCli:
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
@@ -333,7 +344,7 @@ class PGCli:
             return [(None, None, None, "Usage: \\ne <name>")]
 
         existing = NamedQueries.instance.get(name)
-        sql, message = special.open_external_editor(sql=existing or "")
+        sql, message = special.open_external_editor(sql=existing or "", editor=get_editor())
         if message:
             return [(None, None, None, message)]
 
@@ -834,7 +845,7 @@ class PGCli:
                     query = self.pgexecute.view_definition(spec)
                 elif editor_command == "\\ef":
                     query = self.pgexecute.function_definition(spec)
-            sql, message = special.open_external_editor(filename, sql=query)
+            sql, message = special.open_external_editor(filename, sql=query, editor=get_editor())
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
