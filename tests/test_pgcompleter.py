@@ -92,3 +92,19 @@ def test_generate_alias_prefers_alias_over_upper_case_name(table_name, alias_map
 )
 def test_generate_alias_prefers_upper_case_name_over_underscore_name(table_name, alias):
     assert pgcompleter.generate_alias(table_name) == alias
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    [
+        (b"pg_catalog", "pg_catalog"),
+        (b"public", "public"),
+        (b"Mixed Case", '"Mixed Case"'),
+        (b"select", '"select"'),
+    ],
+)
+def test_escape_name_accepts_bytes(name, expected):
+    """Identifiers arrive as bytes under encodings psycopg cannot decode."""
+    completer = pgcompleter.PGCompleter()
+    assert completer.escape_name(name) == expected
+    assert completer.escaped_names([name]) == [expected]

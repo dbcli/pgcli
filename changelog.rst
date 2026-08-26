@@ -1,3 +1,40 @@
+4.6.0 (2026-08-26)
+==================
+
+Internal:
+---------
+* Make the external-editor behave scenario less flaky: the ``expect_exact``
+  timeouts in ``tests/features/steps/iocommands.py`` were as low as 1-2
+  seconds, which intermittently expired on loaded CI runners and reported
+  ``Scenario: edit sql in file with external editor`` as an error. Raised to 10
+  seconds; passing runs are unaffected because pexpect returns as soon as the
+  expected text appears.
+
+Bug fixes:
+----------
+* Restore cursor shape behaviour for Emacs mode
+* Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
+  completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
+* Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
+* Allow ``sqlparse`` 0.6.x. sqlparse 0.6.0 fixes several denial-of-service
+  issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
+  bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
+  installing the fixed release.
+
+Features:
+---------
+* Honor the ``PSQL_EDITOR`` environment variable when opening the external
+  editor (``\\e``, ``\\ev``, ``\\ef``, ``\\ne``), matching psql's precedence of
+  ``PSQL_EDITOR``, then ``EDITOR``, then ``VISUAL`` ([issue 1398](https://github.com/dbcli/pgcli/issues/1398)).
+* Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
+  named query's SQL into ``$EDITOR``; on save it is written back to the
+  ``[named queries]`` section, creating it if it does not exist. Complements
+  ``\\ns`` (save) by making longer queries easier to edit ([issue 1430](https://github.com/dbcli/pgcli/issues/1430)).
+* Enable ``.pgpass`` support for SSH tunnel connections.
+    * Preserve original hostname for ``.pgpass`` lookup using PostgreSQL's ``hostaddr`` parameter
+    * SSH tunnel endpoint (``127.0.0.1``) is passed via ``hostaddr``, keeping ``host`` for ``.pgpass``
+    * Works with both DSN and host/port connection styles
+
 4.5.0 (2026-06-02)
 ==================
 
