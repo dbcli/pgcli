@@ -18,6 +18,7 @@ from pgcli.main import (
     obfuscate_process_password,
     duration_in_words,
     format_output,
+    get_connect_timeout,
     get_editor,
     notify_callback,
     PGCli,
@@ -503,6 +504,7 @@ def test_pg_service_file(tmpdir):
         "",
         notify_callback,
         application_name="pgcli",
+        connect_timeout="30",
     )
     del os.environ["PGPASSWORD"]
     del os.environ["PGSERVICEFILE"]
@@ -551,7 +553,7 @@ def test_application_name_db_uri(tmpdir):
         mock_pgexecute.return_value = None
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
-    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow")
+    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow", connect_timeout="30")
 
 
 @pytest.mark.parametrize(
@@ -766,3 +768,76 @@ def test_list_databases_discards_plain_dbname(tmpdir):
     path, call = _cli_conn_target(["mydb", "-l"], tmpdir)
     assert path == "plain"
     assert call.args[0] == "postgres"
+
+
+def _effective_connect_timeout(tmpdir, cli_timeout=None, dsn_timeout=None, env=None, cfgval=None):
+    """The connect_timeout that actually reaches the connection."""
+    rc = str(tmpdir.join("rcfile"))
+    with open(rc, "w") as f:
+        f.write("[main]\n" + (f"connect_timeout = {cfgval}\n" if cfgval else ""))
+    environ = {k: v for k, v in os.environ.items() if k != "PGCONNECT_TIMEOUT"}
+    if env:
+        environ["PGCONNECT_TIMEOUT"] = env
+    with mock.patch.dict(os.environ, environ, clear=True):
+        cli_obj = PGCli(pgclirc_file=rc, connect_timeout=cli_timeout)
+        dsn = "postgresql://u@h:5432/db" + (f"?connect_timeout={dsn_timeout}" if dsn_timeout else "")
+        captured = {}
+
+        def fake(*a, **k):
+            captured["dsn"] = k.get("dsn") or (a[5] if len(a) > 5 else None)
+            captured["kwargs"] = k
+            raise RuntimeError("stop")
+
+        # connect() turns a failed connection into sys.exit(1); let it.
+        with mock.patch("pgcli.main.PGExecute", side_effect=fake), pytest.raises(SystemExit):
+            cli_obj.connect(dsn=dsn, host="h", port="5432", user="u", database="db")
+        from_kwargs = captured.get("kwargs", {}).get("connect_timeout")
+        return from_kwargs or conninfo_to_dict(captured.get("dsn") or "").get("connect_timeout")
+
+
+DSN_WITH_TIMEOUT = "postgresql://u@h:5432/db?connect_timeout=15"
+DSN_PLAIN = "postgresql://u@h:5432/db"
+
+
+@pytest.mark.parametrize(
+    "explicit, dsn, kwargs, env, expected, why",
+    [
+        (None, DSN_PLAIN, {}, None, 30, "nothing else set, so the config default applies"),
+        (None, DSN_WITH_TIMEOUT, {}, None, None, "the connection string already says so"),
+        (None, DSN_PLAIN, {"connect_timeout": "9"}, None, None, "the caller already says so"),
+        (None, DSN_PLAIN, {}, "7", None, "libpq reads $PGCONNECT_TIMEOUT itself"),
+        (None, DSN_WITH_TIMEOUT, {}, "7", None, "the connection string beats the environment"),
+        (3, DSN_WITH_TIMEOUT, {}, "7", 3, "--timeout beats everything"),
+        (0, DSN_WITH_TIMEOUT, {}, None, 0, "--timeout 0 is meaningful, not unset"),
+        (None, None, {}, None, 30, "no dsn at all"),
+    ],
+)
+def test_get_connect_timeout(explicit, dsn, kwargs, env, expected, why):
+    environ = {k: v for k, v in os.environ.items() if k != "PGCONNECT_TIMEOUT"}
+    if env:
+        environ["PGCONNECT_TIMEOUT"] = env
+    with mock.patch.dict(os.environ, environ, clear=True):
+        assert get_connect_timeout(explicit, dsn, kwargs, 30) == expected, why
+
+
+def test_connect_timeout_config_default_reaches_the_connection(tmpdir):
+    """The helper is actually wired into connect(): libpq's own default of 0
+    waits until the OS gives up, which takes minutes."""
+    assert _effective_connect_timeout(tmpdir) == "30"
+
+
+def test_connect_timeout_config_value_used(tmpdir):
+    assert _effective_connect_timeout(tmpdir, cfgval=45) == "45"
+
+
+def test_connect_timeout_cli_reaches_the_connection(tmpdir):
+    assert _effective_connect_timeout(tmpdir, cli_timeout=3, dsn_timeout=15, env="7") == "3"
+
+
+def test_connect_timeout_config_value_must_be_a_number(tmpdir):
+    """A typo in the config is reported instead of being silently ignored."""
+    rc = str(tmpdir.join("rcfile"))
+    with open(rc, "w") as f:
+        f.write("[main]\nconnect_timeout = soon\n")
+    with pytest.raises(ValueError):
+        PGCli(pgclirc_file=rc)
