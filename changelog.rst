@@ -1,5 +1,24 @@
-Upcoming (TBD)
-==============
+Upcoming
+========
+
+Features:
+---------
+* Add support for forcing destructive commands without confirmation.
+    * Command line option `-y` or `--yes`.
+    * Skips the destructive command confirmation prompt when enabled.
+    * Useful for automated scripts and CI/CD pipelines.
+
+4.6.0 (2026-08-26)
+==================
+
+Internal:
+---------
+* Make the external-editor behave scenario less flaky: the ``expect_exact``
+  timeouts in ``tests/features/steps/iocommands.py`` were as low as 1-2
+  seconds, which intermittently expired on loaded CI runners and reported
+  ``Scenario: edit sql in file with external editor`` as an error. Raised to 10
+  seconds; passing runs are unaffected because pexpect returns as soon as the
+  expected text appears.
 
 Bug fixes:
 ----------
@@ -14,6 +33,12 @@ Bug fixes:
 
 Features:
 ---------
+* Add a ``--timeout`` command line option and a ``connect_timeout`` config value
+  (default 30 seconds) for the connection timeout. Precedence, highest first:
+  ``--timeout``, then a ``connect_timeout`` in the connection string, then
+  ``$PGCONNECT_TIMEOUT``, then the config value. libpq's own default is 0,
+  which waits until the operating system gives up on the TCP connection, so an
+  unreachable host used to hang for minutes.
 * Honor the ``PSQL_EDITOR`` environment variable when opening the external
   editor (``\\e``, ``\\ev``, ``\\ef``, ``\\ne``), matching psql's precedence of
   ``PSQL_EDITOR``, then ``EDITOR``, then ``VISUAL`` ([issue 1398](https://github.com/dbcli/pgcli/issues/1398)).
@@ -62,10 +87,6 @@ Features:
     * Support dsn specific init-command in the config file
 * Add suggestion when setting the search_path
 * Allow per dsn_alias ssh tunnel selection
-* Add support for forcing destructive commands without confirmation.
-    * Command line option `-y` or `--yes`.
-    * Skips the destructive command confirmation prompt when enabled.
-    * Useful for automated scripts and CI/CD pipelines.
 
 Internal:
 ---------
