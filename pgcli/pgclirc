@@ -146,6 +146,13 @@ syntax_style = default
 # for end are available in the REPL.
 vi = False
 
+# Seconds to wait for a connection before giving up. Only applies when nothing
+# else specifies a timeout: an explicit --timeout on the command line wins, then
+# a connect_timeout in the connection string, then $PGCONNECT_TIMEOUT. Use 0 to
+# wait forever, which is libpq's own default (the OS then gives up on the TCP
+# connection after a few minutes).
+connect_timeout = 30
+
 # Error handling
 # When one of multiple SQL statements causes an error, choose to either
 # continue executing the remaining statements, or stopping

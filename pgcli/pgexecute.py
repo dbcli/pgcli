@@ -215,8 +215,10 @@ class PGExecute:
         new_params.update(kwargs)
 
         if new_params["dsn"]:
-            # When using DSN, only keep dsn, password, and hostaddr (for SSH tunnels)
-            new_params = {k: v for k, v in new_params.items() if k in ("dsn", "password", "hostaddr")}
+            # When using a DSN, the connection details all live in the dsn
+            # itself. Only keep the parameters that have to stay outside it:
+            # the password, hostaddr (for SSH tunnels) and connect_timeout.
+            new_params = {k: v for k, v in new_params.items() if k in ("dsn", "password", "hostaddr", "connect_timeout")}
 
             if new_params["password"]:
                 new_params["dsn"] = make_conninfo(new_params["dsn"], password=new_params.pop("password"))
