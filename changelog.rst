@@ -1,3 +1,15 @@
+Upcoming
+========
+
+Bug fixes:
+----------
+* Fix special commands being broken while explain mode (F5) is on. Every input
+  was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
+  backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
+  ``\i``, named queries and ``\G`` all failed with ``syntax error at or near
+  "\"`` and there was no way to leave explain mode or quit. Special commands
+  are now detected first and the EXPLAIN prefix is applied only to real SQL.
+
 4.6.0 (2026-08-26)
 ==================
 
@@ -12,12 +24,6 @@ Internal:
 
 Bug fixes:
 ----------
-* Fix special commands being broken while explain mode (F5) is on. Every input
-  was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
-  backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
-  ``\i``, named queries and ``\G`` all failed with ``syntax error at or near
-  "\"`` and there was no way to leave explain mode or quit. Special commands
-  are now detected first and the EXPLAIN prefix is applied only to real SQL.
 * Restore cursor shape behaviour for Emacs mode
 * Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
   completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
