@@ -1,3 +1,13 @@
+Upcoming
+========
+
+Features:
+---------
+* Add a ``-t``/``--tuples-only`` command line option that prints the rows and
+  nothing else, matching psql: no column headers, no title, no status footer
+  and no timing line. The configured table format is left untouched, so ``\T``
+  still reports it and can still change it mid-session.
+
 4.6.0 (2026-08-26)
 ==================
 
@@ -53,10 +63,6 @@ Features:
 * Add the option to force-quit pgcli when a transaction is in progress.
 * Add support of Python 3.14.
 * Drop support of Python 3.9.
-* Add ``-t``/``--tuples-only`` CLI option to set table format at startup.
-    * Sets table format to ``csv-noheader`` (rows only, no headers)
-    * CLI shortcut equivalent to ``\T csv-noheader``
-    * Does not suppress timing or status messages (use ``\pset`` for that)
 
 Bug fixes:
 ----------
