@@ -3,6 +3,12 @@ Upcoming
 
 Bug fixes:
 ----------
+* Fix special commands being broken while explain mode (F5) is on. Every input
+  was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
+  backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
+  ``\i``, named queries and ``\G`` all failed with ``syntax error at or near
+  "\"`` and there was no way to leave explain mode or quit. Special commands
+  are now detected first and the EXPLAIN prefix is applied only to real SQL.
 * Fix ``-l``/``--list`` and ``--ping`` discarding the connection string. The
   positional argument was unconditionally replaced with ``postgres``, which
   also threw away a connection URI or ``key=value`` conninfo (host, user, port,

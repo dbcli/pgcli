@@ -375,9 +375,11 @@ class PGExecute:
             if not sql:
                 continue
             try:
-                if explain_mode:
-                    sql = self.explain_prefix() + sql
-                elif pgspecial:
+                # Try special commands first, regardless of explain mode: they
+                # are not SQL, so prefixing them with EXPLAIN just sends garbage
+                # to the server. The EXPLAIN prefix is applied further down, to
+                # statements that are not special commands.
+                if pgspecial:
                     # \G is treated specially since we have to set the expanded output.
                     if sql.endswith("\\G"):
                         if not pgspecial.expanded_output:
@@ -412,6 +414,9 @@ class PGExecute:
                         pass
 
                 # Not a special command, so execute as normal sql
+                if explain_mode:
+                    sql = self.explain_prefix() + sql
+
                 yield self.execute_normal_sql(sql) + (sql, True, False)
             except psycopg.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
