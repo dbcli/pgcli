@@ -146,6 +146,46 @@ def notify_callback(notify: Notify):
     )
 
 
+def get_editor():
+    """Pick the external editor for ``\\e``/``\\ev``/``\\ef``/``\\ne``.
+
+    Mirrors psql, which checks ``PSQL_EDITOR`` first, then ``EDITOR``, then
+    ``VISUAL``. Returning ``None`` when none are set lets click fall back to
+    its platform default, so the behaviour is unchanged for anyone who wasn't
+    setting ``PSQL_EDITOR``.
+    """
+    return os.environ.get("PSQL_EDITOR") or os.environ.get("EDITOR") or os.environ.get("VISUAL") or None
+
+
+def get_connect_timeout(explicit, dsn, kwargs, default):
+    """Pick the connection timeout to apply, in seconds.
+
+    Precedence, highest first:
+
+    1. ``explicit``, i.e. ``--timeout`` on the command line
+    2. ``connect_timeout`` in the connection string, or in ``kwargs``
+    3. ``$PGCONNECT_TIMEOUT``
+    4. ``default``, the ``connect_timeout`` config value
+
+    Returns ``None`` when the user already stated a timeout by one of the
+    means we must not override, in which case the caller leaves the
+    connection parameters alone and libpq reads it from where it already is.
+
+    A default matters because libpq's own is 0, which waits until the
+    operating system gives up on the TCP connection, so an unreachable host
+    hangs for minutes.
+    """
+    if explicit is not None:
+        return explicit
+    if "connect_timeout" in kwargs:
+        return None
+    if dsn and "connect_timeout" in conninfo_to_dict(dsn):
+        return None
+    if os.environ.get("PGCONNECT_TIMEOUT"):
+        return None
+    return default
+
+
 class PGCli:
     default_prompt = "\\u@\\h:\\d> "
     max_len_prompt = 30
@@ -186,6 +226,7 @@ class PGCli:
         auto_vertical_output=False,
         warn=None,
         ssh_tunnel_url: str | None = None,
+        connect_timeout: int | None = None,
         log_file: str | None = None,
     ):
         self.force_passwd_prompt = force_passwd_prompt
@@ -252,6 +293,9 @@ class PGCli:
         self.prompt_format = prompt if prompt is not None else c["main"].get("prompt", self.default_prompt)
         self.prompt_dsn_format = prompt_dsn
         self.on_error = c["main"]["on_error"].upper()
+        # Connection timeout, in seconds. See connect() for the precedence.
+        self.connect_timeout = connect_timeout
+        self.default_connect_timeout = c["main"].as_int("connect_timeout")
         self.decimal_format = c["data_formats"]["decimal"]
         self.float_format = c["data_formats"]["float"]
         self.column_date_formats = c["column_date_formats"]
@@ -331,7 +375,7 @@ class PGCli:
             return [(None, None, None, "Usage: \\ne <name>")]
 
         existing = NamedQueries.instance.get(name)
-        sql, message = special.open_external_editor(sql=existing or "")
+        sql, message = special.open_external_editor(sql=existing or "", editor=get_editor())
         if message:
             return [(None, None, None, message)]
 
@@ -665,6 +709,12 @@ class PGCli:
 
         kwargs.setdefault("application_name", self.application_name)
 
+        # The resolved value is passed as a connection parameter rather than
+        # merged into the dsn, leaving the user's connection string untouched.
+        timeout = get_connect_timeout(self.connect_timeout, dsn, kwargs, self.default_connect_timeout)
+        if timeout is not None:
+            kwargs["connect_timeout"] = str(timeout)
+
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
         if not self.force_passwd_prompt and not passwd:
@@ -832,7 +882,7 @@ class PGCli:
                     query = self.pgexecute.view_definition(spec)
                 elif editor_command == "\\ef":
                     query = self.pgexecute.function_definition(spec)
-            sql, message = special.open_external_editor(filename, sql=query)
+            sql, message = special.open_external_editor(filename, sql=query, editor=get_editor())
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
@@ -1415,6 +1465,13 @@ class PGCli:
 )
 @click.option("-u", "--user", "username_opt", help="Username to connect to the postgres database.")
 @click.option(
+    "--timeout",
+    "connect_timeout",
+    type=click.INT,
+    default=None,
+    help="Seconds to wait for a connection before giving up (0 waits forever). Overrides the connection string and $PGCONNECT_TIMEOUT.",
+)
+@click.option(
     "-W",
     "--password",
     "prompt_passwd",
@@ -1552,6 +1609,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    connect_timeout: int | None,
 ):
     if version:
         print("Version:", __version__)
@@ -1610,6 +1668,7 @@ def cli(
         warn=warn,
         ssh_tunnel_url=ssh_tunnel,
         log_file=log_file,
+        connect_timeout=connect_timeout,
     )
 
     # Choose which ever one has a valid value.
