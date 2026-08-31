@@ -1691,9 +1691,9 @@ def cli(
     # listing, since libpq would otherwise default to the OS user name.
     is_conn_string = "://" in database or ("=" in database and service is None)
     if list_databases or ping_database:
-        if not is_conn_string:
+        if not database:
             database = "postgres"
-        else:
+        elif is_conn_string:
             try:
                 if not conninfo_to_dict(database).get("dbname"):
                     database = make_conninfo(database, dbname="postgres")

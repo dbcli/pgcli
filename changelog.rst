@@ -13,8 +13,8 @@ Bug fixes:
   positional argument was unconditionally replaced with ``postgres``, which
   also threw away a connection URI or ``key=value`` conninfo (host, user, port,
   ``sslmode``, everything) and silently fell back to a local socket connection
-  as the OS user. Only a plain database name is discarded now; a connection
-  string that names no database gets ``postgres`` for the listing.
+  as the OS user. The database argument is now kept, like psql; only when no
+  database is given at all does the listing connect to ``postgres``.
 
 4.6.0 (2026-08-26)
 ==================
