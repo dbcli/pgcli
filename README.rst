@@ -352,7 +352,7 @@ which is quite literally the backbone library, that made this app possible.
 Jonathan has also provided valuable feedback and support during the development
 of this app.
 
-`Click <https://click.pocoo.org/>`_ is used for command line option parsing
+`Click <https://click.palletsprojects.com/>`_ is used for command line option parsing
 and printing error messages.
 
 Thanks to `psycopg <https://www.psycopg.org/>`_ for providing a rock solid
