@@ -507,6 +507,49 @@ def test_execute_statements_on_error_resume_continues(executor):
 
 
 @dbtest
+@dbtest
+def test_execute_statements_metacommand_spans_only_its_line(executor):
+    """psql cuts a backslash command at its newline: a metacommand followed
+    by SQL must not swallow the SQL (sqlparse only cuts at semicolons)."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo hola\nselect 42 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    # Two separate outputs: the echo, then a real result table. Without the
+    # line cut there is a single output where \echo swallowed the select and
+    # repeated its text, which is why the select text alone proves nothing.
+    assert len(outputs) == 2
+    assert "hola" in outputs[0]
+    assert "42" in outputs[1] and "hola" not in outputs[1]
+    assert "SELECT 1" in outputs[1], "the select did not actually run"
+
+
+@dbtest
+def test_execute_statements_consecutive_metacommands(executor):
+    """Several backslash commands on consecutive lines each run on their own."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo uno\n\\echo dos\nselect 7 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("uno" in out and "dos" not in out for out in outputs)
+    assert any("dos" in out and "uno" not in out for out in outputs)
+    assert any("7" in out for out in outputs)
+
+
+@dbtest
+def test_execute_statements_sql_then_metacommand(executor):
+    """A metacommand after SQL still runs alone, and the SQL after it too."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 1 as a;\n\\echo medio\nselect 2 as b;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 3
+    assert "medio" in outputs[1]
+
+
 def test_execute_statements_does_not_split_inside_literals(executor):
     """Semicolons inside string literals are not statement boundaries."""
     cli = PGCli(pgexecute=executor)

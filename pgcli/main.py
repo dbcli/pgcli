@@ -1159,13 +1159,26 @@ class PGCli:
         statement, and a bare \watch picks up the previous statement through
         query_history, exactly like psql.
 
+        A backslash command spans only its own line, like in psql, so a
+        metacommand followed by SQL on the next line does not swallow the
+        SQL (sqlparse only cuts at semicolons).
+
         Honors on_error: with STOP, the first failed statement stops the run.
         Returns True when every statement succeeded.
         """
         ok = True
-        for statement in sqlparse.split(text):
-            if not statement.strip():
+        statements = sqlparse.split(text)
+        while statements:
+            statement = statements.pop(0)
+            stripped = statement.strip()
+            if not stripped:
                 continue
+            if stripped.startswith("\\") and "\n" in stripped:
+                # psql's rule: a backslash command ends at its newline. Put
+                # the rest back through the splitter.
+                first_line, rest = stripped.split("\n", 1)
+                statements = sqlparse.split(rest) + statements
+                statement = first_line
             query = self.handle_watch_command(statement)
             if query is not None and not query.successful:
                 ok = False
