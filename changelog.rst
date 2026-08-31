@@ -6,6 +6,9 @@ Features:
 * Add support for executing SQL commands from file and exit.
     * Command line option `-f` or `--file`.
     * Multiple files can be specified.
+    * Files run one statement at a time, like psql, so a ``\watch`` only
+      repeats its own statement (and a bare ``\watch`` re-runs the statement
+      before it), instead of re-running the whole file.
 
 Bug fixes:
 ----------

@@ -1054,11 +1054,12 @@ class PGCli:
                     with open(input_file, 'r', encoding='utf-8') as f:
                         file_content = f.read()
 
-                    # Execute the entire file content as a single command
-                    # This matches psql behavior where the file is treated as one unit
                     if file_content.strip():
                         logger.debug("Executing commands from file: %s", input_file)
-                        self.handle_watch_command(file_content)
+                        # Statement by statement, like psql -f: \watch only
+                        # repeats its own statement, not the whole file.
+                        if not self._execute_statements(file_content):
+                            break
 
             except PgCliQuitError:
                 # Normal exit from quit command
@@ -1147,6 +1148,30 @@ class PGCli:
             query = self.execute_command(text)
 
         self.query_history.append(query)
+        return query
+
+    def _execute_statements(self, text):
+        r"""Run a block of SQL the way psql -f does: one statement at a time.
+
+        get_watch_command()'s regex captures ALL the text before a \watch, so
+        feeding a whole file to handle_watch_command would make \watch repeat
+        every statement in it. Splitting first keeps \watch scoped to its own
+        statement, and a bare \watch picks up the previous statement through
+        query_history, exactly like psql.
+
+        Honors on_error: with STOP, the first failed statement stops the run.
+        Returns True when every statement succeeded.
+        """
+        ok = True
+        for statement in sqlparse.split(text):
+            if not statement.strip():
+                continue
+            query = self.handle_watch_command(statement)
+            if query is not None and not query.successful:
+                ok = False
+                if self.on_error != "RESUME":
+                    break
+        return ok
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)

@@ -440,6 +440,97 @@ def test_watch_works(executor):
     run_with_watch("\\watch 5", target_call_count=4, expected_output="222", expected_timing=5)
 
 
+@dbtest
+def test_execute_statements_splits_a_block(executor):
+    """A multi-statement block runs one statement at a time, like psql -f."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 111;\nselect 222;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 2
+    assert "111" in outputs[0] and "222" not in outputs[0]
+    assert "222" in outputs[1] and "111" not in outputs[1]
+
+
+@dbtest
+def test_execute_statements_watch_repeats_only_its_own_statement(executor):
+    r"""Regression: \watch at the end of a file repeated the WHOLE file."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [None, KeyboardInterrupt]
+        cli._execute_statements("select 111;\nselect 222; \\watch 4")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert "111" in outputs[0]
+    for out in outputs[1:]:
+        assert "222" in out
+        assert "111" not in out, "\\watch repeated the whole block, not just its statement"
+    assert mock_sleep.call_args_list[0][0][0] == 4
+
+
+@dbtest
+def test_execute_statements_bare_watch_uses_previous_statement(executor):
+    r"""A \watch alone on its line picks up the statement before it."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [KeyboardInterrupt]
+        cli._execute_statements("select 333;\n\\watch 5")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) >= 2
+    for out in outputs:
+        assert "333" in out
+    assert mock_sleep.call_args_list[0][0][0] == 5
+
+
+@dbtest
+def test_execute_statements_on_error_stop_halts(executor):
+    """With on_error = STOP (the default) the first failure stops the block."""
+    cli = PGCli(pgexecute=executor)
+    assert cli.on_error == "STOP"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert not any("444" in out for out in outputs), "the statement after the failure still ran"
+
+
+@dbtest
+def test_execute_statements_on_error_resume_continues(executor):
+    """With on_error = RESUME the block keeps going after a failure."""
+    cli = PGCli(pgexecute=executor)
+    cli.on_error = "RESUME"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("444" in out for out in outputs)
+
+
+@dbtest
+def test_execute_statements_does_not_split_inside_literals(executor):
+    """Semicolons inside string literals are not statement boundaries."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 'a;b' as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 1
+    assert "a;b" in outputs[0]
+
+
+def test_file_mode_runs_statements(tmpdir):
+    """-f wiring: the file content goes through _execute_statements."""
+    sql_file = tmpdir.join("script.sql")
+    sql_file.write("select 1;\nselect 2;")
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.input_files = [str(sql_file)]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    mock_exec.assert_called_once_with("select 1;\nselect 2;")
+
+
 def test_missing_rc_dir(tmpdir):
     rcfile = str(tmpdir.join("subdir").join("rcfile"))
 
