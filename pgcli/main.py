@@ -1682,9 +1682,23 @@ def cli(
         service = database[8:]
     elif os.getenv("PGSERVICE") is not None:
         service = os.getenv("PGSERVICE")
-    # because option --ping, --list or -l are not supposed to have a db name
+    # because option --ping, --list or -l are not supposed to have a db name.
+    # A connection string is not a db name though: a URI or a key=value conninfo
+    # carries the whole connection (host, user, port, sslmode, ...), so replacing
+    # it with "postgres" would throw all of that away and fall back to a local
+    # socket connection as the OS user. Only a plain db name is discarded here;
+    # a connection string that names no database gets "postgres" for the
+    # listing, since libpq would otherwise default to the OS user name.
+    is_conn_string = "://" in database or ("=" in database and service is None)
     if list_databases or ping_database:
-        database = "postgres"
+        if not database:
+            database = "postgres"
+        elif is_conn_string:
+            try:
+                if not conninfo_to_dict(database).get("dbname"):
+                    database = make_conninfo(database, dbname="postgres")
+            except Exception:
+                pass  # invalid conninfo: let the connection attempt report it
 
     cfg = load_config(pgclirc, config_full_path)
     if dsn != "":

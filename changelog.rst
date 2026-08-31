@@ -9,6 +9,12 @@ Bug fixes:
   ``\i``, named queries and ``\G`` all failed with ``syntax error at or near
   "\"`` and there was no way to leave explain mode or quit. Special commands
   are now detected first and the EXPLAIN prefix is applied only to real SQL.
+* Fix ``-l``/``--list`` and ``--ping`` discarding the connection string. The
+  positional argument was unconditionally replaced with ``postgres``, which
+  also threw away a connection URI or ``key=value`` conninfo (host, user, port,
+  ``sslmode``, everything) and silently fell back to a local socket connection
+  as the OS user. The database argument is now kept, like psql; only when no
+  database is given at all does the listing connect to ``postgres``.
 
 4.6.0 (2026-08-26)
 ==================
