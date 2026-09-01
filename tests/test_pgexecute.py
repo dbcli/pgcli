@@ -842,3 +842,94 @@ def test_virtual_database(executor):
     with patch.object(executor, "conn", virtual_connection):
         result = run(executor, "select 1")
         assert "Command not supported" in result
+
+
+# When the client encoding is one psycopg cannot decode (e.g. SQL_ASCII),
+# text columns come back as raw bytes. See issues #1484 and #1518.
+
+
+@dbtest
+def test_get_socket_directory_decodes_sql_ascii_bytes(executor):
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.fetchone.return_value = (b"/var/run/postgresql",)
+        assert executor.get_socket_directory() == "/var/run/postgresql"
+
+
+@dbtest
+def test_get_socket_directory_str_unchanged(executor):
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.fetchone.return_value = ("/var/run/postgresql",)
+        assert executor.get_socket_directory() == "/var/run/postgresql"
+
+
+@dbtest
+def test_get_timezone_decodes_sql_ascii_bytes(executor):
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.fetchone.return_value = (b"America/Argentina/Buenos_Aires",)
+        assert executor.get_timezone() == "America/Argentina/Buenos_Aires"
+
+
+@dbtest
+def test_get_timezone_str_unchanged(executor):
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.fetchone.return_value = ("UTC",)
+        assert executor.get_timezone() == "UTC"
+
+
+@dbtest
+def test_functions_decodes_sql_ascii_bytes(executor):
+    row = (
+        b"public",
+        b"func_with_default",
+        [b"x"],
+        [b"integer"],
+        [b"i"],
+        b"integer",
+        False,
+        False,
+        False,
+        False,
+        b"'10'::integer, NULL",
+    )
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.__iter__.return_value = iter([row])
+        funcs = list(executor.functions())
+
+    assert len(funcs) == 1
+    func = funcs[0]
+    assert func.schema_name == "public"
+    assert func.func_name == "func_with_default"
+    assert func.arg_names == ("x",)
+    assert func.arg_types == ("integer",)
+    assert func.arg_modes == ("i",)
+    assert func.return_type == "integer"
+    assert func.is_public is True
+    assert func.arg_defaults == ("'10'::integer", "NULL")
+
+
+@dbtest
+def test_functions_str_unchanged(executor):
+    row = (
+        "public",
+        "func_plain",
+        ["x"],
+        ["integer"],
+        ["i"],
+        "integer",
+        False,
+        False,
+        False,
+        False,
+        None,
+    )
+    with patch.object(executor.conn, "cursor") as mock_cursor:
+        mock_cursor.return_value.__enter__.return_value.__iter__.return_value = iter([row])
+        funcs = list(executor.functions())
+
+    assert len(funcs) == 1
+    func = funcs[0]
+    assert func.schema_name == "public"
+    assert func.func_name == "func_plain"
+    assert func.arg_names == ("x",)
+    assert func.return_type == "integer"
+    assert func.arg_defaults == ()
