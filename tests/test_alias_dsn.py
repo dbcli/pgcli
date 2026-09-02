@@ -29,14 +29,14 @@ def test_list_dsn_fresh_config(isolate_config):
     assert result.exit_code == 0
     assert "Invalid DSNs" not in result.output
     assert result.output.strip() == ""
+    # A read-only command must not create the config file as a side effect.
+    assert not cfg.exists()
 
 
 def test_list_dsn_lists_aliases(isolate_config):
     cfg = write_config(
         isolate_config,
-        "[alias_dsn]\n"
-        "foo = postgres://u:p@localhost:5432/foo\n"
-        "bar = postgres://u:p@localhost:5432/bar\n",
+        "[alias_dsn]\nfoo = postgres://u:p@localhost:5432/foo\nbar = postgres://u:p@localhost:5432/bar\n",
     )
     runner = CliRunner()
     result = runner.invoke(cli, ["--pgclirc", str(cfg), "--list-dsn"])
