@@ -1706,9 +1706,14 @@ def cli(
                 config_full_path,
             )
     if list_dsn:
+        config_file = get_config_filename(pgclirc)
+        if not os.path.exists(config_file):
+            # Nothing is configured yet, so there is nothing to list. Don't write
+            # out the default config just to read it back for a read-only command.
+            sys.exit(0)
         try:
-            cfg = load_config(pgclirc, config_full_path)
-            for alias in cfg["alias_dsn"]:
+            cfg = load_config(config_file)
+            for alias in cfg.get("alias_dsn", {}):
                 click.secho(alias + " : " + cfg["alias_dsn"][alias])
             sys.exit(0)
         except Exception:
@@ -1777,7 +1782,9 @@ def cli(
             except Exception:
                 pass  # invalid conninfo: let the connection attempt report it
 
-    cfg = load_config(pgclirc, config_full_path)
+    # PGCli() already loaded (and, if needed, wrote) the config above, so reuse it
+    # rather than reading the file a second time to resolve the -D alias.
+    cfg = pgcli.config
     if dsn != "":
         try:
             dsn_config = cfg["alias_dsn"][dsn]

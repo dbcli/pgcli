@@ -41,6 +41,12 @@ Internal:
 
 Bug fixes:
 ----------
+* Fix ``--list-dsn`` and ``-D``/``--dsn`` not finding ``[alias_dsn]`` entries.
+  On a fresh install (no config written yet) ``--list-dsn`` printed a misleading
+  "Invalid DSNs found" error. ``--list-dsn`` now treats a missing config or
+  ``[alias_dsn]`` section as simply nothing to list, without writing a config
+  file, and ``-D`` resolves the alias from the config already loaded at startup
+  instead of reading it again ([issue 1489](https://github.com/dbcli/pgcli/issues/1489)).
 * Restore cursor shape behaviour for Emacs mode
 * Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
   completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
