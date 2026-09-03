@@ -1051,8 +1051,39 @@ class PGCli:
             try:
                 for command in self.commands:
                     logger.debug("Running command: %s", command)
-                    # Execute the command using the same logic as interactive mode
-                    self.handle_watch_command(command)
+                    # Statement by statement, like psql -c: \watch only repeats
+                    # its own statement, not the whole -c block.
+                    if not self._execute_statements(command):
+                        break
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # psql runs both -c and -f when they are given together, so only
+            # exit here when there is no file left to run.
+            if not (hasattr(self, 'input_files') and self.input_files):
+                sys.exit(0)
+
+        # Handle file mode (-f flag) - similar to psql behavior
+        # Multiple -f options are executed sequentially
+        if hasattr(self, 'input_files') and self.input_files:
+            try:
+                for input_file in self.input_files:
+                    logger.debug("Reading commands from file: %s", input_file)
+                    with open(input_file, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+
+                    if file_content.strip():
+                        logger.debug("Executing commands from file: %s", input_file)
+                        # Statement by statement, like psql -f: \watch only
+                        # repeats its own statement, not the whole file.
+                        if not self._execute_statements(file_content):
+                            break
+
             except PgCliQuitError:
                 # Normal exit from quit command
                 sys.exit(0)
@@ -1140,6 +1171,43 @@ class PGCli:
             query = self.execute_command(text)
 
         self.query_history.append(query)
+        return query
+
+    def _execute_statements(self, text):
+        r"""Run a block of SQL the way psql -f does: one statement at a time.
+
+        get_watch_command()'s regex captures ALL the text before a \watch, so
+        feeding a whole file to handle_watch_command would make \watch repeat
+        every statement in it. Splitting first keeps \watch scoped to its own
+        statement, and a bare \watch picks up the previous statement through
+        query_history, exactly like psql.
+
+        A backslash command spans only its own line, like in psql, so a
+        metacommand followed by SQL on the next line does not swallow the
+        SQL (sqlparse only cuts at semicolons).
+
+        Honors on_error: with STOP, the first failed statement stops the run.
+        Returns True when every statement succeeded.
+        """
+        ok = True
+        statements = sqlparse.split(text)
+        while statements:
+            statement = statements.pop(0)
+            stripped = statement.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("\\") and "\n" in stripped:
+                # psql's rule: a backslash command ends at its newline. Put
+                # the rest back through the splitter.
+                first_line, rest = stripped.split("\n", 1)
+                statements = sqlparse.split(rest) + statements
+                statement = first_line
+            query = self.handle_watch_command(statement)
+            if query is not None and not query.successful:
+                ok = False
+                if self.on_error != "RESUME":
+                    break
+        return ok
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
@@ -1445,8 +1513,13 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        # Disable pager for -c/--command mode and \watch command
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or (hasattr(self, 'commands') and self.commands):
+        # Disable pager for -c/--command and -f/--file modes and \watch command
+        if (
+            self.pgspecial.pager_config == PAGER_OFF
+            or self.watch_command
+            or (hasattr(self, 'commands') and self.commands)
+            or (hasattr(self, 'input_files') and self.input_files)
+        ):
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1608,6 +1681,14 @@ class PGCli:
     multiple=True,
     help="run command (SQL or internal) and exit. Multiple -c options are allowed.",
 )
+@click.option(
+    "-f",
+    "--file",
+    "input_files",
+    multiple=True,
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    help="execute commands from file, then exit. Multiple -f options are allowed.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1637,6 +1718,7 @@ def cli(
     init_command: str,
     log_file: str,
     commands: tuple,
+    input_files: tuple,
     connect_timeout: int | None,
 ):
     if version:
@@ -1660,9 +1742,14 @@ def cli(
                 config_full_path,
             )
     if list_dsn:
+        config_file = get_config_filename(pgclirc)
+        if not os.path.exists(config_file):
+            # Nothing is configured yet, so there is nothing to list. Don't write
+            # out the default config just to read it back for a read-only command.
+            sys.exit(0)
         try:
-            cfg = load_config(pgclirc, config_full_path)
-            for alias in cfg["alias_dsn"]:
+            cfg = load_config(config_file)
+            for alias in cfg.get("alias_dsn", {}):
                 click.secho(alias + " : " + cfg["alias_dsn"][alias])
             sys.exit(0)
         except Exception:
@@ -1701,6 +1788,8 @@ def cli(
 
     # Store commands for -c option (can be multiple)
     pgcli.commands = commands if commands else None
+    # Store file paths for -f option (can be multiple)
+    pgcli.input_files = input_files if input_files else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
@@ -1713,11 +1802,27 @@ def cli(
         service = database[8:]
     elif os.getenv("PGSERVICE") is not None:
         service = os.getenv("PGSERVICE")
-    # because option --ping, --list or -l are not supposed to have a db name
+    # because option --ping, --list or -l are not supposed to have a db name.
+    # A connection string is not a db name though: a URI or a key=value conninfo
+    # carries the whole connection (host, user, port, sslmode, ...), so replacing
+    # it with "postgres" would throw all of that away and fall back to a local
+    # socket connection as the OS user. Only a plain db name is discarded here;
+    # a connection string that names no database gets "postgres" for the
+    # listing, since libpq would otherwise default to the OS user name.
+    is_conn_string = "://" in database or ("=" in database and service is None)
     if list_databases or ping_database:
-        database = "postgres"
+        if not database:
+            database = "postgres"
+        elif is_conn_string:
+            try:
+                if not conninfo_to_dict(database).get("dbname"):
+                    database = make_conninfo(database, dbname="postgres")
+            except Exception:
+                pass  # invalid conninfo: let the connection attempt report it
 
-    cfg = load_config(pgclirc, config_full_path)
+    # PGCli() already loaded (and, if needed, wrote) the config above, so reuse it
+    # rather than reading the file a second time to resolve the -D alias.
+    cfg = pgcli.config
     if dsn != "":
         try:
             dsn_config = cfg["alias_dsn"][dsn]
