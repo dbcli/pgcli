@@ -1,5 +1,8 @@
-"""
-Steps for testing -c/--command option behavioral tests.
+"""Steps for the -c/--command option.
+
+The steps shared with the -f/--file scenarios (query result, command output,
+error message, exit status) are defined once in file_option.py; behave's step
+registry is global, so redefining them here would raise AmbiguousStep.
 """
 
 import subprocess
@@ -58,63 +61,6 @@ def step_run_pgcli_with_command(context, command):
     except subprocess.TimeoutExpired:
         context.cmd_output = b"Command timed out"
         context.exit_code = -1
-
-
-@then("we see the query result")
-def step_see_query_result(context):
-    """Verify that the query result is in the output."""
-    output = context.cmd_output.decode('utf-8')
-    # Check for common query result indicators
-    assert any([
-        "SELECT" in output,
-        "test_column" in output,
-        "greeting" in output,
-        "hello" in output,
-        "+-" in output,  # table border
-        "|" in output,  # table column separator
-    ]), f"Expected query result in output, but got: {output}"
-
-
-@then("we see both query results")
-def step_see_both_query_results(context):
-    """Verify that both query results are in the output."""
-    output = context.cmd_output.decode('utf-8')
-    # Should contain output from both SELECT statements
-    assert "SELECT" in output, f"Expected SELECT in output, but got: {output}"
-    # The output should have multiple result sets
-    assert output.count("SELECT") >= 2, f"Expected at least 2 SELECT results, but got: {output}"
-
-
-@then("we see the command output")
-def step_see_command_output(context):
-    """Verify that the special command output is present."""
-    output = context.cmd_output.decode('utf-8')
-    # `\dt` renders its column headers whether or not any tables exist, so the
-    # headers are what tells us the special command actually ran and produced
-    # its listing (rather than erroring out).
-    for header in ("Schema", "Name", "Type", "Owner"):
-        assert header in output, f"Expected {header!r} in \\dt output, but got: {output}"
-    assert context.exit_code == 0, f"Expected exit code 0, but got: {context.exit_code}"
-
-
-@then("we see an error message")
-def step_see_error_message(context):
-    """Verify that an error message is in the output."""
-    output = context.cmd_output.decode('utf-8')
-    assert any([
-        "does not exist" in output,
-        "error" in output.lower(),
-        "ERROR" in output,
-    ]), f"Expected error message in output, but got: {output}"
-
-
-@then("pgcli exits successfully")
-def step_pgcli_exits_successfully(context):
-    """Verify that pgcli exited with code 0."""
-    assert context.exit_code == 0, f"Expected exit code 0, but got: {context.exit_code}"
-    # Clean up
-    context.cmd_output = None
-    context.exit_code = None
 
 
 @then("pgcli exits with error")
