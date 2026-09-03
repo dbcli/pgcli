@@ -6,6 +6,7 @@ import datetime
 from unittest import mock
 
 import pytest
+from click.testing import CliRunner
 
 try:
     import setproctitle
@@ -13,6 +14,7 @@ except ImportError:
     setproctitle = None
 
 from pgcli.main import (
+    cli,
     obfuscate_process_password,
     duration_in_words,
     format_output,
@@ -440,6 +442,140 @@ def test_watch_works(executor):
     run_with_watch("\\watch 5", target_call_count=4, expected_output="222", expected_timing=5)
 
 
+@dbtest
+def test_execute_statements_splits_a_block(executor):
+    """A multi-statement block runs one statement at a time, like psql -f."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 111;\nselect 222;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 2
+    assert "111" in outputs[0] and "222" not in outputs[0]
+    assert "222" in outputs[1] and "111" not in outputs[1]
+
+
+@dbtest
+def test_execute_statements_watch_repeats_only_its_own_statement(executor):
+    r"""Regression: \watch at the end of a file repeated the WHOLE file."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [None, KeyboardInterrupt]
+        cli._execute_statements("select 111;\nselect 222; \\watch 4")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert "111" in outputs[0]
+    for out in outputs[1:]:
+        assert "222" in out
+        assert "111" not in out, "\\watch repeated the whole block, not just its statement"
+    assert mock_sleep.call_args_list[0][0][0] == 4
+
+
+@dbtest
+def test_execute_statements_bare_watch_uses_previous_statement(executor):
+    r"""A \watch alone on its line picks up the statement before it."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [KeyboardInterrupt]
+        cli._execute_statements("select 333;\n\\watch 5")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) >= 2
+    for out in outputs:
+        assert "333" in out
+    assert mock_sleep.call_args_list[0][0][0] == 5
+
+
+@dbtest
+def test_execute_statements_on_error_stop_halts(executor):
+    """With on_error = STOP (the default) the first failure stops the block."""
+    cli = PGCli(pgexecute=executor)
+    assert cli.on_error == "STOP"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert not any("444" in out for out in outputs), "the statement after the failure still ran"
+
+
+@dbtest
+def test_execute_statements_on_error_resume_continues(executor):
+    """With on_error = RESUME the block keeps going after a failure."""
+    cli = PGCli(pgexecute=executor)
+    cli.on_error = "RESUME"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("444" in out for out in outputs)
+
+
+@dbtest
+@dbtest
+def test_execute_statements_metacommand_spans_only_its_line(executor):
+    """psql cuts a backslash command at its newline: a metacommand followed
+    by SQL must not swallow the SQL (sqlparse only cuts at semicolons)."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo hola\nselect 42 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    # Two separate outputs: the echo, then a real result table. Without the
+    # line cut there is a single output where \echo swallowed the select and
+    # repeated its text, which is why the select text alone proves nothing.
+    assert len(outputs) == 2
+    assert "hola" in outputs[0]
+    assert "42" in outputs[1] and "hola" not in outputs[1]
+    assert "SELECT 1" in outputs[1], "the select did not actually run"
+
+
+@dbtest
+def test_execute_statements_consecutive_metacommands(executor):
+    """Several backslash commands on consecutive lines each run on their own."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo uno\n\\echo dos\nselect 7 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("uno" in out and "dos" not in out for out in outputs)
+    assert any("dos" in out and "uno" not in out for out in outputs)
+    assert any("7" in out for out in outputs)
+
+
+@dbtest
+def test_execute_statements_sql_then_metacommand(executor):
+    """A metacommand after SQL still runs alone, and the SQL after it too."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 1 as a;\n\\echo medio\nselect 2 as b;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 3
+    assert "medio" in outputs[1]
+
+
+def test_execute_statements_does_not_split_inside_literals(executor):
+    """Semicolons inside string literals are not statement boundaries."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 'a;b' as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 1
+    assert "a;b" in outputs[0]
+
+
+def test_file_mode_runs_statements(tmpdir):
+    """-f wiring: the file content goes through _execute_statements."""
+    sql_file = tmpdir.join("script.sql")
+    sql_file.write("select 1;\nselect 2;")
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.input_files = [str(sql_file)]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    mock_exec.assert_called_once_with("select 1;\nselect 2;")
+
+
 def test_missing_rc_dir(tmpdir):
     rcfile = str(tmpdir.join("subdir").join("rcfile"))
 
@@ -704,6 +840,77 @@ def test_get_editor_precedence():
     # Nothing set -> None, so click uses its platform default.
     with mock.patch.dict(os.environ, {}, clear=True):
         assert get_editor() is None
+
+
+def _cli_conn_target(argv, tmpdir):
+    """Run cli() with argv and report which connect_* path it took."""
+    rc = tmpdir.join("rcfile")
+    rc.write("[main]\n")
+    runner = CliRunner()
+    with (
+        mock.patch.object(PGCli, "connect_uri", side_effect=RuntimeError("stop")) as mock_uri,
+        mock.patch.object(PGCli, "connect_dsn", side_effect=RuntimeError("stop")) as mock_dsn,
+        mock.patch.object(PGCli, "connect", side_effect=RuntimeError("stop")) as mock_plain,
+    ):
+        runner.invoke(cli, argv + ["--pgclirc", str(rc)])
+    if mock_uri.called:
+        return "uri", mock_uri.call_args
+    if mock_dsn.called:
+        return "dsn", mock_dsn.call_args
+    if mock_plain.called:
+        return "plain", mock_plain.call_args
+    return "none", None
+
+
+def test_list_databases_keeps_uri(tmpdir):
+    """-l must not discard a connection URI: doing so fell back to a local
+    socket connection as the OS user."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "-l"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_keeps_kv_conninfo(tmpdir):
+    """Same for a key=value conninfo string, which carries sslmode and friends."""
+    kv = "host=somehost port=6000 user=someuser dbname=somedb sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert call.args[0] == kv
+
+
+def test_ping_keeps_uri(tmpdir):
+    """--ping handles connection strings the same way as -l."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "--ping"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_conn_string_without_dbname_gets_postgres(tmpdir):
+    """A connection string naming no database gets "postgres" for the listing,
+    instead of libpq defaulting to the OS user name."""
+    kv = "host=somehost user=someuser sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert conninfo_to_dict(call.args[0])["dbname"] == "postgres"
+    assert conninfo_to_dict(call.args[0])["sslmode"] == "verify-ca"  # rest preserved
+
+
+def test_list_databases_keeps_plain_dbname(tmpdir):
+    """psql -l connects to the named database and lists from there
+    (psql -l nonexistent fails with "database does not exist"), so a
+    plain db name is kept."""
+    path, call = _cli_conn_target(["mydb", "-l"], tmpdir)
+    assert path == "plain"
+    assert call.args[0] == "mydb"
+
+
+def test_list_databases_no_dbname_gets_postgres(tmpdir):
+    """With no database at all, -l connects to "postgres"."""
+    path, call = _cli_conn_target(["-l"], tmpdir)
+    assert path == "plain"
+    assert call.args[0] == "postgres"
 
 
 def _effective_connect_timeout(tmpdir, cli_timeout=None, dsn_timeout=None, env=None, cfgval=None):
