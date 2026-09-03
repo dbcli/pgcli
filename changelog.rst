@@ -1,6 +1,17 @@
 Upcoming
 ========
 
+Features:
+---------
+* Add support for executing SQL commands from file and exit.
+    * Command line option `-f` or `--file`.
+    * Multiple files can be specified.
+    * Files run one statement at a time, like psql, so a ``\watch`` only
+      repeats its own statement (and a bare ``\watch`` re-runs the statement
+      before it), instead of re-running the whole file. A backslash command
+      spans only its own line, also like psql, so a metacommand followed by
+      SQL on the next line does not swallow the SQL.
+
 Bug fixes:
 ----------
 * Fix special commands being broken while explain mode (F5) is on. Every input

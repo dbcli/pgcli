@@ -1045,6 +1045,33 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
+        # Handle file mode (-f flag) - similar to psql behavior
+        # Multiple -f options are executed sequentially
+        if hasattr(self, 'input_files') and self.input_files:
+            try:
+                for input_file in self.input_files:
+                    logger.debug("Reading commands from file: %s", input_file)
+                    with open(input_file, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+
+                    if file_content.strip():
+                        logger.debug("Executing commands from file: %s", input_file)
+                        # Statement by statement, like psql -f: \watch only
+                        # repeats its own statement, not the whole file.
+                        if not self._execute_statements(file_content):
+                            break
+
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # Exit successfully after executing all commands
+            sys.exit(0)
+
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
             history_file = config_location() + "history"
@@ -1121,6 +1148,43 @@ class PGCli:
             query = self.execute_command(text)
 
         self.query_history.append(query)
+        return query
+
+    def _execute_statements(self, text):
+        r"""Run a block of SQL the way psql -f does: one statement at a time.
+
+        get_watch_command()'s regex captures ALL the text before a \watch, so
+        feeding a whole file to handle_watch_command would make \watch repeat
+        every statement in it. Splitting first keeps \watch scoped to its own
+        statement, and a bare \watch picks up the previous statement through
+        query_history, exactly like psql.
+
+        A backslash command spans only its own line, like in psql, so a
+        metacommand followed by SQL on the next line does not swallow the
+        SQL (sqlparse only cuts at semicolons).
+
+        Honors on_error: with STOP, the first failed statement stops the run.
+        Returns True when every statement succeeded.
+        """
+        ok = True
+        statements = sqlparse.split(text)
+        while statements:
+            statement = statements.pop(0)
+            stripped = statement.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("\\") and "\n" in stripped:
+                # psql's rule: a backslash command ends at its newline. Put
+                # the rest back through the splitter.
+                first_line, rest = stripped.split("\n", 1)
+                statements = sqlparse.split(rest) + statements
+                statement = first_line
+            query = self.handle_watch_command(statement)
+            if query is not None and not query.successful:
+                ok = False
+                if self.on_error != "RESUME":
+                    break
+        return ok
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
@@ -1426,7 +1490,8 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
+        # Disable pager for -f/--file mode and \watch command
+        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or (hasattr(self, 'input_files') and self.input_files):
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1581,6 +1646,14 @@ class PGCli:
     type=str,
     help="SQL statement to execute after connecting.",
 )
+@click.option(
+    "-f",
+    "--file",
+    "input_files",
+    multiple=True,
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    help="execute commands from file, then exit. Multiple -f options are allowed.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1609,6 +1682,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    input_files: tuple,
     connect_timeout: int | None,
 ):
     if version:
@@ -1670,6 +1744,9 @@ def cli(
         log_file=log_file,
         connect_timeout=connect_timeout,
     )
+
+    # Store file paths for -f option (can be multiple)
+    pgcli.input_files = input_files if input_files else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
