@@ -119,7 +119,8 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     "OutputSettings",
-    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output max_field_width",
+    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output "
+    "max_field_width tuples_only",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -132,6 +133,7 @@ OutputSettings.__new__.__defaults__ = (
     lambda x: x,
     None,
     DEFAULT_MAX_FIELD_WIDTH,
+    False,
 )
 
 
@@ -221,6 +223,7 @@ class PGCli:
         application_name="pgcli",
         single_connection=False,
         less_chatty=None,
+        tuples_only=None,
         prompt=None,
         prompt_dsn=None,
         auto_vertical_output=False,
@@ -282,6 +285,13 @@ class PGCli:
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
         self.table_format = c["main"]["table_format"]
+        # psql's -t prints the rows and nothing else: no column headers, no
+        # title, no status footer and no timing line. The table format is left
+        # alone here and switched to an unadorned one at output time, so \T
+        # still reports (and can change) the configured format.
+        self.tuples_only = bool(tuples_only)
+        if self.tuples_only:
+            self.pgspecial.timing_enabled = False
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
@@ -1336,6 +1346,7 @@ class PGCli:
                 case_function=(self.completer.case if self.settings["case_column_headers"] else lambda x: x),
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
+                tuples_only=self.tuples_only,
             )
 
             # Hide query text for named queries in quiet mode
@@ -1603,6 +1614,14 @@ class PGCli:
     default=False,
     help="Skip intro on startup and goodbye on exit.",
 )
+@click.option(
+    "-t",
+    "--tuples-only",
+    "tuples_only",
+    is_flag=True,
+    default=False,
+    help="Print rows only: no column headers, no status footer and no timing, like psql.",
+)
 @click.option("--prompt", help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option(
     "--prompt-dsn",
@@ -1682,6 +1701,7 @@ def cli(
     row_limit,
     application_name,
     less_chatty,
+    tuples_only,
     prompt,
     prompt_dsn,
     list_databases,
@@ -1752,6 +1772,7 @@ def cli(
         application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
+        tuples_only=tuples_only,
         prompt=prompt,
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
@@ -2064,7 +2085,15 @@ def exception_formatter(e, verbose_errors: bool = False):
 def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
-    table_format = "vertical" if settings.expanded else settings.table_format
+    if settings.tuples_only:
+        # Rows and nothing else, so an unadorned format. This wins over
+        # expanded output: with the headers suppressed there is no label
+        # column left for the vertical formatter to lay out.
+        table_format = "plain"
+    elif settings.expanded:
+        table_format = "vertical"
+    else:
+        table_format = settings.table_format
     max_width = settings.max_width
     case_function = settings.case_function
     if explain_mode:
@@ -2122,11 +2151,12 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         dialect = "excel" if platform.system() == "Windows" else "unix"
         output_kwargs["dialect"] = dialect
 
-    if title:  # Only print the title if it's not None.
+    # The title is printed unless there is none, or -t asked for rows only.
+    if title and not settings.tuples_only:
         output.append(title)
 
     if cur:
-        headers = [case_function(x) for x in headers]
+        headers = [] if settings.tuples_only else [case_function(x) for x in headers]
         if max_width is not None:
             cur = list(cur)
         column_types = None
@@ -2160,8 +2190,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         output = itertools.chain(output, formatted)
 
-    # Only print the status if it's not None
-    if status:
+    # Likewise the status footer.
+    if status and not settings.tuples_only:
         output = itertools.chain(output, [format_status(cur, status)])
 
     return output
