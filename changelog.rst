@@ -3,6 +3,10 @@ Upcoming
 
 Features:
 ---------
+* Add a ``-t``/``--tuples-only`` command line option that prints the rows and
+  nothing else, matching psql: no column headers, no title, no status footer
+  and no timing line. The configured table format is left untouched, so ``\T``
+  still reports it and can still change it mid-session.
 * Add support for executing SQL commands from file and exit.
     * Command line option `-f` or `--file`.
     * Multiple files can be specified.
