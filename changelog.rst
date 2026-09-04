@@ -3,6 +3,10 @@ Upcoming
 
 Features:
 ---------
+* Add support for forcing destructive commands without confirmation.
+    * Command line option `-y` or `--yes`.
+    * Skips the destructive command confirmation prompt when enabled.
+    * Useful for automated scripts and CI/CD pipelines.
 * Add a ``-t``/``--tuples-only`` command line option that prints the rows and
   nothing else, matching psql: no column headers, no title, no status footer
   and no timing line. The configured table format is left untouched, so ``\T``
