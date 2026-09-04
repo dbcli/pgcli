@@ -3,6 +3,11 @@ Upcoming
 
 Features:
 ---------
+* Add support for `single-command` to run a SQL command and exit.
+    * Command line option `-c` or `--command`.
+    * You can specify multiple times.
+    * Runs one statement at a time, like `-f`, and can be combined with `-f`:
+      both run, the same way psql does.
 * Add support for forcing destructive commands without confirmation.
     * Command line option `-y` or `--yes`.
     * Skips the destructive command confirmation prompt when enabled.

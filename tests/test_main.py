@@ -563,6 +563,31 @@ def test_execute_statements_does_not_split_inside_literals(executor):
     assert "a;b" in outputs[0]
 
 
+def test_command_and_file_both_run(tmpdir):
+    """psql runs both -c and -f when given together; -c must not exit first."""
+    sql_file = tmpdir.join("script.sql")
+    sql_file.write("select 2;")
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.commands = ["select 1;"]
+    cli.input_files = [str(sql_file)]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    assert [c[0][0] for c in mock_exec.call_args_list] == ["select 1;", "select 2;"]
+
+
+def test_command_mode_alone_still_exits(tmpdir):
+    """With no -f, the -c block still exits on its own."""
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.commands = ["select 1;"]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    mock_exec.assert_called_once_with("select 1;")
+
+
 def test_file_mode_runs_statements(tmpdir):
     """-f wiring: the file content goes through _execute_statements."""
     sql_file = tmpdir.join("script.sql")
