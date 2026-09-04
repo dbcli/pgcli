@@ -1,18 +1,20 @@
+from collections import namedtuple
+import contextlib
 import ipaddress
 import logging
-import traceback
-from collections import namedtuple
 import re
+import traceback
+
 import pgspecial as special
 import psycopg
-import psycopg.sql
 from psycopg.conninfo import make_conninfo
+import psycopg.sql
 import sqlparse
 
 sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
 sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
-from .packages.parseutils.meta import FunctionMetadata, ForeignKey
+from .packages.parseutils.meta import ForeignKey, FunctionMetadata
 
 _logger = logging.getLogger(__name__)
 
@@ -481,14 +483,16 @@ class PGExecute:
         try:
             with self.conn.cursor() as cur:
                 _logger.debug("Search path query. sql: %r", self.search_path_query)
-                cur.execute(self.search_path_query)
-                return [x[0] for x in cur.fetchall()]
+                with override_client_encoding(self.conn, "utf8"):
+                    cur.execute(self.search_path_query)
+                    return [x[0] for x in cur.fetchall()]
         except psycopg.ProgrammingError:
             fallback = "SELECT * FROM current_schemas(true)"
             with self.conn.cursor() as cur:
                 _logger.debug("Search path query. sql: %r", fallback)
-                cur.execute(fallback)
-                return cur.fetchone()[0]
+                with override_client_encoding(self.conn, "utf8"):
+                    cur.execute(fallback)
+                    return cur.fetchone()[0]
 
     def view_definition(self, spec):
         """Returns the SQL defining views described by `spec`"""
@@ -500,7 +504,8 @@ class PGExecute:
             sql = self.view_definition_query
             _logger.debug("View Definition Query. sql: %r\nspec: %r", sql, spec)
             try:
-                cur.execute(sql, (spec,))
+                with override_client_encoding(self.conn, "utf8"):
+                    cur.execute(sql, (spec,))
             except psycopg.ProgrammingError:
                 raise RuntimeError(f"View {spec} does not exist.")
             result = ViewDef(*cur.fetchone())
@@ -525,9 +530,10 @@ class PGExecute:
             sql = self.function_definition_query
             _logger.debug("Function Definition Query. sql: %r\nspec: %r", sql, spec)
             try:
-                cur.execute(sql, (spec,))
-                result = cur.fetchone()
-                return result[0]
+                with override_client_encoding(self.conn, "utf8"):
+                    cur.execute(sql, (spec,))
+                    result = cur.fetchone()
+                    return result[0]
             except psycopg.ProgrammingError:
                 raise RuntimeError(f"Function {spec} does not exist.")
 
@@ -536,8 +542,9 @@ class PGExecute:
 
         with self.conn.cursor() as cur:
             _logger.debug("Schemata Query. sql: %r", self.schemata_query)
-            cur.execute(self.schemata_query)
-            return [x[0] for x in cur.fetchall()]
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(self.schemata_query)
+                return [x[0] for x in cur.fetchall()]
 
     def _relations(self, kinds=("r", "p", "f", "v", "m")):
         """Get table or view name metadata
@@ -554,8 +561,9 @@ class PGExecute:
         with self.conn.cursor() as cur:
             # sql = cur.mogrify(self.tables_query, kinds)
             # _logger.debug("Tables Query. sql: %r", sql)
-            cur.execute(self.tables_query, [kinds])
-            yield from cur
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(self.tables_query, [kinds])
+                yield from cur
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
@@ -623,8 +631,9 @@ class PGExecute:
         with self.conn.cursor() as cur:
             # sql = cur.mogrify(columns_query, kinds)
             # _logger.debug("Columns Query. sql: %r", sql)
-            cur.execute(columns_query, [kinds])
-            yield from cur
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(columns_query, [kinds])
+                yield from cur
 
     def table_columns(self):
         yield from self._columns(kinds=["r", "p", "f"])
@@ -635,8 +644,9 @@ class PGExecute:
     def databases(self):
         with self.conn.cursor() as cur:
             _logger.debug("Databases Query. sql: %r", self.databases_query)
-            cur.execute(self.databases_query)
-            return [x[0] for x in cur.fetchall()]
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(self.databases_query)
+                return [x[0] for x in cur.fetchall()]
 
     def full_databases(self):
         with self.conn.cursor() as cur:
@@ -695,9 +705,10 @@ class PGExecute:
                 WHERE fk.contype = 'f';
                 """
             _logger.debug("Functions Query. sql: %r", query)
-            cur.execute(query)
-            for row in cur:
-                yield ForeignKey(*row)
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(query)
+                for row in cur:
+                    yield ForeignKey(*row)
 
     def functions(self):
         """Yields FunctionMetadata named tuples"""
@@ -785,9 +796,10 @@ class PGExecute:
 
         with self.conn.cursor() as cur:
             _logger.debug("Functions Query. sql: %r", query)
-            cur.execute(query)
-            for row in cur:
-                yield FunctionMetadata(*row)
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(query)
+                for row in cur:
+                    yield FunctionMetadata(*row)
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
@@ -830,8 +842,9 @@ class PGExecute:
                     ORDER BY 1, 2;
                 """
             _logger.debug("Datatypes Query. sql: %r", query)
-            cur.execute(query)
-            yield from cur
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(query)
+                yield from cur
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""
@@ -878,9 +891,10 @@ class PGExecute:
             AND Row_Number = 1;
             """
             _logger.debug("Casing Query. sql: %r", query)
-            cur.execute(query)
-            for row in cur:
-                yield row[0]
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(query)
+                for row in cur:
+                    yield row[0]
 
     def explain_prefix(self):
         return "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON) "
@@ -888,10 +902,32 @@ class PGExecute:
     def get_timezone(self) -> str:
         query = psycopg.sql.SQL("show time zone")
         with self.conn.cursor() as cur:
-            cur.execute(query)
-            return cur.fetchone()[0]
+            with override_client_encoding(self.conn, "utf8"):
+                cur.execute(query)
+                return cur.fetchone()[0]
 
     def set_timezone(self, timezone: str):
         query = psycopg.sql.SQL("set time zone {}").format(psycopg.sql.Identifier(timezone))
         with self.conn.cursor() as cur:
             cur.execute(query)
+
+
+@contextlib.contextmanager
+def override_client_encoding(cur, encoding):
+    initial_encoding = cur.connection.info.encoding
+    if encoding == initial_encoding:
+        yield
+
+    else:
+        try:
+            cur.execute(f"set client_encoding to {encoding}")
+            yield
+        finally:
+            # What is stored in `psycopg.ConnectionInfo.encoding` does
+            # not seem to always be an encoding name that is supported
+            # by PostgreSQL (I did not search why).
+            initial_encoding = {
+                "ascii": "sql_ascii",
+                "utf-8": "utf8",
+            }.get(initial_encoding, initial_encoding)
+            cur.execute(f"set client_encoding to {initial_encoding}")
