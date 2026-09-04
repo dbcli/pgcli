@@ -35,6 +35,17 @@ Bug fixes:
   as the OS user. The database argument is now kept, like psql; only when no
   database is given at all does the listing connect to ``postgres``.
 
+* Fix a prompt crash, garbled timezone output and a completion-refresh crash
+  when the client encoding cannot decode text (e.g. SQL_ASCII), where psycopg
+  returns text columns as raw bytes: the socket directory and timezone query
+  results are now decoded defensively (so the prompt no longer raises a
+  ``TypeError`` on Unix socket connections and the timezone startup message no
+  longer shows a ``b'...'``-prefixed value), and the function metadata rows
+  are decoded before building completions (so the background completion
+  refresh no longer dies in ``parse_defaults`` with a ``TypeError``). Same
+  guard as the completion metadata fix for issue #1405; see upstream issues
+  #1484 and #1518.
+
 4.6.0 (2026-08-26)
 ==================
 

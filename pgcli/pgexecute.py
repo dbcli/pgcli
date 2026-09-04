@@ -55,6 +55,23 @@ def register_typecasters(connection):
         connection.adapters.register_loader(forced_text_type, psycopg.types.string.TextLoader)
 
 
+def _decode_if_bytes(value):
+    """psycopg returns text columns as raw bytes when the client encoding
+    cannot be decoded (e.g. SQL_ASCII); decode defensively so callers can
+    treat the value as a regular str. See issues #1484 and #1518."""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    return value
+
+
+def _decode_row(row):
+    """psycopg returns text columns as raw bytes when the client encoding
+    cannot be decoded (e.g. SQL_ASCII); decode every scalar value and every
+    array element so callers can treat the whole row as regular str values.
+    See issues #1484 and #1518."""
+    return [[_decode_if_bytes(item) for item in value] if isinstance(value, list) else _decode_if_bytes(value) for value in row]
+
+
 # pg3: I don't know what is this
 class ProtocolSafeCursor(psycopg.Cursor):
     """This class wraps and suppresses Protocol Errors with pgbouncer database.
@@ -667,7 +684,7 @@ class PGExecute:
             _logger.debug("Socket directory Query. sql: %r", self.socket_directory_query)
             cur.execute(self.socket_directory_query)
             result = cur.fetchone()
-            return result[0] if result else ""
+            return _decode_if_bytes(result[0]) if result else ""
 
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
@@ -797,7 +814,7 @@ class PGExecute:
             _logger.debug("Functions Query. sql: %r", query)
             cur.execute(query)
             for row in cur:
-                yield FunctionMetadata(*row)
+                yield FunctionMetadata(*_decode_row(row))
 
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
@@ -899,7 +916,8 @@ class PGExecute:
         query = psycopg.sql.SQL("show time zone")
         with self.conn.cursor() as cur:
             cur.execute(query)
-            return cur.fetchone()[0]
+            result = cur.fetchone()
+            return _decode_if_bytes(result[0]) if result else ""
 
     def set_timezone(self, timezone: str):
         query = psycopg.sql.SQL("set time zone {}").format(psycopg.sql.Identifier(timezone))
