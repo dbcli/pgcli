@@ -8,6 +8,14 @@ Features:
     * You can specify multiple times.
     * Runs one statement at a time, like `-f`, and can be combined with `-f`:
       both run, the same way psql does.
+* Add support for forcing destructive commands without confirmation.
+    * Command line option `-y` or `--yes`.
+    * Skips the destructive command confirmation prompt when enabled.
+    * Useful for automated scripts and CI/CD pipelines.
+* Add a ``-t``/``--tuples-only`` command line option that prints the rows and
+  nothing else, matching psql: no column headers, no title, no status footer
+  and no timing line. The configured table format is left untouched, so ``\T``
+  still reports it and can still change it mid-session.
 * Add support for executing SQL commands from file and exit.
     * Command line option `-f` or `--file`.
     * Multiple files can be specified.
