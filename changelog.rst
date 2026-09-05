@@ -46,6 +46,18 @@ Internal:
   ``Scenario: edit sql in file with external editor`` as an error. Raised to 10
   seconds; passing runs are unaffected because pexpect returns as soon as the
   expected text appears.
+* Remove a stale ``@pytest.mark.xfail`` on
+  ``test_simple_insert_single_table_schema_qualified``. It was marked for an old
+  ``sqlparse`` that mislabeled schema-qualified ``INSERT``; the test now passes
+  across the supported ``sqlparse`` range (0.3.0 to 0.6.x), so the marker only
+  hid a passing test (an unreported XPASS, since ``xfail_strict`` is not set).
+* Document the still-needed ``@pytest.mark.xfail`` on
+  ``test_sub_select_multiple_col_name_completion``, which was added in 2015
+  without explanation. The parser still misidentifies the token before the
+  trailing comma in an incomplete multi-column sub-select
+  (``SELECT a, FROM abc``) as a table, so the marker now carries a ``reason``
+  recording that this remains an expected failure on the supported
+  ``sqlparse`` range.
 
 Bug fixes:
 ----------
