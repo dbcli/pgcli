@@ -21,6 +21,7 @@ from pgcli.main import (
     get_connect_timeout,
     get_editor,
     notify_callback,
+    parse_service_info,
     PGCli,
     OutputSettings,
     COLOR_CODE_REGEX,
@@ -588,6 +589,18 @@ def test_quoted_db_uri(tmpdir):
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar%5E:%5Dfoo@baz.com/testdb%5B")
     mock_connect.assert_called_with(database="testdb[", host="baz.com", user="bar^", passwd="]foo")
+
+
+@pytest.mark.parametrize("password", ["abc#def", "#leading", "abc #def", "abc%def", "a,b", '"quoted"', "'quoted'"])
+def test_pg_service_password_is_literal(tmp_path, monkeypatch, password):
+    service_file = tmp_path / "pg_service.conf"
+    service_file.write_text(f"# comment\n[myservice]\npassword={password}\n")
+    monkeypatch.setenv("PGSERVICEFILE", str(service_file))
+
+    config, filename = parse_service_info("myservice")
+
+    assert filename == str(service_file)
+    assert config["password"] == password
 
 
 def test_pg_service_file(tmpdir):

@@ -1,5 +1,5 @@
 from zoneinfo import ZoneInfoNotFoundError
-from configobj import ConfigObj, ParseError
+from configparser import ConfigParser
 from pgspecial.namedqueries import NamedQueries
 from .config import skip_initial_comment
 
@@ -2213,14 +2213,13 @@ def parse_service_info(service):
         return None, service_file
     with open(service_file, newline="") as f:
         skipped_lines = skip_initial_comment(f)
-        try:
-            service_file_config = ConfigObj(f)
-        except ParseError as err:
-            err.line_number += skipped_lines
-            raise err
+        # libpq treats values literally: hashes, commas, quotes and percent
+        # signs are part of the value, not ConfigObj comments or syntax.
+        service_file_config = ConfigParser(interpolation=None, delimiters=("=",), comment_prefixes=("#",))
+        service_file_config.read_file(itertools.chain(itertools.repeat("\n", skipped_lines), f), source=service_file)
     if service not in service_file_config:
         return None, service_file
-    service_conf = service_file_config.get(service)
+    service_conf = service_file_config[service]
     return service_conf, service_file
 
 

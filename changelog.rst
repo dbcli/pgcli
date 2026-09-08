@@ -22,6 +22,9 @@ Features:
 
 Bug fixes:
 ----------
+* Preserve hashes, percent signs, commas and quotes in service-file passwords,
+  matching libpq. Quotes around service-file values are now literal; remove
+  quotes previously added solely to escape ConfigObj syntax.
 * Fix special commands being broken while explain mode (F5) is on. Every input
   was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
   backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
