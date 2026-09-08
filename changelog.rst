@@ -3,6 +3,8 @@ Upcoming
 
 Features:
 ---------
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 * Add support for forcing destructive commands without confirmation.
     * Command line option `-y` or `--yes`.
     * Skips the destructive command confirmation prompt when enabled.
