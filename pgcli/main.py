@@ -237,6 +237,7 @@ class PGCli:
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
         self.dsn_alias = None
+        self.service_name = None
         self.watch_command = None
         self.force_destructive = force_destructive
 
@@ -703,6 +704,7 @@ class PGCli:
             port=service_config.get("port"),
             passwd=service_config.get("password"),
         )
+        self.service_name = service or os.getenv("PGSERVICE")
 
     def connect_uri(self, uri):
         kwargs = conninfo_to_dict(uri)
@@ -869,6 +871,7 @@ class PGCli:
             sys.exit(1)
 
         self.pgexecute = pgexecute
+        self.service_name = None
 
     def handle_editor_command(self, text):
         r"""
@@ -1471,6 +1474,7 @@ class PGCli:
     def get_prompt(self, string):
         # should be before replacing \\d
         string = string.replace("\\dsn_alias", self.dsn_alias or "")
+        string = string.replace("\\service", self.service_name or "")
         string = string.replace("\\t", self.now.strftime("%x %X"))
         string = string.replace("\\u", self.pgexecute.user or "(none)")
         string = string.replace("\\H", self.pgexecute.host or "(none)")

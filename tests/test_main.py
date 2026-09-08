@@ -742,6 +742,34 @@ def test_get_prompt_with_transaction_status(transaction_indicator, expected):
     assert result == expected
 
 
+@pytest.mark.parametrize("service_name", ["reporting", None])
+def test_get_prompt_service_name(service_name):
+    cli = PGCli()
+    cli.pgexecute = mock.MagicMock(user="user", host="localhost", short_host="localhost", dbname="db", transaction_indicator="")
+    cli.service_name = service_name
+    assert cli.get_prompt("\\service> ") == f"{service_name or ''}> "
+
+
+@pytest.mark.parametrize("service", ["reporting", None])
+def test_connect_service_remembers_name(tmp_path, monkeypatch, service):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    service_file = tmp_path / "pg_service.conf"
+    service_file.write_text("[reporting]\nhost=localhost\n")
+    monkeypatch.setenv("PGSERVICEFILE", str(service_file))
+    monkeypatch.setenv("PGSERVICE", "reporting")
+    with mock.patch.object(cli, "connect"):
+        cli.connect_service(service, None)
+    assert cli.service_name == "reporting"
+
+
+def test_direct_connection_clears_service_name(tmp_path):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    cli.service_name = "reporting"
+    with mock.patch("pgcli.main.PGExecute"):
+        cli.connect(database="db", user="user", host="localhost")
+    assert cli.service_name is None
+
+
 def test_get_prompt_transaction_status_in_full_prompt():
     cli = PGCli()
     cli.pgexecute = mock.MagicMock()
