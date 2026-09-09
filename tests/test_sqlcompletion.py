@@ -450,7 +450,12 @@ def test_sub_select_col_name_completion():
     }
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(
+    reason="Parsing an incomplete multi-column sub-select still misidentifies the "
+    "token before the trailing comma as a table: 'SELECT a, FROM abc' yields "
+    "table_refs for both 'a' and 'abc' instead of just 'abc'. Confirmed still "
+    "failing on sqlparse 0.6.0."
+)
 def test_sub_select_multiple_col_name_completion():
     suggestions = suggest_type("SELECT * FROM (SELECT a, FROM abc", "SELECT * FROM (SELECT a, ")
     assert set(suggestions) == cols_etc("abc")
