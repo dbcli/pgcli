@@ -25,10 +25,10 @@ class ConfigSection(dict):
         value = self[key]
         if not value:
             return [""]
-        if value == ",":
-            return []
         if isinstance(value, ConfigValue) and value.quoted:
             return [str(value)]
+        if value == ",":
+            return []
         items = []
         start = 0
         quote = None

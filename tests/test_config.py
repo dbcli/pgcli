@@ -119,7 +119,14 @@ def test_configobj_lists_preserve_backslashes(tmp_path):
 
 @pytest.mark.parametrize(
     "source, expected",
-    [("", [""]), ('""', [""]), ("delete,", ["delete"]), (",", [])],
+    [
+        ("", [""]),
+        ('""', [""]),
+        ("delete,", ["delete"]),
+        (",", []),
+        ('","', [","]),
+        ("','", [","]),
+    ],
 )
 def test_configobj_list_edge_cases(tmp_path, source, expected):
     filename = tmp_path / "config"
