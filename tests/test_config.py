@@ -92,3 +92,34 @@ def test_config_write_keeps_comments_and_round_trips_queries(tmp_path):
         "NewQuery": "select '#', '100%'",
     }
     assert reloaded["main"]["prompt"] == "# > 100%"
+
+
+def test_configobj_quoted_lists_are_preserved(tmp_path):
+    filename = tmp_path / "config"
+    filename.write_text(
+        '[main]\nitems = "delete", "update"\nquoted_item = "delete, update"\n',
+        encoding="utf-8",
+    )
+
+    config = load_config(str(filename))
+
+    assert config["main"].as_list("items") == ["delete", "update"]
+    assert config["main"].as_list("quoted_item") == ["delete, update"]
+
+
+def test_configobj_multiline_and_literal_quotes_survive_writes(tmp_path):
+    filename = tmp_path / "config"
+    filename.write_text(
+        "[named queries]\nold = '''select 1\nfrom numbers''' # keep\n[main]\nprompt = original\n",
+        encoding="utf-8",
+    )
+    config = load_config(str(filename))
+
+    config["named queries"]["new"] = "select 2"
+    config["main"]["prompt"] = "'quoted prompt'"
+    config.write()
+
+    reloaded = load_config(str(filename))
+    assert reloaded["named queries"]["old"] == "select 1\nfrom numbers"
+    assert reloaded["main"]["prompt"] == "'quoted prompt'"
+    assert "''' # keep" in filename.read_text(encoding="utf-8")

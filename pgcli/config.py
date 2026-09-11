@@ -26,11 +26,22 @@ class ConfigSection(dict):
         value = self[key]
         if not value:
             return []
+        if isinstance(value, ConfigValue) and value.quoted:
+            return [str(value)]
         lexer = shlex.shlex(value, posix=True)
         lexer.whitespace = ","
         lexer.whitespace_split = True
         lexer.commenters = ""
         return [item.strip() for item in lexer]
+
+
+class ConfigValue(str):
+    """A string that remembers when its entire source value was quoted."""
+
+    def __new__(cls, value, quoted=False):
+        instance = super().__new__(cls, value)
+        instance.quoted = quoted
+        return instance
 
 
 class PgcliConfig(dict):
@@ -120,6 +131,10 @@ class PgcliConfig(dict):
 def _format_option(key, value, indent="", separator=" = ", inline_comment=""):
     value = str(value)
     parts = value.splitlines() or [""]
+    if len(parts) == 1 and len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        outer_quote = '"' if value[0] == "'" else "'"
+        value = f"{outer_quote}{value}{outer_quote}"
+        parts = [value]
     lines = [f"{indent}{key}{separator}{parts[0]}{inline_comment}\n"]
     lines.extend(f"{indent}\t{part}\n" for part in parts[1:])
     return lines
@@ -135,11 +150,30 @@ def _read_config(filename):
         empty_lines_in_values=False,
     )
     parser.optionxform = str
-    parser.read(expanduser(filename), encoding="utf-8")
+    try:
+        with open(expanduser(filename), encoding="utf-8") as source:
+            contents = source.read()
+    except FileNotFoundError:
+        return {}
+    parser.read_string(_normalize_triple_quoted_values(contents), source=filename)
     return {
         name: ConfigSection({key: _unquote(_split_value_comment(value)[0]) for key, value in parser.items(name, raw=True)})
         for name in parser.sections()
     }
+
+
+def _normalize_triple_quoted_values(contents):
+    """Translate ConfigObj triple-quoted values to configparser continuations."""
+    pattern = re.compile(
+        r"^([ \t]*[^#;\s][^=\r\n]*?[ \t]*=[ \t]*)(\"\"\"|''')(.*?)\2[ \t]*(?:#[^\r\n]*)?$",
+        re.MULTILINE | re.DOTALL,
+    )
+
+    def replace(match):
+        parts = match.group(3).split("\n")
+        return match.group(1) + parts[0] + "".join(f"\n\t{part}" for part in parts[1:])
+
+    return pattern.sub(replace, contents)
 
 
 def _split_value_comment(value):
@@ -158,9 +192,12 @@ def _split_value_comment(value):
 
 def _unquote(value):
     stripped = value.strip()
-    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in "\"'":
-        return stripped[1:-1]
-    return stripped
+    if len(stripped) >= 2 and stripped[0] in "\"'":
+        quote = stripped[0]
+        closing = stripped.find(quote, 1)
+        if closing == len(stripped) - 1:
+            return ConfigValue(stripped[1:-1], quoted=True)
+    return ConfigValue(stripped)
 
 
 def config_location():
