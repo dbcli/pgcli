@@ -127,7 +127,7 @@ def test_configobj_multiline_queries_update_and_delete(tmp_path):
 
     contents = filename.read_text(encoding="utf-8")
     assert "from numbers'''" not in contents
-    assert 'where false\"\"\"' not in contents
+    assert 'where false"""' not in contents
     assert "old = select 3 # keep old comment" in contents
     assert "# keep remove comment" in contents
     reloaded = load_config(str(filename))

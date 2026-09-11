@@ -95,9 +95,7 @@ class PgcliConfig(dict):
             option_match = re.match(r"(\s*)([^#;\s][^:=]*?)(\s*[=:]\s*)(.*?)(\r?\n)?$", line)
             if section in self and option_match:
                 key = option_match.group(2).rstrip()
-                value_end, triple_quoted_comment = _triple_quoted_value_end(
-                    lines, line_number, option_match.group(4)
-                )
+                value_end, triple_quoted_comment = _triple_quoted_value_end(lines, line_number, option_match.group(4))
                 if key in self[section]:
                     seen_options.add(key)
                     if self[section][key] == self._original.get(section, {}).get(key):
