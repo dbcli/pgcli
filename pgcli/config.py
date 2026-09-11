@@ -1,10 +1,166 @@
 import shutil
 import os
 import platform
+import configparser
+import shlex
 from os.path import expanduser, exists, dirname
 import re
 from typing import TextIO
-from configobj import ConfigObj
+
+
+class ConfigSection(dict):
+    """A case-sensitive config section with ConfigObj's typed accessors."""
+
+    def as_bool(self, key):
+        value = self[key].lower()
+        if value in ("1", "yes", "true", "on"):
+            return True
+        if value in ("0", "no", "false", "off"):
+            return False
+        raise ValueError(f"Not a boolean: {self[key]}")
+
+    def as_int(self, key):
+        return int(self[key])
+
+    def as_list(self, key):
+        value = self[key]
+        if not value:
+            return []
+        lexer = shlex.shlex(value, posix=True)
+        lexer.whitespace = ","
+        lexer.whitespace_split = True
+        lexer.commenters = ""
+        return [item.strip() for item in lexer]
+
+
+class PgcliConfig(dict):
+    """The subset of ConfigObj's interface used by pgcli and pgspecial."""
+
+    def __init__(self, filename, sections=None):
+        super().__init__(sections or {})
+        self.filename = filename
+        self._original = {name: dict(section) for name, section in self.items()}
+
+    def write(self):
+        """Update values in place while retaining user comments and layout."""
+        try:
+            with open(self.filename, encoding="utf-8") as source:
+                lines = source.readlines()
+        except FileNotFoundError:
+            lines = []
+
+        output = []
+        seen_sections = set()
+        section = None
+        seen_options = set()
+        skip_continuations = False
+
+        def append_missing_options():
+            if section not in self:
+                return
+            for key, value in self[section].items():
+                if key not in seen_options:
+                    output.extend(_format_option(key, value))
+
+        for line in lines:
+            section_match = re.match(r"\s*\[([^]]+)\]\s*(?:[#;].*)?$", line)
+            if section_match:
+                append_missing_options()
+                section = section_match.group(1)
+                seen_sections.add(section)
+                seen_options = set()
+                skip_continuations = False
+                output.append(line)
+                continue
+
+            if skip_continuations and line.startswith((" ", "\t")) and line.strip() and not line.lstrip().startswith(("#", ";")):
+                continue
+            skip_continuations = False
+
+            option_match = re.match(r"(\s*)([^#;\s][^:=]*?)(\s*[=:]\s*)(.*?)(\r?\n)?$", line)
+            if section in self and option_match:
+                key = option_match.group(2).rstrip()
+                if key in self[section]:
+                    seen_options.add(key)
+                    if self[section][key] == self._original.get(section, {}).get(key):
+                        output.append(line)
+                    else:
+                        _, inline_comment = _split_value_comment(option_match.group(4))
+                        output.extend(
+                            _format_option(
+                                key,
+                                self[section][key],
+                                option_match.group(1),
+                                option_match.group(3),
+                                inline_comment,
+                            )
+                        )
+                        skip_continuations = True
+                else:
+                    skip_continuations = True
+                # A missing key was deliberately deleted.
+                continue
+            output.append(line)
+
+        append_missing_options()
+        for name, values in self.items():
+            if name in seen_sections:
+                continue
+            if output and output[-1].strip():
+                output.append("\n")
+            output.append(f"[{name}]\n")
+            for key, value in values.items():
+                output.extend(_format_option(key, value))
+
+        with open(self.filename, "w", encoding="utf-8", newline="") as destination:
+            destination.writelines(output)
+        self._original = {name: dict(values) for name, values in self.items()}
+
+
+def _format_option(key, value, indent="", separator=" = ", inline_comment=""):
+    value = str(value)
+    parts = value.splitlines() or [""]
+    lines = [f"{indent}{key}{separator}{parts[0]}{inline_comment}\n"]
+    lines.extend(f"{indent}\t{part}\n" for part in parts[1:])
+    return lines
+
+
+def _read_config(filename):
+    parser = configparser.RawConfigParser(
+        delimiters=("=",),
+        comment_prefixes=("#", ";"),
+        inline_comment_prefixes=None,
+        interpolation=None,
+        strict=True,
+        empty_lines_in_values=False,
+    )
+    parser.optionxform = str
+    parser.read(expanduser(filename), encoding="utf-8")
+    return {
+        name: ConfigSection({key: _unquote(_split_value_comment(value)[0]) for key, value in parser.items(name, raw=True)})
+        for name in parser.sections()
+    }
+
+
+def _split_value_comment(value):
+    quote = None
+    for index, character in enumerate(value):
+        if character in "\"'":
+            quote = None if quote == character else character if quote is None else quote
+        elif character == "#" and quote is None:
+            uncommented = value[:index].rstrip()
+            newline = value.find("\n", index)
+            if newline == -1:
+                return uncommented, value[len(uncommented) :]
+            return uncommented + value[newline:], value[len(uncommented) : newline]
+    return value, ""
+
+
+def _unquote(value):
+    stripped = value.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in "\"'":
+        return stripped[1:-1]
+    return stripped
 
 
 def config_location():
@@ -17,16 +173,14 @@ def config_location():
 
 
 def load_config(usr_cfg, def_cfg=None):
-    # avoid config merges when possible. For writing, we need an umerged config instance.
-    # see https://github.com/dbcli/pgcli/issues/1240 and https://github.com/DiffSK/configobj/issues/171
+    usr_cfg = expanduser(usr_cfg)
     if def_cfg:
-        cfg = ConfigObj()
-        cfg.merge(ConfigObj(def_cfg, interpolation=False))
-        cfg.merge(ConfigObj(expanduser(usr_cfg), interpolation=False, encoding="utf-8"))
+        sections = _read_config(def_cfg)
+        for name, values in _read_config(usr_cfg).items():
+            sections.setdefault(name, ConfigSection()).update(values)
     else:
-        cfg = ConfigObj(expanduser(usr_cfg), interpolation=False, encoding="utf-8")
-    cfg.filename = expanduser(usr_cfg)
-    return cfg
+        sections = _read_config(usr_cfg)
+    return PgcliConfig(usr_cfg, sections)
 
 
 def ensure_dir_exists(path):
