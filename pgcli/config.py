@@ -73,7 +73,9 @@ class PgcliConfig(dict):
                 if key not in seen_options:
                     output.extend(_format_option(key, value))
 
-        for line in lines:
+        line_number = 0
+        while line_number < len(lines):
+            line = lines[line_number]
             section_match = re.match(r"\s*\[([^]]+)\]\s*(?:[#;].*)?$", line)
             if section_match:
                 append_missing_options()
@@ -82,21 +84,27 @@ class PgcliConfig(dict):
                 seen_options = set()
                 skip_continuations = False
                 output.append(line)
+                line_number += 1
                 continue
 
             if skip_continuations and line.startswith((" ", "\t")) and line.strip() and not line.lstrip().startswith(("#", ";")):
+                line_number += 1
                 continue
             skip_continuations = False
 
             option_match = re.match(r"(\s*)([^#;\s][^:=]*?)(\s*[=:]\s*)(.*?)(\r?\n)?$", line)
             if section in self and option_match:
                 key = option_match.group(2).rstrip()
+                value_end, triple_quoted_comment = _triple_quoted_value_end(
+                    lines, line_number, option_match.group(4)
+                )
                 if key in self[section]:
                     seen_options.add(key)
                     if self[section][key] == self._original.get(section, {}).get(key):
-                        output.append(line)
+                        output.extend(lines[line_number : value_end + 1])
                     else:
                         _, inline_comment = _split_value_comment(option_match.group(4))
+                        inline_comment = triple_quoted_comment or inline_comment
                         output.extend(
                             _format_option(
                                 key,
@@ -108,10 +116,14 @@ class PgcliConfig(dict):
                         )
                         skip_continuations = True
                 else:
+                    if triple_quoted_comment:
+                        output.append(f"{option_match.group(1)}{triple_quoted_comment.lstrip()}\n")
                     skip_continuations = True
                 # A missing key was deliberately deleted.
+                line_number = value_end + 1
                 continue
             output.append(line)
+            line_number += 1
 
         append_missing_options()
         for name, values in self.items():
@@ -126,6 +138,25 @@ class PgcliConfig(dict):
         with open(self.filename, "w", encoding="utf-8", newline="") as destination:
             destination.writelines(output)
         self._original = {name: dict(values) for name, values in self.items()}
+
+
+def _triple_quoted_value_end(lines, start, first_value):
+    """Return the last source line and trailing comment for a triple-quoted value."""
+    stripped = first_value.lstrip()
+    quote = stripped[:3]
+    if quote not in ('"""', "'''"):
+        return start, ""
+
+    for line_number in range(start, len(lines)):
+        value = stripped[3:] if line_number == start else lines[line_number]
+        closing = value.find(quote)
+        if closing == -1:
+            continue
+        suffix = value[closing + 3 :].rstrip("\r\n")
+        match = re.fullmatch(r"[ \t]*(#[^\r\n]*)?", suffix)
+        if match:
+            return line_number, suffix if match.group(1) else ""
+    return start, ""
 
 
 def _format_option(key, value, indent="", separator=" = ", inline_comment=""):

@@ -107,19 +107,29 @@ def test_configobj_quoted_lists_are_preserved(tmp_path):
     assert config["main"].as_list("quoted_item") == ["delete, update"]
 
 
-def test_configobj_multiline_and_literal_quotes_survive_writes(tmp_path):
+def test_configobj_multiline_queries_update_and_delete(tmp_path):
+    from pgspecial.namedqueries import NamedQueries
+
     filename = tmp_path / "config"
     filename.write_text(
-        "[named queries]\nold = '''select 1\nfrom numbers''' # keep\n[main]\nprompt = original\n",
+        "[named queries]\nold = '''select 1\nfrom numbers''' # keep old comment\n"
+        "remove = \"\"\"select 2\nfrom numbers\nwhere false\"\"\" # keep remove comment\n"
+        "[main]\nprompt = original\n",
         encoding="utf-8",
     )
     config = load_config(str(filename))
 
-    config["named queries"]["new"] = "select 2"
+    queries = NamedQueries.from_config(config)
+    queries.save("old", "select 3\nfrom updated")
+    assert queries.delete("remove") == "remove: Deleted"
     config["main"]["prompt"] = "'quoted prompt'"
     config.write()
 
+    contents = filename.read_text(encoding="utf-8")
+    assert "from numbers'''" not in contents
+    assert 'where false\"\"\"' not in contents
+    assert "old = select 3 # keep old comment" in contents
+    assert "# keep remove comment" in contents
     reloaded = load_config(str(filename))
-    assert reloaded["named queries"]["old"] == "select 1\nfrom numbers"
+    assert reloaded["named queries"] == {"old": "select 3\nfrom updated"}
     assert reloaded["main"]["prompt"] == "'quoted prompt'"
-    assert "''' # keep" in filename.read_text(encoding="utf-8")
