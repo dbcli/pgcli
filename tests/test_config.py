@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import stat
 
 import pytest
@@ -116,6 +117,17 @@ def test_configobj_lists_preserve_backslashes(tmp_path):
     assert config["main"].as_list("paths") == [r"C:\tmp\file", r"D:\data"]
 
 
+@pytest.mark.parametrize(
+    "source, expected",
+    [("", [""]), ('""', [""]), ("delete,", ["delete"]), (",", [])],
+)
+def test_configobj_list_edge_cases(tmp_path, source, expected):
+    filename = tmp_path / "config"
+    filename.write_text(f"[main]\nitems = {source}\n", encoding="utf-8")
+
+    assert load_config(str(filename))["main"].as_list("items") == expected
+
+
 def test_escaped_quote_does_not_expose_hash_comment(tmp_path):
     filename = tmp_path / "config"
     filename.write_text("[main]\nprompt = 'Bob\\'s # tag'\n", encoding="utf-8")
@@ -172,8 +184,49 @@ def test_configobj_multiline_queries_update_and_delete(tmp_path):
     contents = filename.read_text(encoding="utf-8")
     assert "from numbers'''" not in contents
     assert 'where false"""' not in contents
-    assert "old = select 3 # keep old comment" in contents
+    assert 'old = """select 3\nfrom updated""" # keep old comment' in contents
     assert "# keep remove comment" in contents
     reloaded = load_config(str(filename))
     assert reloaded["named queries"] == {"old": "select 3\nfrom updated"}
     assert reloaded["main"]["prompt"] == "'quoted prompt'"
+
+
+@pytest.mark.parametrize("quote", ['"""', "'''"])
+def test_multiline_queries_are_lossless_across_writes_and_delete(tmp_path, quote):
+    filename = tmp_path / "config"
+    original = "\nselect 1\n\n# literal hash\n; literal semicolon\n  indented\n"
+    filename.write_text(
+        f"[named queries]\nq = {quote}{original}{quote}\nkeep = select 2 # keep\n",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(filename))
+    assert config["named queries"]["q"] == original
+    config["named queries"]["new"] = original
+    config.write()
+    assert load_config(str(filename))["named queries"]["new"] == original
+
+    reloaded = load_config(str(filename))
+    reloaded.write()
+    del reloaded["named queries"]["q"]
+    reloaded.write()
+    result = load_config(str(filename))["named queries"]
+    assert "q" not in result
+    assert result["new"] == original
+    assert result["keep"] == "select 2"
+    assert "# keep" in filename.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "contents, message",
+    [
+        ("option = value\n[main]\nprompt = ready\n", "root-level options"),
+        ("[main]\n[[nested]]\noption = value\n", "nested [[sections]]"),
+    ],
+)
+def test_unsupported_configobj_structures_fail_clearly(tmp_path, contents, message):
+    filename = tmp_path / "config"
+    filename.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=re.escape(message)):
+        load_config(str(filename))

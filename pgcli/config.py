@@ -24,6 +24,8 @@ class ConfigSection(dict):
     def as_list(self, key):
         value = self[key]
         if not value:
+            return [""]
+        if value == ",":
             return []
         if isinstance(value, ConfigValue) and value.quoted:
             return [str(value)]
@@ -37,6 +39,8 @@ class ConfigSection(dict):
                 items.append(str(_unquote(value[start:index])))
                 start = index + 1
         items.append(str(_unquote(value[start:])))
+        if value.endswith(","):
+            items.pop()
         return items
 
 
@@ -164,6 +168,11 @@ def _triple_quoted_value_end(lines, start, first_value):
 
 def _format_option(key, value, indent="", separator=" = ", inline_comment=""):
     value = str(value)
+    if "\n" in value or "\r" in value:
+        quote = next((candidate for candidate in ('"""', "'''") if candidate not in value), None)
+        if quote is None:
+            raise ValueError(f"Cannot serialize {key!r}: value contains both triple-quote delimiters")
+        return [f"{indent}{key}{separator}{quote}{value}{quote}{inline_comment}\n"]
     if "#" in value or value != value.strip():
         if "'" not in value:
             value = f"'{value}'"
@@ -196,26 +205,54 @@ def _read_config(filename):
             contents = source.read()
     except FileNotFoundError:
         return {}
-    parser.read_string(_normalize_triple_quoted_values(contents), source=filename)
+    normalized, multiline_values = _extract_triple_quoted_values(contents, filename)
+    parser.read_string(normalized, source=filename)
     return {
-        name: ConfigSection({key: _unquote(_split_value_comment(value)[0]) for key, value in parser.items(name, raw=True)})
+        name: ConfigSection({
+            key: multiline_values.get(str(parsed := _unquote(_split_value_comment(value)[0])), parsed)
+            for key, value in parser.items(name, raw=True)
+        })
         for name in parser.sections()
     }
 
 
-def _normalize_triple_quoted_values(contents):
-    """Translate ConfigObj triple-quoted values to configparser continuations."""
+def _extract_triple_quoted_values(contents, source):
+    """Hide ConfigObj multiline values from configparser and retain them exactly."""
     pattern = re.compile(
-        r"^([ \t]*[^#;\s][^=\r\n]*?[ \t]*=[ \t]*)(\"\"\"|''')(.*?)\2[ \t]*(?:#[^\r\n]*)?$",
+        r"^([ \t]*[^#;\s][^=\r\n]*?[ \t]*=[ \t]*)(\"\"\"|''')(.*?)\2([ \t]*(?:#[^\r\n]*)?)$",
         re.MULTILINE | re.DOTALL,
     )
+    values = {}
+    counter = 0
 
     def replace(match):
-        parts = match.group(3).split("\n")
-        quote = match.group(2)
-        return match.group(1) + quote + parts[0] + "".join(f"\n\t{part}" for part in parts[1:]) + quote
+        nonlocal counter
+        while True:
+            placeholder = f"__pgcli_multiline_{counter}__"
+            counter += 1
+            if placeholder not in contents:
+                break
+        values[placeholder] = ConfigValue(match.group(3), quoted=True)
+        return f'{match.group(1)}"{placeholder}"{match.group(4)}'
 
-    return pattern.sub(replace, contents)
+    normalized = pattern.sub(replace, contents)
+    _validate_supported_structure(normalized, source)
+    return normalized, values
+
+
+def _validate_supported_structure(contents, source):
+    """Reject ConfigObj structures that pgclirc has never needed."""
+    section_seen = False
+    for line_number, line in enumerate(contents.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ";")):
+            continue
+        if re.match(r"^\[\[.*\]\](?:\s*[#;].*)?$", stripped):
+            raise ValueError(f"{source}:{line_number}: nested [[sections]] are not supported")
+        if re.match(r"^\[[^]]+\](?:\s*[#;].*)?$", stripped):
+            section_seen = True
+        elif not section_seen and re.match(r"^[^#;\s][^=]*=", stripped):
+            raise ValueError(f"{source}:{line_number}: root-level options are not supported")
 
 
 def _split_value_comment(value):
