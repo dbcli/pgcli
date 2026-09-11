@@ -2,7 +2,6 @@ import shutil
 import os
 import platform
 import configparser
-import shlex
 from os.path import expanduser, exists, dirname
 import re
 from typing import TextIO
@@ -28,11 +27,17 @@ class ConfigSection(dict):
             return []
         if isinstance(value, ConfigValue) and value.quoted:
             return [str(value)]
-        lexer = shlex.shlex(value, posix=True)
-        lexer.whitespace = ","
-        lexer.whitespace_split = True
-        lexer.commenters = ""
-        return [item.strip() for item in lexer]
+        items = []
+        start = 0
+        quote = None
+        for index, character in enumerate(value):
+            if character in "\"'" and not _is_escaped(value, index):
+                quote = None if quote == character else character if quote is None else quote
+            elif character == "," and quote is None:
+                items.append(str(_unquote(value[start:index])))
+                start = index + 1
+        items.append(str(_unquote(value[start:])))
+        return items
 
 
 class ConfigValue(str):
@@ -159,11 +164,17 @@ def _triple_quoted_value_end(lines, start, first_value):
 
 def _format_option(key, value, indent="", separator=" = ", inline_comment=""):
     value = str(value)
-    parts = value.splitlines() or [""]
-    if len(parts) == 1 and len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+    if "#" in value or value != value.strip():
+        if "'" not in value:
+            value = f"'{value}'"
+        elif '"' not in value:
+            value = f'"{value}"'
+        else:
+            value = f'"""{value}"""'
+    elif "\n" not in value and "\r" not in value and len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
         outer_quote = '"' if value[0] == "'" else "'"
         value = f"{outer_quote}{value}{outer_quote}"
-        parts = [value]
+    parts = value.splitlines() or [""]
     lines = [f"{indent}{key}{separator}{parts[0]}{inline_comment}\n"]
     lines.extend(f"{indent}\t{part}\n" for part in parts[1:])
     return lines
@@ -177,6 +188,7 @@ def _read_config(filename):
         interpolation=None,
         strict=True,
         empty_lines_in_values=False,
+        default_section=None,
     )
     parser.optionxform = str
     try:
@@ -200,15 +212,27 @@ def _normalize_triple_quoted_values(contents):
 
     def replace(match):
         parts = match.group(3).split("\n")
-        return match.group(1) + parts[0] + "".join(f"\n\t{part}" for part in parts[1:])
+        quote = match.group(2)
+        return match.group(1) + quote + parts[0] + "".join(f"\n\t{part}" for part in parts[1:]) + quote
 
     return pattern.sub(replace, contents)
 
 
 def _split_value_comment(value):
+    stripped = value.lstrip()
+    triple_quote = stripped[:3]
+    if triple_quote in ('"""', "'''"):
+        closing = value.rfind(triple_quote)
+        if closing > len(value) - len(stripped):
+            suffix = value[closing + 3 :]
+            comment = re.fullmatch(r"([ \t]*#[^\r\n]*)(\r?\n.*)?", suffix, re.DOTALL)
+            if comment:
+                return value[: closing + 3] + (comment.group(2) or ""), comment.group(1)
+            return value, ""
+
     quote = None
     for index, character in enumerate(value):
-        if character in "\"'":
+        if character in "\"'" and not _is_escaped(value, index):
             quote = None if quote == character else character if quote is None else quote
         elif character == "#" and quote is None:
             uncommented = value[:index].rstrip()
@@ -219,11 +243,26 @@ def _split_value_comment(value):
     return value, ""
 
 
+def _is_escaped(value, index):
+    """Return whether the character at index follows an odd run of slashes."""
+    slashes = 0
+    index -= 1
+    while index >= 0 and value[index] == "\\":
+        slashes += 1
+        index -= 1
+    return slashes % 2 == 1
+
+
 def _unquote(value):
     stripped = value.strip()
+    if len(stripped) >= 6 and stripped[:3] in ('"""', "'''") and stripped.endswith(stripped[:3]):
+        return ConfigValue(stripped[3:-3], quoted=True)
     if len(stripped) >= 2 and stripped[0] in "\"'":
         quote = stripped[0]
-        closing = stripped.find(quote, 1)
+        closing = next(
+            (index for index in range(1, len(stripped)) if stripped[index] == quote and not _is_escaped(stripped, index)),
+            None,
+        )
         if closing == len(stripped) - 1:
             return ConfigValue(stripped[1:-1], quoted=True)
     return ConfigValue(stripped)

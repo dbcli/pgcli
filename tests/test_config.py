@@ -107,6 +107,50 @@ def test_configobj_quoted_lists_are_preserved(tmp_path):
     assert config["main"].as_list("quoted_item") == ["delete, update"]
 
 
+def test_configobj_lists_preserve_backslashes(tmp_path):
+    filename = tmp_path / "config"
+    filename.write_text("[main]\npaths = C:\\tmp\\file, D:\\data\n", encoding="utf-8")
+
+    config = load_config(str(filename))
+
+    assert config["main"].as_list("paths") == [r"C:\tmp\file", r"D:\data"]
+
+
+def test_escaped_quote_does_not_expose_hash_comment(tmp_path):
+    filename = tmp_path / "config"
+    filename.write_text("[main]\nprompt = 'Bob\\'s # tag'\n", encoding="utf-8")
+
+    config = load_config(str(filename))
+
+    assert config["main"]["prompt"] == r"Bob\'s # tag"
+
+
+def test_default_is_an_ordinary_case_sensitive_section(tmp_path):
+    filename = tmp_path / "config"
+    filename.write_text("[DEFAULT]\nOnlyHere = value\n[main]\nprompt = ready\n", encoding="utf-8")
+
+    config = load_config(str(filename))
+
+    assert config["DEFAULT"] == {"OnlyHere": "value"}
+    assert config["main"] == {"prompt": "ready"}
+
+
+@pytest.mark.parametrize(
+    "query",
+    ["select payload #> path", " select trailing ", '''select 'one', "two" #> path'''],
+)
+def test_named_query_write_quotes_hashes_and_surrounding_whitespace(tmp_path, query):
+    from pgspecial.namedqueries import NamedQueries
+
+    filename = tmp_path / "config"
+    filename.write_text("[named queries]\n", encoding="utf-8")
+    config = load_config(str(filename))
+
+    NamedQueries.from_config(config).save("q", query)
+
+    assert load_config(str(filename))["named queries"]["q"] == query
+
+
 def test_configobj_multiline_queries_update_and_delete(tmp_path):
     from pgspecial.namedqueries import NamedQueries
 
