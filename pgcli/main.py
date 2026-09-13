@@ -2214,7 +2214,7 @@ def parse_service_info(service):
     with open(service_file, newline="") as f:
         skipped_lines = skip_initial_comment(f)
         # libpq treats values literally: hashes, commas, quotes and percent
-        # signs are part of the value, not ConfigObj comments or syntax.
+        # signs are part of the value.
         service_file_config = ConfigParser(interpolation=None, delimiters=("=",), comment_prefixes=("#",))
         service_file_config.read_file(itertools.chain(itertools.repeat("\n", skipped_lines), f), source=service_file)
     if service not in service_file_config:
