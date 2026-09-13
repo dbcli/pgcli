@@ -27,6 +27,10 @@ Features:
 
 Bug fixes:
 ----------
+* [breaking change] Passwords in service files (usually
+  ``~/.pg_service.conf``) are now read as they appear, as ``libpq`` and
+  ``psql`` do. Previously, hashes, percent signs and other values had to be
+  quoted. They must not be quoted anymore.
 * Fix special commands being broken while explain mode (F5) is on. Every input
   was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
   backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
