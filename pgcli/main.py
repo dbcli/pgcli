@@ -1057,6 +1057,29 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
+        # Handle command mode (-c flag) - similar to psql behavior
+        # Multiple -c options are executed sequentially
+        if hasattr(self, 'commands') and self.commands:
+            try:
+                for command in self.commands:
+                    logger.debug("Running command: %s", command)
+                    # Statement by statement, like psql -c: \watch only repeats
+                    # its own statement, not the whole -c block.
+                    if not self._execute_statements(command):
+                        break
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # psql runs both -c and -f when they are given together, so only
+            # exit here when there is no file left to run.
+            if not (hasattr(self, 'input_files') and self.input_files):
+                sys.exit(0)
+
         # Handle file mode (-f flag) - similar to psql behavior
         # Multiple -f options are executed sequentially
         if hasattr(self, 'input_files') and self.input_files:
@@ -1503,8 +1526,13 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        # Disable pager for -f/--file mode and \watch command
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command or (hasattr(self, 'input_files') and self.input_files):
+        # Disable pager for -c/--command and -f/--file modes and \watch command
+        if (
+            self.pgspecial.pager_config == PAGER_OFF
+            or self.watch_command
+            or (hasattr(self, 'commands') and self.commands)
+            or (hasattr(self, 'input_files') and self.input_files)
+        ):
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1668,6 +1696,13 @@ class PGCli:
     help="SQL statement to execute after connecting.",
 )
 @click.option(
+    "-c",
+    "--command",
+    "commands",
+    multiple=True,
+    help="run command (SQL or internal) and exit. Multiple -c options are allowed.",
+)
+@click.option(
     "-y",
     "--yes",
     "force_destructive",
@@ -1712,6 +1747,7 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    commands: tuple,
     force_destructive: bool,
     input_files: tuple,
     connect_timeout: int | None,
@@ -1783,6 +1819,8 @@ def cli(
         connect_timeout=connect_timeout,
     )
 
+    # Store commands for -c option (can be multiple)
+    pgcli.commands = commands if commands else None
     # Store file paths for -f option (can be multiple)
     pgcli.input_files = input_files if input_files else None
 
