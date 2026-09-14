@@ -49,7 +49,7 @@ dynamic = ["version"]
 pgcli = "pgcli.main:cli"
 
 [project.optional-dependencies]
-keyring = ["keyring >= 12.2.0"]
+keyring = ["keyring >= 23.1.0, < 26"]
 sshtunnel = ["sshtunnel >= 0.4.0"]
 dev = [
     "behave>=1.2.4",

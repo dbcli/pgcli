@@ -47,30 +47,14 @@ def keyring_get_password(key):
 
 
 def _is_macos_keyring_backend(backend):
-    return backend.__class__.__module__ in {
-        "keyring.backends.macOS",
-        "keyring.backends.OS_X",
-    }
-
-
-def _macos_keyring_uses_keychain_path(backend):
-    if backend.__class__.__module__ == "keyring.backends.OS_X":
-        return True
-
-    import importlib
-
-    backend_module = importlib.import_module(backend.__class__.__module__)
-    return hasattr(backend_module.api, "SecKeychainCopyDefault")
+    return backend.__class__.__module__ == "keyring.backends.macOS"
 
 
 def _set_password_with_backend(backend, key, passwd):
     if _is_macos_keyring_backend(backend):
         from pgcli import macos_keychain
 
-        if _macos_keyring_uses_keychain_path(backend):
-            macos_keychain.set_password("pgcli", key, passwd, backend.keychain)
-        else:
-            macos_keychain.set_password("pgcli", key, passwd)
+        macos_keychain.set_password("pgcli", key, passwd)
     else:
         backend.set_password("pgcli", key, passwd)
 
