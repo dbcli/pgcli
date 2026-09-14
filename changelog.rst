@@ -22,9 +22,9 @@ Features:
 
 Bug fixes:
 ----------
-* Avoid rewriting passwords loaded from the keyring after every successful
-  connection. On macOS, rewriting recreated Keychain items and restored Python
-  as an application allowed to access them without confirmation.
+* Preserve macOS Keychain access choices. New credentials no longer
+  pre-authorize Python, and credentials loaded from the keyring are not
+  rewritten after successful connections.
 * Fix special commands being broken while explain mode (F5) is on. Every input
   was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
   backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
