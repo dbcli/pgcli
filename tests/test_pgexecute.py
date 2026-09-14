@@ -686,6 +686,21 @@ def test_copy_stdout_keeps_open_transaction(executor, exception_formatter):
         executor.conn.close()
 
 
+@dbtest
+@pytest.mark.parametrize(
+    ("sql", "error"),
+    [
+        ("select from", psycopg.errors.SyntaxError),
+        ("select * from no_such_table", psycopg.errors.UndefinedTable),
+    ],
+)
+def test_other_programming_errors_are_not_rewritten(executor, sql, error):
+    with pytest.raises(error) as excinfo:
+        list(executor.run(sql))
+    assert "\\copy" not in str(excinfo.value)
+    assert run(executor, "select 1", join=True).endswith("SELECT 1")
+
+
 # @dbtest
 # def test_unicode_notices(executor):
 #     sql = "DO language plpgsql $$ BEGIN RAISE NOTICE '有人更改'; END $$;"
