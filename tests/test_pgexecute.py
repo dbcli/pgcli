@@ -644,6 +644,48 @@ def test_on_error_stop(executor, exception_formatter):
     assert len(result) == 2
 
 
+@dbtest
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "copy (select 1) to stdout",
+        "copy (select generate_series(1, 10000)) to stdout csv",
+        "copy test from stdin",
+    ],
+)
+def test_copy_stdout_stdin_does_not_break_connection(executor, exception_formatter, sql):
+    run(executor, "create table test(a text)")
+    try:
+        result = run(executor, sql, exception_formatter=exception_formatter)
+        assert "use \\copy instead" in result[-1]
+        assert not executor.valid_transaction()
+        assert run(executor, "select 42", join=True) == dedent(
+            """\
+            +----------+
+            | ?column? |
+            |----------|
+            | 42       |
+            +----------+
+            SELECT 1"""
+        )
+    finally:
+        # A connection stuck in COPY keeps its locks, which would block the
+        # fixture from dropping the tables.
+        executor.conn.close()
+
+
+@dbtest
+def test_copy_stdout_keeps_open_transaction(executor, exception_formatter):
+    try:
+        run(executor, "begin")
+        run(executor, "copy (select 1) to stdout", exception_formatter=exception_formatter)
+        assert executor.conn.info.transaction_status == psycopg.pq.TransactionStatus.INTRANS
+        run(executor, "rollback")
+        assert executor.conn.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+    finally:
+        executor.conn.close()
+
+
 # @dbtest
 # def test_unicode_notices(executor):
 #     sql = "DO language plpgsql $$ BEGIN RAISE NOTICE '有人更改'; END $$;"
