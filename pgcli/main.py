@@ -120,7 +120,7 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 OutputSettings = namedtuple(
     "OutputSettings",
     "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output "
-    "max_field_width tuples_only",
+    "max_field_width tuples_only show_status",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -134,6 +134,7 @@ OutputSettings.__new__.__defaults__ = (
     None,
     DEFAULT_MAX_FIELD_WIDTH,
     False,
+    True,
 )
 
 
@@ -224,6 +225,8 @@ class PGCli:
         single_connection=False,
         less_chatty=None,
         tuples_only=None,
+        no_timings=False,
+        no_status=False,
         prompt=None,
         prompt_dsn=None,
         auto_vertical_output=False,
@@ -290,8 +293,14 @@ class PGCli:
         # alone here and switched to an unadorned one at output time, so \T
         # still reports (and can change) the configured format.
         self.tuples_only = bool(tuples_only)
-        if self.tuples_only:
+        # --no-timings and --no-status turn off one thing each, for scripts that
+        # want the rows plus one of the two. -t is the psql-compatible shorthand
+        # that turns off both, along with the headers and the title.
+        self.show_status = not no_status
+        if no_timings or self.tuples_only:
             self.pgspecial.timing_enabled = False
+        if self.tuples_only:
+            self.show_status = False
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
@@ -1370,6 +1379,7 @@ class PGCli:
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
                 tuples_only=self.tuples_only,
+                show_status=self.show_status,
             )
 
             # Hide query text for named queries in quiet mode
@@ -1650,6 +1660,20 @@ class PGCli:
     default=False,
     help="Print rows only: no column headers, no status footer and no timing, like psql.",
 )
+@click.option(
+    "--no-timings",
+    "no_timings",
+    is_flag=True,
+    default=False,
+    help="Do not print the timing line after each query.",
+)
+@click.option(
+    "--no-status",
+    "no_status",
+    is_flag=True,
+    default=False,
+    help="Do not print the status footer (SELECT 3, UPDATE 1, ...) after each query.",
+)
 @click.option("--prompt", help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option(
     "--prompt-dsn",
@@ -1737,6 +1761,8 @@ def cli(
     application_name,
     less_chatty,
     tuples_only,
+    no_timings: bool,
+    no_status: bool,
     prompt,
     prompt_dsn,
     list_databases,
@@ -1809,6 +1835,8 @@ def cli(
         single_connection=single_connection,
         less_chatty=less_chatty,
         tuples_only=tuples_only,
+        no_timings=no_timings,
+        no_status=no_status,
         prompt=prompt,
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
@@ -2229,7 +2257,7 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         output = itertools.chain(output, formatted)
 
     # Likewise the status footer.
-    if status and not settings.tuples_only:
+    if status and settings.show_status and not settings.tuples_only:
         output = itertools.chain(output, [format_status(cur, status)])
 
     return output
