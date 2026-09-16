@@ -27,6 +27,11 @@ Features:
 
 Bug fixes:
 ----------
+* Require ``sqlparse`` 0.6.0 or newer. Every 0.5.x release is affected by the
+  denial-of-service and string-escaping advisories fixed in 0.6.0
+  (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491 and CVE-2026-59894), and the
+  ``>=0.3.0`` floor let an existing installation keep a vulnerable version
+  across a pgcli upgrade.
 * Fix special commands being broken while explain mode (F5) is on. Every input
   was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
   backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
