@@ -157,8 +157,11 @@ class FunctionMetadata:
             # E.g. 'SELECT unnest FROM unnest(...);'
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
+        # arg_modes being truthy doesn't guarantee arg_names/arg_types are
+        # populated too (e.g. an unnamed variadic parameter), so fall back
+        # to None placeholders the same way args() falls back for modes.
+        names = self.arg_names or [None] * len(self.arg_modes)
+        types = self.arg_types or [None] * len(self.arg_modes)
         return [
-            ColumnMetadata(name, typ, [])
-            for name, typ, mode in zip(self.arg_names, self.arg_types, self.arg_modes)
-            if mode in ("o", "b", "t")
+            ColumnMetadata(name, typ, []) for name, typ, mode in zip(names, types, self.arg_modes) if mode in ("o", "b", "t")
         ]  # OUT, INOUT, TABLE
