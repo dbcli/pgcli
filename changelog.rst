@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+
+
+4.7.0 (2026-09-19)
+==================
+
 Features:
 ---------
 * Add support for `single-command` to run a SQL command and exit.
