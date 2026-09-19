@@ -501,11 +501,23 @@ class PGCli:
         )
 
         self.pgspecial.register(
+            self.crosstabview,
+            "\\crosstabview",
+            "\\crosstabview [colV [colH [colD [sortcolH]]]]",
+            "Execute query (or re-run the last one) and display the result in a crosstab.",
+        )
+
+        self.pgspecial.register(
             self.toggle_verbose_errors,
             "\\v",
             "\\v [on|off]",
             "Toggle verbose errors.",
         )
+
+    def crosstabview(self, pattern, **_):
+        # A bare \crosstabview re-runs the last query; "<query> \crosstabview"
+        # is handled by PGExecute.run().
+        return [self.pgexecute.crosstabview(None, pattern)]
 
     def toggle_verbose_errors(self, pattern, **_):
         flag = pattern.strip()
@@ -1294,6 +1306,10 @@ class PGCli:
         if self.explain_mode:
             return False
         if not is_select(sql):
+            return False
+
+        # A \crosstabview grid is not a cursor; like psql, it is never truncated.
+        if not hasattr(cur, "rowcount"):
             return False
 
         return not self._has_limit(sql) and self.row_limit != 0 and cur and cur.rowcount > self.row_limit
@@ -2194,7 +2210,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         output.append(title)
 
     if cur:
-        headers = [] if settings.tuples_only else [case_function(x) for x in headers]
+        # A \crosstabview header can be NULL; show it like a NULL value.
+        headers = [] if settings.tuples_only else [settings.missingval if x is None else case_function(x) for x in headers]
         if max_width is not None:
             cur = list(cur)
         column_types = None
