@@ -84,7 +84,9 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build]
-    environment: release
+    environment:
+      name: release
+      url: https://pypi.org/p/pgcli
     permissions:
       id-token: write
     steps:
