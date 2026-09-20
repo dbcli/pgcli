@@ -552,6 +552,7 @@ def test_execute_statements_sql_then_metacommand(executor):
     assert "medio" in outputs[1]
 
 
+@dbtest
 def test_execute_statements_does_not_split_inside_literals(executor):
     """Semicolons inside string literals are not statement boundaries."""
     cli = PGCli(pgexecute=executor)
