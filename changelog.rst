@@ -2,9 +2,21 @@ Upcoming
 ========
 
 
+4.7.1 (2026-09-20)
+==================
+
+Bug fixes:
+----------
+* Fix wrong version number that was shown in `pgcli --version` for
+  version 4.7.0.
+
 
 4.7.0 (2026-09-19)
 ==================
+
+**Brown bag release:** this version shows (in `pgcli --version`) as
+"4.6.0" instead of "4.7.0".
+
 
 Features:
 ---------
