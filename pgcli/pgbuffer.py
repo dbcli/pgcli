@@ -1,6 +1,6 @@
 import logging
 
-import sqlparse
+from .packages.parseutils import strip_trailing_comments
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.application import get_app
@@ -15,7 +15,10 @@ def _is_complete(sql):
     # CREATE FUNCTION command.
     # Strip trailing comments so that "SELECT 1; -- note" is recognized as
     # complete (the semicolon is not at the end when a comment follows).
-    stripped = sqlparse.format(sql, strip_comments=True).strip()
+    # Not sqlparse's strip_comments: it reads "#" as a comment marker, which in
+    # PostgreSQL is the bitwise XOR operator (issue #1646), so "select 17 # 5;"
+    # would never look complete.
+    stripped = strip_trailing_comments(sql).strip()
     return stripped.endswith(";") and not is_open_quote(sql)
 
 
