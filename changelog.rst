@@ -25,6 +25,11 @@ Features:
     * You can specify multiple times.
     * Runs one statement at a time, like `-f`, and can be combined with `-f`:
       both run, the same way psql does.
+* Add ``--no-timings`` and ``--no-status`` to suppress the timing line and the
+  status footer independently. ``-t``/``--tuples-only`` already turns off both,
+  along with the headers and the title, but there was no way to keep the table
+  formatting and drop only one of the two, which scripts that post-process the
+  output often want.
 * Add support for forcing destructive commands without confirmation.
     * Command line option `-y` or `--yes`.
     * Skips the destructive command confirmation prompt when enabled.
