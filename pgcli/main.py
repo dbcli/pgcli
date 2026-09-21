@@ -66,6 +66,7 @@ from .config import (
     load_config,
     config_location,
     ensure_dir_exists,
+    ensure_private_file,
     get_config,
     get_config_filename,
 )
@@ -660,6 +661,9 @@ class PGCli:
         if log_level.upper() == "NONE":
             handler = logging.NullHandler()
         else:
+            # Before the handler creates it, so the file never exists with
+            # the umask mode.
+            ensure_private_file(log_file)
             handler = logging.FileHandler(os.path.expanduser(log_file))
 
         level_map = {
@@ -1110,6 +1114,7 @@ class PGCli:
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
             history_file = config_location() + "history"
+        ensure_private_file(history_file)
         history = FileHistory(os.path.expanduser(history_file))
         self.refresh_completions(history=history, persist_priorities="none")
 

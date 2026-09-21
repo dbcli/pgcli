@@ -1,6 +1,18 @@
 Upcoming
 ========
 
+Bug fixes:
+----------
+* Create the history, log and config files readable by their owner only
+  (0600). They were left to the process umask, which is 0644 or 0664 on a
+  typical desktop, while the history records every statement typed,
+  ``alter role ... password`` included, the log carries the same at DEBUG
+  level and the config can hold passwords in ``[alias_dsn]``. psql keeps its
+  history at 0600 and libpq requires it for ``.pgpass``. An existing history
+  or log with wider permissions is tightened on the next run; device nodes
+  such as ``/dev/null``, FIFOs and files owned by someone else are left
+  alone.
+
 
 4.7.1 (2026-09-20)
 ==================
