@@ -1,8 +1,30 @@
 Upcoming
 ========
 
+
+4.7.1 (2026-09-20)
+==================
+
+Bug fixes:
+----------
+* Fix wrong version number that was shown in `pgcli --version` for
+  version 4.7.0.
+
+
+4.7.0 (2026-09-19)
+==================
+
+**Brown bag release:** this version shows (in `pgcli --version`) as
+"4.6.0" instead of "4.7.0".
+
+
 Features:
 ---------
+* Add support for `single-command` to run a SQL command and exit.
+    * Command line option `-c` or `--command`.
+    * You can specify multiple times.
+    * Runs one statement at a time, like `-f`, and can be combined with `-f`:
+      both run, the same way psql does.
 * Add support for forcing destructive commands without confirmation.
     * Command line option `-y` or `--yes`.
     * Skips the destructive command confirmation prompt when enabled.
@@ -66,6 +88,8 @@ Bug fixes:
   issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
   bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
   installing the fixed release.
+* Detect an unconditional ``UPDATE`` with ``sqlparse`` rather than splitting on whitespace, so a
+  ``WHERE`` appearing inside a string literal no longer suppresses the destructive-statement warning.
 
 Features:
 ---------
