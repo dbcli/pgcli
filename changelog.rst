@@ -44,6 +44,9 @@ Features:
 
 Bug fixes:
 ----------
+* Preserve macOS Keychain access choices. New credentials no longer
+  pre-authorize Python, and credentials loaded from the keyring are not
+  rewritten after successful connections.
 * Fix special commands being broken while explain mode (F5) is on. Every input
   was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
   backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
