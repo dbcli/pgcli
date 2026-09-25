@@ -1059,3 +1059,68 @@ def test_connect_timeout_config_value_must_be_a_number(tmpdir):
         f.write("[main]\nconnect_timeout = soon\n")
     with pytest.raises(ValueError):
         PGCli(pgclirc_file=rc)
+
+
+CROSSTAB_QUERY = "SELECT * FROM (VALUES (1, 'one', false), (2, 'two', false), (3, 'three', true)) v(first, second, gt2)"
+
+
+def crosstab(cli, text):
+    output, query = cli._evaluate_command(text)
+    return [COLOR_CODE_REGEX.sub("", line) for line in output], query
+
+
+@dbtest
+def test_crosstabview(executor):
+    cli = PGCli(pgexecute=executor)
+    output, query = crosstab(cli, CROSSTAB_QUERY + " \\crosstabview first second")
+    assert query.successful
+    assert output == [
+        "+-------+-------+-------+-------+",
+        "| first | one   | two   | three |",
+        "|-------+-------+-------+-------|",
+        "| 1     | False |       |       |",
+        "| 2     |       | False |       |",
+        "| 3     |       |       | True  |",
+        "+-------+-------+-------+-------+",
+        "SELECT 3",
+    ]
+
+
+@dbtest
+def test_crosstabview_reruns_last_query(executor):
+    cli = PGCli(pgexecute=executor)
+    output, _ = crosstab(cli, "\\crosstabview")
+    assert output == ["\\crosstabview: there is no previous query to run"]
+
+    cli._evaluate_command(CROSSTAB_QUERY)
+    cli._evaluate_command("\\dt")  # not a query sent to the server
+    output, query = crosstab(cli, "\\crosstabview 2 1")
+    assert query.successful
+    assert output[1] == "| second | 1     | 2     | 3    |"
+
+    # the same, in one go
+    output, _ = crosstab(cli, CROSSTAB_QUERY + "; \\crosstabview 2 1")
+    assert output[-7] == "| second | 1     | 2     | 3    |"
+
+
+@dbtest
+def test_crosstabview_error(executor):
+    cli = PGCli(pgexecute=executor)
+    output, query = crosstab(cli, "SELECT 1, 2 \\crosstabview")
+    assert not query.successful
+    assert output == ["\\crosstabview: query must return at least three columns"]
+
+
+@dbtest
+def test_crosstabview_not_a_result_set(executor):
+    cli = PGCli(pgexecute=executor)
+    output, query = crosstab(cli, "SET search_path = public \\crosstabview")
+    assert query.successful
+    assert output == ["SET"]
+
+
+@dbtest
+def test_crosstabview_is_not_row_limited(executor):
+    cli = PGCli(pgexecute=executor, row_limit=2)
+    output, _ = crosstab(cli, CROSSTAB_QUERY + " \\crosstabview")
+    assert output[-1] == "SELECT 3"
