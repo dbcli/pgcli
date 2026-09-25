@@ -1,6 +1,13 @@
 Upcoming
 ========
 
+Bug fixes:
+----------
+* Fix ``COPY ... TO STDOUT`` and ``COPY ... FROM STDIN`` (instead of ``\copy``)
+  leaving the connection stuck: every later query failed with "another command
+  is already in progress" and quitting asked about an ongoing transaction.
+  The COPY is now ended cleanly and the error suggests ``\copy`` instead
+  ([issue 1505](https://github.com/dbcli/pgcli/issues/1505)).
 
 4.7.1 (2026-09-20)
 ==================
