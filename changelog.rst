@@ -20,6 +20,13 @@ Bug fixes:
 
 Features:
 ---------
+* Replace ConfigObj with the standard-library ``configparser`` for the main
+  pgclirc parser while retaining case-sensitive names, typed settings, quoted
+  values, lists, literal percent/hash characters, user comments, and
+  default/user precedence. ConfigObj's nested ``[[section]]`` syntax is not
+  supported; pgclirc continues to use single-bracket section names (including
+  dotted names such as ``[alias_dsn.init-commands]``). ConfigObj remains a
+  dependency for PostgreSQL service-file parsing.
 * Add support for `single-command` to run a SQL command and exit.
     * Command line option `-c` or `--command`.
     * You can specify multiple times.
