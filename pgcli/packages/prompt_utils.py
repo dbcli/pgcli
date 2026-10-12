@@ -3,22 +3,31 @@ import click
 from .parseutils import is_destructive
 
 
-def confirm_destructive_query(queries, keywords, alias):
+def confirm_destructive_query(queries, keywords, alias, force=False):
     """Check if the query is destructive and prompts the user to confirm.
 
     Returns:
     * None if the query is non-destructive or we can't prompt the user.
-    * True if the query is destructive and the user wants to proceed.
+    * True if the query is destructive and the user wants to proceed, or if the
+      confirmation was bypassed with `force`.
     * False if the query is destructive and the user doesn't want to proceed.
 
     """
+    if not is_destructive(queries, keywords):
+        return None
+
+    if force:
+        return True
+
+    if not sys.stdin.isatty():
+        return None
+
     info = "You're about to run a destructive command"
     if alias:
         info += f" in {click.style(alias, fg='red')}"
 
     prompt_text = f"{info}.\nDo you want to proceed?"
-    if is_destructive(queries, keywords) and sys.stdin.isatty():
-        return confirm(prompt_text)
+    return confirm(prompt_text)
 
 
 def confirm(*args, **kwargs):

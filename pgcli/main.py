@@ -119,7 +119,8 @@ MetaQuery.__new__.__defaults__ = ("", False, 0, 0, False, False, False, False)
 
 OutputSettings = namedtuple(
     "OutputSettings",
-    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output max_field_width",
+    "table_format dcmlfmt floatfmt column_date_formats missingval expanded max_width case_function style_output "
+    "max_field_width tuples_only",
 )
 OutputSettings.__new__.__defaults__ = (
     None,
@@ -132,6 +133,7 @@ OutputSettings.__new__.__defaults__ = (
     lambda x: x,
     None,
     DEFAULT_MAX_FIELD_WIDTH,
+    False,
 )
 
 
@@ -144,6 +146,46 @@ def notify_callback(notify: Notify):
         'Notification received on channel "{}" (PID {}):\n{}'.format(notify.channel, notify.pid, notify.payload),
         fg="green",
     )
+
+
+def get_editor():
+    """Pick the external editor for ``\\e``/``\\ev``/``\\ef``/``\\ne``.
+
+    Mirrors psql, which checks ``PSQL_EDITOR`` first, then ``EDITOR``, then
+    ``VISUAL``. Returning ``None`` when none are set lets click fall back to
+    its platform default, so the behaviour is unchanged for anyone who wasn't
+    setting ``PSQL_EDITOR``.
+    """
+    return os.environ.get("PSQL_EDITOR") or os.environ.get("EDITOR") or os.environ.get("VISUAL") or None
+
+
+def get_connect_timeout(explicit, dsn, kwargs, default):
+    """Pick the connection timeout to apply, in seconds.
+
+    Precedence, highest first:
+
+    1. ``explicit``, i.e. ``--timeout`` on the command line
+    2. ``connect_timeout`` in the connection string, or in ``kwargs``
+    3. ``$PGCONNECT_TIMEOUT``
+    4. ``default``, the ``connect_timeout`` config value
+
+    Returns ``None`` when the user already stated a timeout by one of the
+    means we must not override, in which case the caller leaves the
+    connection parameters alone and libpq reads it from where it already is.
+
+    A default matters because libpq's own is 0, which waits until the
+    operating system gives up on the TCP connection, so an unreachable host
+    hangs for minutes.
+    """
+    if explicit is not None:
+        return explicit
+    if "connect_timeout" in kwargs:
+        return None
+    if dsn and "connect_timeout" in conninfo_to_dict(dsn):
+        return None
+    if os.environ.get("PGCONNECT_TIMEOUT"):
+        return None
+    return default
 
 
 class PGCli:
@@ -181,18 +223,22 @@ class PGCli:
         application_name="pgcli",
         single_connection=False,
         less_chatty=None,
+        tuples_only=None,
         prompt=None,
         prompt_dsn=None,
         auto_vertical_output=False,
         warn=None,
         ssh_tunnel_url: str | None = None,
+        connect_timeout: int | None = None,
         log_file: str | None = None,
+        force_destructive: bool = False,
     ):
         self.force_passwd_prompt = force_passwd_prompt
         self.never_passwd_prompt = never_passwd_prompt
         self.pgexecute = pgexecute
         self.dsn_alias = None
         self.watch_command = None
+        self.force_destructive = force_destructive
 
         # Load config.
         c = self.config = get_config(pgclirc_file)
@@ -239,6 +285,13 @@ class PGCli:
         self.min_num_menu_lines = c["main"].as_int("min_num_menu_lines")
         self.multiline_continuation_char = c["main"]["multiline_continuation_char"]
         self.table_format = c["main"]["table_format"]
+        # psql's -t prints the rows and nothing else: no column headers, no
+        # title, no status footer and no timing line. The table format is left
+        # alone here and switched to an unadorned one at output time, so \T
+        # still reports (and can change) the configured format.
+        self.tuples_only = bool(tuples_only)
+        if self.tuples_only:
+            self.pgspecial.timing_enabled = False
         self.syntax_style = c["main"]["syntax_style"]
         self.cli_style = c["colors"]
         self.wider_completion_menu = c["main"].as_bool("wider_completion_menu")
@@ -252,6 +305,9 @@ class PGCli:
         self.prompt_format = prompt if prompt is not None else c["main"].get("prompt", self.default_prompt)
         self.prompt_dsn_format = prompt_dsn
         self.on_error = c["main"]["on_error"].upper()
+        # Connection timeout, in seconds. See connect() for the precedence.
+        self.connect_timeout = connect_timeout
+        self.default_connect_timeout = c["main"].as_int("connect_timeout")
         self.decimal_format = c["data_formats"]["decimal"]
         self.float_format = c["data_formats"]["float"]
         self.column_date_formats = c["column_date_formats"]
@@ -331,7 +387,7 @@ class PGCli:
             return [(None, None, None, "Usage: \\ne <name>")]
 
         existing = NamedQueries.instance.get(name)
-        sql, message = special.open_external_editor(sql=existing or "")
+        sql, message = special.open_external_editor(sql=existing or "", editor=get_editor())
         if message:
             return [(None, None, None, message)]
 
@@ -554,7 +610,7 @@ class PGCli:
             ):
                 message = "Destructive statements must be run within a transaction. Command execution stopped."
                 return [(None, None, None, message)]
-            destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias)
+            destroy = confirm_destructive_query(query, self.destructive_warning, self.dsn_alias, self.force_destructive)
             if destroy is False:
                 message = "Wise choice. Command execution stopped."
                 return [(None, None, None, message)]
@@ -698,6 +754,12 @@ class PGCli:
             database = user
 
         kwargs.setdefault("application_name", self.application_name)
+
+        # The resolved value is passed as a connection parameter rather than
+        # merged into the dsn, leaving the user's connection string untouched.
+        timeout = get_connect_timeout(self.connect_timeout, dsn, kwargs, self.default_connect_timeout)
+        if timeout is not None:
+            kwargs["connect_timeout"] = str(timeout)
 
         # If password prompt is not forced but no password is provided, try
         # getting it from environment variable.
@@ -866,7 +928,7 @@ class PGCli:
                     query = self.pgexecute.view_definition(spec)
                 elif editor_command == "\\ef":
                     query = self.pgexecute.function_definition(spec)
-            sql, message = special.open_external_editor(filename, sql=query)
+            sql, message = special.open_external_editor(filename, sql=query, editor=get_editor())
             if message:
                 # Something went wrong. Raise an exception and bail.
                 raise RuntimeError(message)
@@ -894,11 +956,11 @@ class PGCli:
                 ):
                     click.secho("Destructive statements must be run within a transaction.")
                     raise KeyboardInterrupt
-                destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias)
+                destroy = confirm_destructive_query(text, self.destructive_warning, self.dsn_alias, self.force_destructive)
                 if destroy is False:
                     click.secho("Wise choice!")
                     raise KeyboardInterrupt
-                elif destroy:
+                elif destroy and not self.force_destructive:
                     click.secho("Your call!")
 
             output, query = self._evaluate_command(text)
@@ -1029,6 +1091,56 @@ class PGCli:
     def run_cli(self):
         logger = self.logger
 
+        # Handle command mode (-c flag) - similar to psql behavior
+        # Multiple -c options are executed sequentially
+        if hasattr(self, 'commands') and self.commands:
+            try:
+                for command in self.commands:
+                    logger.debug("Running command: %s", command)
+                    # Statement by statement, like psql -c: \watch only repeats
+                    # its own statement, not the whole -c block.
+                    if not self._execute_statements(command):
+                        break
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # psql runs both -c and -f when they are given together, so only
+            # exit here when there is no file left to run.
+            if not (hasattr(self, 'input_files') and self.input_files):
+                sys.exit(0)
+
+        # Handle file mode (-f flag) - similar to psql behavior
+        # Multiple -f options are executed sequentially
+        if hasattr(self, 'input_files') and self.input_files:
+            try:
+                for input_file in self.input_files:
+                    logger.debug("Reading commands from file: %s", input_file)
+                    with open(input_file, 'r', encoding='utf-8') as f:
+                        file_content = f.read()
+
+                    if file_content.strip():
+                        logger.debug("Executing commands from file: %s", input_file)
+                        # Statement by statement, like psql -f: \watch only
+                        # repeats its own statement, not the whole file.
+                        if not self._execute_statements(file_content):
+                            break
+
+            except PgCliQuitError:
+                # Normal exit from quit command
+                sys.exit(0)
+            except Exception as e:
+                logger.error("Error executing command: %s", e)
+                logger.error("traceback: %r", traceback.format_exc())
+                click.secho(str(e), err=True, fg="red")
+                sys.exit(1)
+            # Exit successfully after executing all commands
+            sys.exit(0)
+
         history_file = self.config["main"]["history_file"]
         if history_file == "default":
             history_file = config_location() + "history"
@@ -1105,6 +1217,43 @@ class PGCli:
             query = self.execute_command(text)
 
         self.query_history.append(query)
+        return query
+
+    def _execute_statements(self, text):
+        r"""Run a block of SQL the way psql -f does: one statement at a time.
+
+        get_watch_command()'s regex captures ALL the text before a \watch, so
+        feeding a whole file to handle_watch_command would make \watch repeat
+        every statement in it. Splitting first keeps \watch scoped to its own
+        statement, and a bare \watch picks up the previous statement through
+        query_history, exactly like psql.
+
+        A backslash command spans only its own line, like in psql, so a
+        metacommand followed by SQL on the next line does not swallow the
+        SQL (sqlparse only cuts at semicolons).
+
+        Honors on_error: with STOP, the first failed statement stops the run.
+        Returns True when every statement succeeded.
+        """
+        ok = True
+        statements = sqlparse.split(text)
+        while statements:
+            statement = statements.pop(0)
+            stripped = statement.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("\\") and "\n" in stripped:
+                # psql's rule: a backslash command ends at its newline. Put
+                # the rest back through the splitter.
+                first_line, rest = stripped.split("\n", 1)
+                statements = sqlparse.split(rest) + statements
+                statement = first_line
+            query = self.handle_watch_command(statement)
+            if query is not None and not query.successful:
+                ok = False
+                if self.on_error != "RESUME":
+                    break
+        return ok
 
     def _build_cli(self, history):
         key_bindings = pgcli_bindings(self)
@@ -1254,6 +1403,7 @@ class PGCli:
                 case_function=(self.completer.case if self.settings["case_column_headers"] else lambda x: x),
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
+                tuples_only=self.tuples_only,
             )
 
             # Hide query text for named queries in quiet mode
@@ -1410,7 +1560,13 @@ class PGCli:
         return len(lines) >= (self.prompt_app.output.get_size().rows - 4)
 
     def echo_via_pager(self, text, color=None):
-        if self.pgspecial.pager_config == PAGER_OFF or self.watch_command:
+        # Disable pager for -c/--command and -f/--file modes and \watch command
+        if (
+            self.pgspecial.pager_config == PAGER_OFF
+            or self.watch_command
+            or (hasattr(self, 'commands') and self.commands)
+            or (hasattr(self, 'input_files') and self.input_files)
+        ):
             click.echo(text, color=color)
         elif self.pgspecial.pager_config == PAGER_LONG_OUTPUT and self.table_format != "csv":
             lines = text.split("\n")
@@ -1448,6 +1604,13 @@ class PGCli:
     help="Username to connect to the postgres database.",
 )
 @click.option("-u", "--user", "username_opt", help="Username to connect to the postgres database.")
+@click.option(
+    "--timeout",
+    "connect_timeout",
+    type=click.INT,
+    default=None,
+    help="Seconds to wait for a connection before giving up (0 waits forever). Overrides the connection string and $PGCONNECT_TIMEOUT.",
+)
 @click.option(
     "-W",
     "--password",
@@ -1513,6 +1676,14 @@ class PGCli:
     default=False,
     help="Skip intro on startup and goodbye on exit.",
 )
+@click.option(
+    "-t",
+    "--tuples-only",
+    "tuples_only",
+    is_flag=True,
+    default=False,
+    help="Print rows only: no column headers, no status footer and no timing, like psql.",
+)
 @click.option("--prompt", help='Prompt format (Default: "\\u@\\h:\\d> ").')
 @click.option(
     "--prompt-dsn",
@@ -1558,6 +1729,29 @@ class PGCli:
     type=str,
     help="SQL statement to execute after connecting.",
 )
+@click.option(
+    "-c",
+    "--command",
+    "commands",
+    multiple=True,
+    help="run command (SQL or internal) and exit. Multiple -c options are allowed.",
+)
+@click.option(
+    "-y",
+    "--yes",
+    "force_destructive",
+    is_flag=True,
+    default=False,
+    help="Force destructive commands without confirmation prompt.",
+)
+@click.option(
+    "-f",
+    "--file",
+    "input_files",
+    multiple=True,
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    help="execute commands from file, then exit. Multiple -f options are allowed.",
+)
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
 def cli(
@@ -1576,6 +1770,7 @@ def cli(
     row_limit,
     application_name,
     less_chatty,
+    tuples_only,
     prompt,
     prompt_dsn,
     list_databases,
@@ -1586,6 +1781,10 @@ def cli(
     ssh_tunnel: str,
     init_command: str,
     log_file: str,
+    commands: tuple,
+    force_destructive: bool,
+    input_files: tuple,
+    connect_timeout: int | None,
 ):
     if version:
         print("Version:", __version__)
@@ -1608,9 +1807,14 @@ def cli(
                 config_full_path,
             )
     if list_dsn:
+        config_file = get_config_filename(pgclirc)
+        if not os.path.exists(config_file):
+            # Nothing is configured yet, so there is nothing to list. Don't write
+            # out the default config just to read it back for a read-only command.
+            sys.exit(0)
         try:
-            cfg = load_config(pgclirc, config_full_path)
-            for alias in cfg["alias_dsn"]:
+            cfg = load_config(config_file)
+            for alias in cfg.get("alias_dsn", {}):
                 click.secho(alias + " : " + cfg["alias_dsn"][alias])
             sys.exit(0)
         except Exception:
@@ -1638,13 +1842,21 @@ def cli(
         application_name=application_name,
         single_connection=single_connection,
         less_chatty=less_chatty,
+        tuples_only=tuples_only,
         prompt=prompt,
         prompt_dsn=prompt_dsn,
         auto_vertical_output=auto_vertical_output,
         warn=warn,
         ssh_tunnel_url=ssh_tunnel,
         log_file=log_file,
+        force_destructive=force_destructive,
+        connect_timeout=connect_timeout,
     )
+
+    # Store commands for -c option (can be multiple)
+    pgcli.commands = commands if commands else None
+    # Store file paths for -f option (can be multiple)
+    pgcli.input_files = input_files if input_files else None
 
     # Choose which ever one has a valid value.
     if dbname_opt and dbname:
@@ -1657,11 +1869,27 @@ def cli(
         service = database[8:]
     elif os.getenv("PGSERVICE") is not None:
         service = os.getenv("PGSERVICE")
-    # because option --ping, --list or -l are not supposed to have a db name
+    # because option --ping, --list or -l are not supposed to have a db name.
+    # A connection string is not a db name though: a URI or a key=value conninfo
+    # carries the whole connection (host, user, port, sslmode, ...), so replacing
+    # it with "postgres" would throw all of that away and fall back to a local
+    # socket connection as the OS user. Only a plain db name is discarded here;
+    # a connection string that names no database gets "postgres" for the
+    # listing, since libpq would otherwise default to the OS user name.
+    is_conn_string = "://" in database or ("=" in database and service is None)
     if list_databases or ping_database:
-        database = "postgres"
+        if not database:
+            database = "postgres"
+        elif is_conn_string:
+            try:
+                if not conninfo_to_dict(database).get("dbname"):
+                    database = make_conninfo(database, dbname="postgres")
+            except Exception:
+                pass  # invalid conninfo: let the connection attempt report it
 
-    cfg = load_config(pgclirc, config_full_path)
+    # PGCli() already loaded (and, if needed, wrote) the config above, so reuse it
+    # rather than reading the file a second time to resolve the -D alias.
+    cfg = pgcli.config
     if dsn != "":
         try:
             dsn_config = cfg["alias_dsn"][dsn]
@@ -1929,7 +2157,15 @@ def exception_formatter(e, verbose_errors: bool = False):
 def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
-    table_format = "vertical" if settings.expanded else settings.table_format
+    if settings.tuples_only:
+        # Rows and nothing else, so an unadorned format. This wins over
+        # expanded output: with the headers suppressed there is no label
+        # column left for the vertical formatter to lay out.
+        table_format = "plain"
+    elif settings.expanded:
+        table_format = "vertical"
+    else:
+        table_format = settings.table_format
     max_width = settings.max_width
     case_function = settings.case_function
     if explain_mode:
@@ -1987,11 +2223,12 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         dialect = "excel" if platform.system() == "Windows" else "unix"
         output_kwargs["dialect"] = dialect
 
-    if title:  # Only print the title if it's not None.
+    # The title is printed unless there is none, or -t asked for rows only.
+    if title and not settings.tuples_only:
         output.append(title)
 
     if cur:
-        headers = [case_function(x) for x in headers]
+        headers = [] if settings.tuples_only else [case_function(x) for x in headers]
         if max_width is not None:
             cur = list(cur)
         column_types = None
@@ -2025,8 +2262,8 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         output = itertools.chain(output, formatted)
 
-    # Only print the status if it's not None
-    if status:
+    # Likewise the status footer.
+    if status and not settings.tuples_only:
         output = itertools.chain(output, [format_status(cur, status)])
 
     return output

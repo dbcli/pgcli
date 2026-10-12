@@ -7,6 +7,7 @@ import datetime
 from unittest import mock
 
 import pytest
+from click.testing import CliRunner
 
 try:
     import setproctitle
@@ -14,15 +15,19 @@ except ImportError:
     setproctitle = None
 
 from pgcli.main import (
+    cli,
     obfuscate_process_password,
     duration_in_words,
     format_output,
+    get_connect_timeout,
+    get_editor,
     notify_callback,
     PGCli,
     OutputSettings,
     COLOR_CODE_REGEX,
 )
 from pgcli.pgexecute import PGExecute
+from psycopg.conninfo import conninfo_to_dict
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
@@ -490,6 +495,166 @@ def test_watch_works(executor):
     run_with_watch("\\watch 5", target_call_count=4, expected_output="222", expected_timing=5)
 
 
+@dbtest
+def test_execute_statements_splits_a_block(executor):
+    """A multi-statement block runs one statement at a time, like psql -f."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 111;\nselect 222;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 2
+    assert "111" in outputs[0] and "222" not in outputs[0]
+    assert "222" in outputs[1] and "111" not in outputs[1]
+
+
+@dbtest
+def test_execute_statements_watch_repeats_only_its_own_statement(executor):
+    r"""Regression: \watch at the end of a file repeated the WHOLE file."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [None, KeyboardInterrupt]
+        cli._execute_statements("select 111;\nselect 222; \\watch 4")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert "111" in outputs[0]
+    for out in outputs[1:]:
+        assert "222" in out
+        assert "111" not in out, "\\watch repeated the whole block, not just its statement"
+    assert mock_sleep.call_args_list[0][0][0] == 4
+
+
+@dbtest
+def test_execute_statements_bare_watch_uses_previous_statement(executor):
+    r"""A \watch alone on its line picks up the statement before it."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo, mock.patch("pgcli.main.sleep") as mock_sleep:
+        mock_sleep.side_effect = [KeyboardInterrupt]
+        cli._execute_statements("select 333;\n\\watch 5")
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) >= 2
+    for out in outputs:
+        assert "333" in out
+    assert mock_sleep.call_args_list[0][0][0] == 5
+
+
+@dbtest
+def test_execute_statements_on_error_stop_halts(executor):
+    """With on_error = STOP (the default) the first failure stops the block."""
+    cli = PGCli(pgexecute=executor)
+    assert cli.on_error == "STOP"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert not any("444" in out for out in outputs), "the statement after the failure still ran"
+
+
+@dbtest
+def test_execute_statements_on_error_resume_continues(executor):
+    """With on_error = RESUME the block keeps going after a failure."""
+    cli = PGCli(pgexecute=executor)
+    cli.on_error = "RESUME"
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select boom_not_a_column;\nselect 444;")
+    assert ok is False
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("444" in out for out in outputs)
+
+
+@dbtest
+@dbtest
+def test_execute_statements_metacommand_spans_only_its_line(executor):
+    """psql cuts a backslash command at its newline: a metacommand followed
+    by SQL must not swallow the SQL (sqlparse only cuts at semicolons)."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo hola\nselect 42 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    # Two separate outputs: the echo, then a real result table. Without the
+    # line cut there is a single output where \echo swallowed the select and
+    # repeated its text, which is why the select text alone proves nothing.
+    assert len(outputs) == 2
+    assert "hola" in outputs[0]
+    assert "42" in outputs[1] and "hola" not in outputs[1]
+    assert "SELECT 1" in outputs[1], "the select did not actually run"
+
+
+@dbtest
+def test_execute_statements_consecutive_metacommands(executor):
+    """Several backslash commands on consecutive lines each run on their own."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("\\echo uno\n\\echo dos\nselect 7 as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert any("uno" in out and "dos" not in out for out in outputs)
+    assert any("dos" in out and "uno" not in out for out in outputs)
+    assert any("7" in out for out in outputs)
+
+
+@dbtest
+def test_execute_statements_sql_then_metacommand(executor):
+    """A metacommand after SQL still runs alone, and the SQL after it too."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 1 as a;\n\\echo medio\nselect 2 as b;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 3
+    assert "medio" in outputs[1]
+
+
+@dbtest
+def test_execute_statements_does_not_split_inside_literals(executor):
+    """Semicolons inside string literals are not statement boundaries."""
+    cli = PGCli(pgexecute=executor)
+    with mock.patch.object(cli, "echo_via_pager") as mock_echo:
+        ok = cli._execute_statements("select 'a;b' as x;")
+    assert ok is True
+    outputs = [c[0][0] for c in mock_echo.call_args_list]
+    assert len(outputs) == 1
+    assert "a;b" in outputs[0]
+
+
+def test_command_and_file_both_run(tmpdir):
+    """psql runs both -c and -f when given together; -c must not exit first."""
+    sql_file = tmpdir.join("script.sql")
+    sql_file.write("select 2;")
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.commands = ["select 1;"]
+    cli.input_files = [str(sql_file)]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    assert [c[0][0] for c in mock_exec.call_args_list] == ["select 1;", "select 2;"]
+
+
+def test_command_mode_alone_still_exits(tmpdir):
+    """With no -f, the -c block still exits on its own."""
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.commands = ["select 1;"]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    mock_exec.assert_called_once_with("select 1;")
+
+
+def test_file_mode_runs_statements(tmpdir):
+    """-f wiring: the file content goes through _execute_statements."""
+    sql_file = tmpdir.join("script.sql")
+    sql_file.write("select 1;\nselect 2;")
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+    cli.input_files = [str(sql_file)]
+    with mock.patch.object(cli, "_execute_statements", return_value=True) as mock_exec:
+        with pytest.raises(SystemExit) as e:
+            cli.run_cli()
+    assert e.value.code == 0
+    mock_exec.assert_called_once_with("select 1;\nselect 2;")
+
+
 def test_missing_rc_dir(tmpdir):
     rcfile = str(tmpdir.join("subdir").join("rcfile"))
 
@@ -552,6 +717,7 @@ def test_pg_service_file(tmpdir):
         "",
         notify_callback,
         application_name="pgcli",
+        connect_timeout="30",
     )
     del os.environ["PGPASSWORD"]
     del os.environ["PGSERVICEFILE"]
@@ -600,7 +766,7 @@ def test_application_name_db_uri(tmpdir):
         mock_pgexecute.return_value = None
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
         cli.connect_uri("postgres://bar@baz.com/?application_name=cow")
-    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow")
+    mock_pgexecute.assert_called_with("bar", "bar", "", "baz.com", "", "", notify_callback, application_name="cow", connect_timeout="30")
 
 
 @pytest.mark.parametrize(
@@ -691,6 +857,55 @@ def test_notifications(executor):
         mock_secho.assert_not_called()
 
 
+def test_force_destructive_flag():
+    """Test that PGCli can be initialized with force_destructive flag."""
+    cli = PGCli(force_destructive=True)
+    assert cli.force_destructive is True
+
+    cli = PGCli(force_destructive=False)
+    assert cli.force_destructive is False
+
+    cli = PGCli()
+    assert cli.force_destructive is False
+
+
+@dbtest
+def test_force_destructive_skips_confirmation(executor):
+    """Test that force_destructive=True skips confirmation for destructive commands."""
+    cli = PGCli(pgexecute=executor, force_destructive=True)
+    cli.destructive_warning = ["drop", "alter"]
+
+    # The proceed/abort decision lives inside confirm_destructive_query, which is
+    # told to force; what must not happen is the user being prompted.
+    with mock.patch("pgcli.packages.prompt_utils.confirm") as mock_prompt:
+        # Execute a destructive command
+        result = cli.execute_command("ALTER TABLE test_table ADD COLUMN test_col TEXT;")
+
+        # Verify that the user was never prompted
+        mock_prompt.assert_not_called()
+
+        # Verify that the command was attempted (even if it fails due to missing table)
+        assert result is not None
+
+
+@dbtest
+def test_without_force_destructive_calls_confirmation(executor):
+    """Test that without force_destructive, confirmation is called for destructive commands."""
+    cli = PGCli(pgexecute=executor, force_destructive=False)
+    cli.destructive_warning = ["drop", "alter"]
+
+    # Mock confirm_destructive_query to return True (user confirms)
+    with mock.patch("pgcli.main.confirm_destructive_query", return_value=True) as mock_confirm:
+        # Execute a destructive command
+        result = cli.execute_command("ALTER TABLE test_table ADD COLUMN test_col TEXT;")
+
+        # Verify that confirm_destructive_query WAS called
+        mock_confirm.assert_called_once()
+
+        # Verify that the command was attempted
+        assert result is not None
+
+
 def test_edit_named_query():
     """Test \\ne edits/creates a named query via the external editor."""
     from pgspecial.namedqueries import NamedQueries
@@ -734,3 +949,166 @@ def test_edit_named_query():
         # Missing name -> usage message.
         out = cli.edit_named_query("")
         assert "Usage" in out[0][3]
+
+
+def test_get_editor_precedence():
+    """PSQL_EDITOR wins over EDITOR/VISUAL, like psql; None when nothing is set."""
+    env = {"PSQL_EDITOR": "psqled", "EDITOR": "myedit", "VISUAL": "myvisual"}
+    with mock.patch.dict(os.environ, env, clear=False):
+        assert get_editor() == "psqled"
+
+    # PSQL_EDITOR unset -> fall back to EDITOR.
+    with mock.patch.dict(os.environ, {"EDITOR": "myedit", "VISUAL": "myvisual"}, clear=True):
+        assert get_editor() == "myedit"
+
+    # Only VISUAL set.
+    with mock.patch.dict(os.environ, {"VISUAL": "myvisual"}, clear=True):
+        assert get_editor() == "myvisual"
+
+    # Nothing set -> None, so click uses its platform default.
+    with mock.patch.dict(os.environ, {}, clear=True):
+        assert get_editor() is None
+
+
+def _cli_conn_target(argv, tmpdir):
+    """Run cli() with argv and report which connect_* path it took."""
+    rc = tmpdir.join("rcfile")
+    rc.write("[main]\n")
+    runner = CliRunner()
+    with (
+        mock.patch.object(PGCli, "connect_uri", side_effect=RuntimeError("stop")) as mock_uri,
+        mock.patch.object(PGCli, "connect_dsn", side_effect=RuntimeError("stop")) as mock_dsn,
+        mock.patch.object(PGCli, "connect", side_effect=RuntimeError("stop")) as mock_plain,
+    ):
+        runner.invoke(cli, argv + ["--pgclirc", str(rc)])
+    if mock_uri.called:
+        return "uri", mock_uri.call_args
+    if mock_dsn.called:
+        return "dsn", mock_dsn.call_args
+    if mock_plain.called:
+        return "plain", mock_plain.call_args
+    return "none", None
+
+
+def test_list_databases_keeps_uri(tmpdir):
+    """-l must not discard a connection URI: doing so fell back to a local
+    socket connection as the OS user."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "-l"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_keeps_kv_conninfo(tmpdir):
+    """Same for a key=value conninfo string, which carries sslmode and friends."""
+    kv = "host=somehost port=6000 user=someuser dbname=somedb sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert call.args[0] == kv
+
+
+def test_ping_keeps_uri(tmpdir):
+    """--ping handles connection strings the same way as -l."""
+    uri = "postgresql://someuser@somehost:6000/somedb"
+    path, call = _cli_conn_target([uri, "--ping"], tmpdir)
+    assert path == "uri"
+    assert call.args[0] == uri
+
+
+def test_list_databases_conn_string_without_dbname_gets_postgres(tmpdir):
+    """A connection string naming no database gets "postgres" for the listing,
+    instead of libpq defaulting to the OS user name."""
+    kv = "host=somehost user=someuser sslmode=verify-ca"
+    path, call = _cli_conn_target([kv, "-l"], tmpdir)
+    assert path == "dsn"
+    assert conninfo_to_dict(call.args[0])["dbname"] == "postgres"
+    assert conninfo_to_dict(call.args[0])["sslmode"] == "verify-ca"  # rest preserved
+
+
+def test_list_databases_keeps_plain_dbname(tmpdir):
+    """psql -l connects to the named database and lists from there
+    (psql -l nonexistent fails with "database does not exist"), so a
+    plain db name is kept."""
+    path, call = _cli_conn_target(["mydb", "-l"], tmpdir)
+    assert path == "plain"
+    assert call.args[0] == "mydb"
+
+
+def test_list_databases_no_dbname_gets_postgres(tmpdir):
+    """With no database at all, -l connects to "postgres"."""
+    path, call = _cli_conn_target(["-l"], tmpdir)
+    assert path == "plain"
+    assert call.args[0] == "postgres"
+
+
+def _effective_connect_timeout(tmpdir, cli_timeout=None, dsn_timeout=None, env=None, cfgval=None):
+    """The connect_timeout that actually reaches the connection."""
+    rc = str(tmpdir.join("rcfile"))
+    with open(rc, "w") as f:
+        f.write("[main]\n" + (f"connect_timeout = {cfgval}\n" if cfgval else ""))
+    environ = {k: v for k, v in os.environ.items() if k != "PGCONNECT_TIMEOUT"}
+    if env:
+        environ["PGCONNECT_TIMEOUT"] = env
+    with mock.patch.dict(os.environ, environ, clear=True):
+        cli_obj = PGCli(pgclirc_file=rc, connect_timeout=cli_timeout)
+        dsn = "postgresql://u@h:5432/db" + (f"?connect_timeout={dsn_timeout}" if dsn_timeout else "")
+        captured = {}
+
+        def fake(*a, **k):
+            captured["dsn"] = k.get("dsn") or (a[5] if len(a) > 5 else None)
+            captured["kwargs"] = k
+            raise RuntimeError("stop")
+
+        # connect() turns a failed connection into sys.exit(1); let it.
+        with mock.patch("pgcli.main.PGExecute", side_effect=fake), pytest.raises(SystemExit):
+            cli_obj.connect(dsn=dsn, host="h", port="5432", user="u", database="db")
+        from_kwargs = captured.get("kwargs", {}).get("connect_timeout")
+        return from_kwargs or conninfo_to_dict(captured.get("dsn") or "").get("connect_timeout")
+
+
+DSN_WITH_TIMEOUT = "postgresql://u@h:5432/db?connect_timeout=15"
+DSN_PLAIN = "postgresql://u@h:5432/db"
+
+
+@pytest.mark.parametrize(
+    "explicit, dsn, kwargs, env, expected, why",
+    [
+        (None, DSN_PLAIN, {}, None, 30, "nothing else set, so the config default applies"),
+        (None, DSN_WITH_TIMEOUT, {}, None, None, "the connection string already says so"),
+        (None, DSN_PLAIN, {"connect_timeout": "9"}, None, None, "the caller already says so"),
+        (None, DSN_PLAIN, {}, "7", None, "libpq reads $PGCONNECT_TIMEOUT itself"),
+        (None, DSN_WITH_TIMEOUT, {}, "7", None, "the connection string beats the environment"),
+        (3, DSN_WITH_TIMEOUT, {}, "7", 3, "--timeout beats everything"),
+        (0, DSN_WITH_TIMEOUT, {}, None, 0, "--timeout 0 is meaningful, not unset"),
+        (None, None, {}, None, 30, "no dsn at all"),
+    ],
+)
+def test_get_connect_timeout(explicit, dsn, kwargs, env, expected, why):
+    environ = {k: v for k, v in os.environ.items() if k != "PGCONNECT_TIMEOUT"}
+    if env:
+        environ["PGCONNECT_TIMEOUT"] = env
+    with mock.patch.dict(os.environ, environ, clear=True):
+        assert get_connect_timeout(explicit, dsn, kwargs, 30) == expected, why
+
+
+def test_connect_timeout_config_default_reaches_the_connection(tmpdir):
+    """The helper is actually wired into connect(): libpq's own default of 0
+    waits until the OS gives up, which takes minutes."""
+    assert _effective_connect_timeout(tmpdir) == "30"
+
+
+def test_connect_timeout_config_value_used(tmpdir):
+    assert _effective_connect_timeout(tmpdir, cfgval=45) == "45"
+
+
+def test_connect_timeout_cli_reaches_the_connection(tmpdir):
+    assert _effective_connect_timeout(tmpdir, cli_timeout=3, dsn_timeout=15, env="7") == "3"
+
+
+def test_connect_timeout_config_value_must_be_a_number(tmpdir):
+    """A typo in the config is reported instead of being silently ignored."""
+    rc = str(tmpdir.join("rcfile"))
+    with open(rc, "w") as f:
+        f.write("[main]\nconnect_timeout = soon\n")
+    with pytest.raises(ValueError):
+        PGCli(pgclirc_file=rc)

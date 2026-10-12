@@ -106,7 +106,6 @@ def test_simple_insert_single_table():
     assert tables == ((None, "abc", "abc", False),)
 
 
-@pytest.mark.xfail
 def test_simple_insert_single_table_schema_qualified():
     tables = extract_tables('insert into abc.def (id, name) values (1, "def")')
     assert tables == (("abc", "def", None, False),)
@@ -283,6 +282,28 @@ def test_is_open_quote__open(sql):
 )
 def test_is_destructive(sql, keywords, expected):
     assert is_destructive(sql, keywords) == expected
+
+
+@pytest.mark.parametrize(
+    ("sql", "expected"),
+    [
+        # A "where" appearing inside a string literal must not be mistaken
+        # for a WHERE clause (regression test for the unconditional UPDATE
+        # confirmation bypass).
+        ("update accounts set note = 'no where clause here'", True),
+        ("update t set c = 'nowhere'", True),
+        ("update accounts set balance = 0", True),
+        ("update accounts set balance = 0 where id = 1", False),
+        ("UPDATE t SET c = 1", True),
+        ("-- where\nupdate t set c = 1", True),
+        ("select * from t", False),
+        ("", False),
+        # A WHERE inside a subquery does not make the outer UPDATE conditional.
+        ("update t set c = (select x from y where z = 1)", True),
+    ],
+)
+def test_is_destructive_unconditional_update_string_literal(sql, expected):
+    assert is_destructive(sql, ["unconditional_update"]) == expected
 
 
 @pytest.mark.parametrize(

@@ -1,17 +1,109 @@
-Upcoming (TBD)
-==============
-
-Bug fixes:
-----------
-* Restore cursor shape behaviour for Emacs mode
-* Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
-  completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
-* Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
+Upcoming
+========
 
 Features:
 ---------
 * Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
   filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
+
+
+4.7.1 (2026-09-20)
+==================
+
+Bug fixes:
+----------
+* Fix wrong version number that was shown in `pgcli --version` for
+  version 4.7.0.
+
+
+4.7.0 (2026-09-19)
+==================
+
+**Brown bag release:** this version shows (in `pgcli --version`) as
+"4.6.0" instead of "4.7.0".
+
+
+Features:
+---------
+* Add support for `single-command` to run a SQL command and exit.
+    * Command line option `-c` or `--command`.
+    * You can specify multiple times.
+    * Runs one statement at a time, like `-f`, and can be combined with `-f`:
+      both run, the same way psql does.
+* Add support for forcing destructive commands without confirmation.
+    * Command line option `-y` or `--yes`.
+    * Skips the destructive command confirmation prompt when enabled.
+    * Useful for automated scripts and CI/CD pipelines.
+* Add a ``-t``/``--tuples-only`` command line option that prints the rows and
+  nothing else, matching psql: no column headers, no title, no status footer
+  and no timing line. The configured table format is left untouched, so ``\T``
+  still reports it and can still change it mid-session.
+* Add support for executing SQL commands from file and exit.
+    * Command line option `-f` or `--file`.
+    * Multiple files can be specified.
+    * Files run one statement at a time, like psql, so a ``\watch`` only
+      repeats its own statement (and a bare ``\watch`` re-runs the statement
+      before it), instead of re-running the whole file. A backslash command
+      spans only its own line, also like psql, so a metacommand followed by
+      SQL on the next line does not swallow the SQL.
+
+Bug fixes:
+----------
+* Fix special commands being broken while explain mode (F5) is on. Every input
+  was prefixed with ``EXPLAIN (...)`` and sent to the server as SQL, including
+  backslash commands and the bare words ``exit``/``quit``, so ``\q``, ``\d``,
+  ``\i``, named queries and ``\G`` all failed with ``syntax error at or near
+  "\"`` and there was no way to leave explain mode or quit. Special commands
+  are now detected first and the EXPLAIN prefix is applied only to real SQL.
+* Fix ``-l``/``--list`` and ``--ping`` discarding the connection string. The
+  positional argument was unconditionally replaced with ``postgres``, which
+  also threw away a connection URI or ``key=value`` conninfo (host, user, port,
+  ``sslmode``, everything) and silently fell back to a local socket connection
+  as the OS user. The database argument is now kept, like psql; only when no
+  database is given at all does the listing connect to ``postgres``.
+
+4.6.0 (2026-08-26)
+==================
+
+Internal:
+---------
+* Make the external-editor behave scenario less flaky: the ``expect_exact``
+  timeouts in ``tests/features/steps/iocommands.py`` were as low as 1-2
+  seconds, which intermittently expired on loaded CI runners and reported
+  ``Scenario: edit sql in file with external editor`` as an error. Raised to 10
+  seconds; passing runs are unaffected because pexpect returns as soon as the
+  expected text appears.
+
+Bug fixes:
+----------
+* Fix ``--list-dsn`` and ``-D``/``--dsn`` not finding ``[alias_dsn]`` entries.
+  On a fresh install (no config written yet) ``--list-dsn`` printed a misleading
+  "Invalid DSNs found" error. ``--list-dsn`` now treats a missing config or
+  ``[alias_dsn]`` section as simply nothing to list, without writing a config
+  file, and ``-D`` resolves the alias from the config already loaded at startup
+  instead of reading it again ([issue 1489](https://github.com/dbcli/pgcli/issues/1489)).
+* Restore cursor shape behaviour for Emacs mode
+* Fix ``TypeError: cannot use a string pattern on a bytes-like object`` when
+  completion metadata comes back as bytes (e.g. ``SQL_ASCII`` client encoding).
+* Suggest columns, not datatypes, after a column literally named ``type`` in a ``SELECT`` list.
+* Allow ``sqlparse`` 0.6.x. sqlparse 0.6.0 fixes several denial-of-service
+  issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
+  bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
+  installing the fixed release.
+* Detect an unconditional ``UPDATE`` with ``sqlparse`` rather than splitting on whitespace, so a
+  ``WHERE`` appearing inside a string literal no longer suppresses the destructive-statement warning.
+
+Features:
+---------
+* Add a ``--timeout`` command line option and a ``connect_timeout`` config value
+  (default 30 seconds) for the connection timeout. Precedence, highest first:
+  ``--timeout``, then a ``connect_timeout`` in the connection string, then
+  ``$PGCONNECT_TIMEOUT``, then the config value. libpq's own default is 0,
+  which waits until the operating system gives up on the TCP connection, so an
+  unreachable host used to hang for minutes.
+* Honor the ``PSQL_EDITOR`` environment variable when opening the external
+  editor (``\\e``, ``\\ev``, ``\\ef``, ``\\ne``), matching psql's precedence of
+  ``PSQL_EDITOR``, then ``EDITOR``, then ``VISUAL`` ([issue 1398](https://github.com/dbcli/pgcli/issues/1398)).
 * Add ``\\ne <name>`` to edit a named query in the external editor. Loads the
   named query's SQL into ``$EDITOR``; on save it is written back to the
   ``[named queries]`` section, creating it if it does not exist. Complements

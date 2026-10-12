@@ -756,6 +756,62 @@ class VirtualCursor:
 
 
 @dbtest
+def test_explain_mode_does_not_wrap_special_command(executor):
+    """A special command is dispatched as a special command in explain mode.
+
+    Prefixing it with EXPLAIN would send it to the server as invalid SQL, which
+    used to make it impossible to even quit while explain mode was on.
+    """
+    quit_handler = MagicMock()
+    pgspecial = PGSpecial()
+    pgspecial.register(
+        quit_handler,
+        "\\q",
+        "\\q",
+        "Quit pgcli.",
+        arg_type=NO_QUERY,
+        case_sensitive=True,
+        aliases=(":q",),
+    )
+    with patch.object(executor, "execute_normal_sql") as normal_sql:
+        list(executor.run("\\q", pgspecial=pgspecial, explain_mode=True))
+
+    quit_handler.assert_called_once()
+    normal_sql.assert_not_called()
+
+
+@dbtest
+def test_explain_mode_runs_describe_as_special(executor, pgspecial):
+    """A describe command still runs as a special command in explain mode."""
+    with patch.object(executor, "execute_normal_sql") as normal_sql:
+        result = list(executor.run("\\dt", pgspecial=pgspecial, explain_mode=True))
+
+    normal_sql.assert_not_called()
+    assert result[0][6] is True  # is_special
+
+
+@dbtest
+def test_explain_mode_wraps_normal_sql(executor, pgspecial):
+    """Normal SQL is still prefixed with EXPLAIN in explain mode."""
+    with patch.object(executor, "execute_normal_sql", return_value=("", None, None, "")) as normal_sql:
+        list(executor.run("select 1", pgspecial=pgspecial, explain_mode=True))
+
+    normal_sql.assert_called_once()
+    assert normal_sql.call_args.args[0] == executor.explain_prefix() + "select 1"
+
+
+@dbtest
+def test_explain_mode_strips_G_suffix(executor, pgspecial):
+    """`select ... \\G` strips the \\G in explain mode instead of sending it."""
+    with patch.object(executor, "execute_normal_sql", return_value=("", None, None, "")) as normal_sql:
+        list(executor.run("select 1 \\G", pgspecial=pgspecial, explain_mode=True))
+
+    sent = normal_sql.call_args.args[0]
+    assert sent == executor.explain_prefix() + "select 1"
+    assert "\\G" not in sent
+
+
+@dbtest
 def test_exit_without_active_connection(executor):
     quit_handler = MagicMock()
     pgspecial = PGSpecial()
