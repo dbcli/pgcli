@@ -20,7 +20,6 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-urls = { Homepage = "https://pgcli.com" }
 requires-python = ">=3.10"
 dependencies = [
     "pgspecial>=2.0.0",
@@ -44,6 +43,11 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.urls]
+Homepage = "https://pgcli.com"
+Changelog = "https://github.com/dbcli/pgcli/blob/main/changelog.rst"
+Repository = "https://github.com/dbcli/pgcli/"
+Issues = "https://github.com/dbcli/pgcli/issues"
 
 [project.scripts]
 pgcli = "pgcli.main:cli"
