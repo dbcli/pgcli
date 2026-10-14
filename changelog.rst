@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+Bug fixes:
+----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
+
 
 4.7.1 (2026-09-20)
 ==================
