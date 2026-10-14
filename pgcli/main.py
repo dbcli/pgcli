@@ -1383,6 +1383,14 @@ class PGCli:
             ):
                 title = None
 
+            if not success and status and self.tuples_only:
+                # For a failed statement `status` is the error message, not
+                # the "SELECT 3" footer that -t drops, so -t used to hide the
+                # error completely. With -t stdout carries only rows, so the
+                # error goes to stderr, as psql does.
+                click.echo(status, err=True)
+                status = None
+
             execution = time() - start
             formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
 

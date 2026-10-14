@@ -22,6 +22,10 @@ Feature: run the cli with -c/--command option,
       then we see an error message
       and pgcli exits successfully
 
+  Scenario: run pgcli with -t and an invalid query
+     When we run pgcli with -t -c "SELECT invalid_column FROM nonexistent_table"
+      then we see the error on stderr and nothing on stdout
+
   Scenario: run pgcli with -c and multiple statements
      When we run pgcli with -c "SELECT 1; SELECT 2"
       then we see both query results

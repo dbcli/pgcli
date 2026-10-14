@@ -1059,3 +1059,23 @@ def test_connect_timeout_config_value_must_be_a_number(tmpdir):
         f.write("[main]\nconnect_timeout = soon\n")
     with pytest.raises(ValueError):
         PGCli(pgclirc_file=rc)
+
+
+@dbtest
+def test_tuples_only_sends_errors_to_stderr(executor, capsys):
+    # The error of a failed statement travels in `status`, the footer -t
+    # drops, so -t used to print nothing at all for a broken query.
+    cli = PGCli(pgexecute=executor, tuples_only=True)
+    output, query = cli._evaluate_command("select nope")
+    assert not query.successful
+    assert 'column "nope" does not exist' in capsys.readouterr().err
+    assert not any("nope" in line for line in output)
+
+
+@dbtest
+def test_tuples_only_rows_stay_on_stdout(executor, capsys):
+    cli = PGCli(pgexecute=executor, tuples_only=True)
+    output, query = cli._evaluate_command("select 42")
+    assert query.successful
+    assert any("42" in line for line in output)
+    assert capsys.readouterr().err == ""
