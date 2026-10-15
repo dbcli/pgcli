@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+Features:
+---------
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+
 Bug fixes:
 ----------
 * Create the history, log and config files readable by their owner only
@@ -28,7 +33,6 @@ Bug fixes:
 
 **Brown bag release:** this version shows (in `pgcli --version`) as
 "4.6.0" instead of "4.7.0".
-
 
 Features:
 ---------
