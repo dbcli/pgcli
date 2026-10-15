@@ -812,6 +812,15 @@ def test_explain_mode_strips_G_suffix(executor, pgspecial):
 
 
 @dbtest
+def test_explain_mode_strips_crosstabview(executor, pgspecial):
+    """`select ... \\crosstabview` explains the query in explain mode."""
+    with patch.object(executor, "execute_normal_sql", return_value=("", None, None, "")) as normal_sql:
+        list(executor.run("select 1, 2, 3 \\crosstabview", pgspecial=pgspecial, explain_mode=True))
+
+    assert normal_sql.call_args.args[0] == executor.explain_prefix() + "select 1, 2, 3"
+
+
+@dbtest
 def test_exit_without_active_connection(executor):
     quit_handler = MagicMock()
     pgspecial = PGSpecial()
