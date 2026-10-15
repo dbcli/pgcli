@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 from click.testing import CliRunner
+from psycopg import OperationalError
 
 try:
     import setproctitle
@@ -668,6 +669,42 @@ def test_pg_service_file(tmpdir):
     )
     del os.environ["PGPASSWORD"]
     del os.environ["PGSERVICEFILE"]
+
+
+def test_connect_does_not_resave_keyring_password(tmpdir):
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+
+    with (
+        mock.patch.dict(os.environ, {"PGPASSWORD": ""}),
+        mock.patch("pgcli.main.auth.keyring", True),
+        mock.patch("pgcli.main.auth.keyring_get_password", return_value="keyring-password") as get_password,
+        mock.patch("pgcli.main.auth.keyring_set_password") as set_password,
+        mock.patch("pgcli.main.PGExecute") as pgexecute,
+    ):
+        cli.connect(database="test", host="localhost", user="postgres", port=5432)
+
+    get_password.assert_called_once_with("postgres@localhost@5432")
+    assert pgexecute.call_args.args[2] == "keyring-password"
+    set_password.assert_not_called()
+
+
+def test_connect_saves_replacement_for_invalid_keyring_password(tmpdir):
+    cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
+
+    with (
+        mock.patch.dict(os.environ, {"PGPASSWORD": ""}),
+        mock.patch("pgcli.main.auth.keyring", True),
+        mock.patch("pgcli.main.auth.keyring_get_password", return_value="old-password"),
+        mock.patch("pgcli.main.auth.keyring_set_password") as set_password,
+        mock.patch("pgcli.main.click.prompt", return_value="new-password"),
+        mock.patch(
+            "pgcli.main.PGExecute",
+            side_effect=[OperationalError("password authentication failed"), mock.Mock()],
+        ),
+    ):
+        cli.connect(database="test", host="localhost", user="postgres", port=5432)
+
+    set_password.assert_called_once_with("postgres@localhost@5432", "new-password")
 
 
 def test_ssl_db_uri(tmpdir):
