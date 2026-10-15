@@ -9,6 +9,8 @@ import psycopg.sql
 from psycopg.conninfo import make_conninfo
 import sqlparse
 
+from .packages.parseutils import strip_trailing_comments
+
 sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
 sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
@@ -367,10 +369,12 @@ class PGExecute:
         # run each sql query
         for sql in sqlarr:
             # Remove spaces, eol and semi-colons.
-            # Strip comments first so rstrip(";") works when there are
-            # trailing comments after the semicolon, e.g.:
+            # Strip trailing comments first so rstrip(";") works when there are
+            # comments after the semicolon, e.g.:
             #   vacuum freeze verbose t; -- 82% towards emergency
-            sql = sqlparse.format(sql, strip_comments=True).strip().rstrip(";")
+            # Not sqlparse's strip_comments: it reads "#" as a comment marker,
+            # which in PostgreSQL is the bitwise XOR operator (issue #1646).
+            sql = strip_trailing_comments(sql).strip().rstrip(";")
             sql = sql.strip()
             if not sql:
                 continue
