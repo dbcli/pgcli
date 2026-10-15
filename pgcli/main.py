@@ -1379,7 +1379,9 @@ class PGCli:
                 style_output=self.style_output,
                 max_field_width=self.max_field_width,
                 tuples_only=self.tuples_only,
-                show_status=self.show_status,
+                # For a failed statement `status` is the error message, not
+                # the "SELECT 3" footer, so --no-status must not drop it.
+                show_status=self.show_status or not success,
             )
 
             # Hide query text for named queries in quiet mode

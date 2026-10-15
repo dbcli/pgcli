@@ -3,6 +3,7 @@ from unittest.mock import patch
 from click.testing import CliRunner
 
 from pgcli.main import cli, format_output, OutputSettings, PGCli
+from utils import dbtest
 
 
 def test_no_timings_flag_passed_to_pgcli():
@@ -65,3 +66,24 @@ def test_status_footer_is_printed_by_default():
     output = "\n".join(format_output("Title", [(1,)], ["a"], "SELECT 1", settings))
 
     assert "SELECT 1" in output
+
+
+@dbtest
+def test_no_status_keeps_errors_visible(executor):
+    # The error of a failed statement travels in `status`, the same field as
+    # the footer --no-status drops, so a broken query used to print nothing.
+    cli_obj = PGCli(pgexecute=executor, no_status=True)
+    output, query = cli_obj._evaluate_command("select nope")
+
+    assert not query.successful
+    assert any('column "nope" does not exist' in line for line in output)
+
+
+@dbtest
+def test_no_status_still_drops_the_footer_of_a_good_query(executor):
+    cli_obj = PGCli(pgexecute=executor, no_status=True)
+    output, query = cli_obj._evaluate_command("select 42")
+
+    assert query.successful
+    assert any("42" in line for line in output)
+    assert not any("SELECT 1" in line for line in output)
