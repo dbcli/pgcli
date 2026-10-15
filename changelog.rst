@@ -3,6 +3,8 @@ Upcoming
 
 Features:
 ---------
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 * Add psql's ``\crosstabview [colV [colH [colD [sortcolH]]]]``: run the query
   and show the result as a crosstab grid, with the values of ``colV`` down the
   side, the values of ``colH`` across the top and ``colD`` in the cells.
@@ -25,7 +27,6 @@ Bug fixes:
 
 **Brown bag release:** this version shows (in `pgcli --version`) as
 "4.6.0" instead of "4.7.0".
-
 
 Features:
 ---------
