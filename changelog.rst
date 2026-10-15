@@ -1,6 +1,10 @@
 Upcoming
 ========
 
+Features:
+---------
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 4.7.1 (2026-09-20)
 ==================
@@ -16,7 +20,6 @@ Bug fixes:
 
 **Brown bag release:** this version shows (in `pgcli --version`) as
 "4.6.0" instead of "4.7.0".
-
 
 Features:
 ---------
