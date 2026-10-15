@@ -40,7 +40,7 @@ jobs:
 
       - name: Run Codex review
         id: run_codex
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # v1.12
         env:
           # Use env variables to handle untrusted metadata safely
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -75,7 +75,7 @@ jobs:
 
     steps:
       - name: Post Codex review as PR comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           CODEX_FINAL_MESSAGE: |
             ${{ format('## Codex Review
