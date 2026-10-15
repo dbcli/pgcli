@@ -1,6 +1,11 @@
 Upcoming
 ========
 
+Features:
+---------
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+
 Bug fixes:
 ----------
 * Treat ``#`` as the bitwise XOR operator it is in PostgreSQL, rather than as a
@@ -29,7 +34,6 @@ Bug fixes:
 
 **Brown bag release:** this version shows (in `pgcli --version`) as
 "4.6.0" instead of "4.7.0".
-
 
 Features:
 ---------

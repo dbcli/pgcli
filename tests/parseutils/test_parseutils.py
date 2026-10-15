@@ -106,7 +106,6 @@ def test_simple_insert_single_table():
     assert tables == ((None, "abc", "abc", False),)
 
 
-@pytest.mark.xfail
 def test_simple_insert_single_table_schema_qualified():
     tables = extract_tables('insert into abc.def (id, name) values (1, "def")')
     assert tables == (("abc", "def", None, False),)
