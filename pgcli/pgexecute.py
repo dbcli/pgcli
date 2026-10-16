@@ -1,6 +1,8 @@
+import contextlib
 import ipaddress
 import logging
 import select
+import signal
 import time
 import traceback
 from collections import namedtuple
@@ -58,6 +60,22 @@ def register_typecasters(connection):
 
 
 # pg3: I don't know what is this
+@contextlib.contextmanager
+def _sigint_ignored():
+    """Ignore Ctrl-C inside the block (main thread only, where signals live)."""
+    try:
+        previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except ValueError:
+        # Not the main thread: signal handlers cannot be changed here.
+        yield
+        return
+    try:
+        yield
+    finally:
+        # None means the old handler was not set from Python.
+        signal.signal(signal.SIGINT, previous if previous is not None else signal.default_int_handler)
+
+
 class ProtocolSafeCursor(psycopg.Cursor):
     """This class wraps and suppresses Protocol Errors with pgbouncer database.
     See https://github.com/dbcli/pgcli/pull/1097.
@@ -487,18 +505,21 @@ class PGExecute:
 
         For when the user interrupts the recovery itself: closing alone would
         leave the query running on the server, which only notices the client
-        is gone when it next sends it data. A further Ctrl-C skips the cancel.
+        is gone when it next sends it data. Ctrl-C is ignored for the at most
+        ``timeout`` seconds the cancel takes, so it always goes out.
         """
         conn = self.conn
         if conn is None or conn.closed:
             return
         try:
             if conn.pgconn.transaction_status == psycopg.pq.TransactionStatus.ACTIVE:
-                if hasattr(conn, "cancel_safe"):
-                    conn.cancel_safe(timeout=timeout)
-                else:
-                    conn.cancel()
+                with _sigint_ignored():
+                    if hasattr(conn, "cancel_safe"):
+                        conn.cancel_safe(timeout=timeout)
+                    else:
+                        conn.cancel()
         except (Exception, KeyboardInterrupt) as e:
+            # Best effort: the connection is closed below either way.
             _logger.debug("Cancel before closing failed: %r", e)
         finally:
             conn.close()
@@ -509,7 +530,7 @@ class PGExecute:
         Waits at most ``timeout`` seconds; returns True once the connection is
         idle again.
         """
-        pgconn = self.conn.pgconn
+        pgconn = self.conn.pgconn  # type: ignore[union-attr]
         deadline = time.monotonic() + timeout
         try:
             while True:

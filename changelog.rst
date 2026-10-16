@@ -16,8 +16,9 @@ Bug fixes:
   statement failed with ``another command is already in progress``. After a
   cancelled query pgcli now checks the connection: if it is still busy it
   cancels again and reads the reply, and if the server does not answer within
-  5 seconds, or yet another Ctrl-C arrives, it cancels and closes the
-  connection so the next statement reconnects.
+  5 seconds, or yet another Ctrl-C arrives, it cancels (ignoring Ctrl-C for
+  the at most 2 seconds that takes, so the query never outlives the session)
+  and closes the connection so the next statement reconnects.
 
 4.7.1 (2026-09-20)
 ==================

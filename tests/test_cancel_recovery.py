@@ -1,3 +1,5 @@
+import os
+import signal
 import time
 from unittest.mock import patch
 
@@ -78,6 +80,26 @@ def test_another_ctrl_c_during_the_recovery_closes_the_connection(executor, conn
 
     assert executor.conn.closed
     # Closing alone would leave the sleep running on the server.
+    assert not _still_running(connection, pid)
+
+
+@dbtest
+def test_ctrl_c_during_the_last_resort_cancel_is_ignored(executor, connection):
+    # Someone hammering Ctrl-C must not cost the cancel: closing alone would
+    # leave the query running on the server.
+    pid = executor.conn.info.backend_pid
+    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    name = "cancel_safe" if hasattr(executor.conn, "cancel_safe") else "cancel"
+    real_cancel = getattr(executor.conn, name)
+
+    def cancel_with_ctrl_c(*args, **kwargs):
+        os.kill(os.getpid(), signal.SIGINT)
+        return real_cancel(*args, **kwargs)
+
+    with patch.object(executor.conn, name, side_effect=cancel_with_ctrl_c):
+        executor.abandon_connection()
+
+    assert executor.conn.closed
     assert not _still_running(connection, pid)
 
 
