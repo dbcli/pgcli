@@ -30,4 +30,4 @@ Feature: run the cli with -f/--file option,
      When we create a file with "SELECT invalid_column FROM nonexistent_table"
       and we run pgcli with -f and the file
      then we see an error message
-      and pgcli exits successfully
+      and pgcli exits with error

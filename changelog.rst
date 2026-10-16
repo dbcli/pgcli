@@ -6,6 +6,16 @@ Features:
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
+Bug fixes:
+----------
+* ``-c`` and ``-f`` now exit with psql's status codes instead of always 0. A
+  failed ``-c`` exits 1. With ``on_error = STOP`` (the default, psql's
+  ``ON_ERROR_STOP``) the first failure also stops every ``-c`` and ``-f`` after
+  it, and a failed script exits 3. With ``RESUME`` everything runs and the
+  status is that of the last ``-c`` or ``-f``, where a script counts as a
+  success, as in psql. Before, a failed ``-c`` also kept the next ``-c`` from
+  running under ``RESUME``, and did not stop the ``-f`` files under ``STOP``.
+
 4.7.1 (2026-09-20)
 ==================
 
