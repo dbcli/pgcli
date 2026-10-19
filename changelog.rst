@@ -12,6 +12,11 @@ Bug fixes:
 ----------
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Fix completion crashing with ``TypeError: 'NoneType' object is not iterable``
+  for set-returning functions whose parameters or ``TABLE(...)`` output
+  columns have no names (e.g. an unnamed ``VARIADIC`` parameter). Such
+  functions now offer the function name as their column, like functions
+  without output parameters.
 
 4.7.1 (2026-09-20)
 ==================
