@@ -1,4 +1,4 @@
-from pgcli.packages.parseutils.meta import FunctionMetadata
+from pgcli.packages.parseutils.meta import ColumnMetadata, FunctionMetadata
 
 
 def test_function_metadata_eq():
@@ -14,10 +14,7 @@ def test_function_metadata_eq():
 
 
 def test_function_metadata_fields_with_variadic_and_no_arg_names():
-    # Regression for issue #1204: a function with a VARIADIC argument that has
-    # a type but no name (e.g. `labels(variadic text[]) RETURNS hstore`) leaves
-    # arg_names as None while arg_modes is truthy. fields() must not raise
-    # "'NoneType' object is not iterable".
+    # Issue #1204: labels(variadic text[]) RETURNS hstore has arg_modes but no arg_names.
     f = FunctionMetadata(
         "public",
         "labels",
@@ -31,5 +28,5 @@ def test_function_metadata_fields_with_variadic_and_no_arg_names():
         False,
         None,
     )
-    # No OUT/INOUT/TABLE columns, so fields() yields nothing.
-    assert f.fields() == []
+    # No OUT/INOUT/TABLE columns, so the function name is the output column.
+    assert f.fields() == [ColumnMetadata("labels", "hstore", [])]
