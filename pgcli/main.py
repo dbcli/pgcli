@@ -1314,6 +1314,19 @@ class PGCli:
 
         return new_cur, new_status
 
+    def _output_width(self):
+        """Columns available to auto-expand into, or None when it must not apply.
+
+        In -c/-f mode no prompt is ever built, so the terminal is asked
+        directly. psql's \\x auto only expands when the output is a terminal:
+        a pipe or a file gets the plain table whatever its width.
+        """
+        if self.prompt_app:
+            return self.prompt_app.output.get_size().columns
+        if sys.stdout.isatty():
+            return shutil.get_terminal_size().columns
+        return None
+
     def _evaluate_command(self, text):
         """Used to run a command entered by the user during CLI operation
         (Puts the E in REPL)
@@ -1356,7 +1369,7 @@ class PGCli:
                 cur, status = self._limit_output(cur)
 
             if self.pgspecial.auto_expand or self.auto_expand:
-                max_width = self.prompt_app.output.get_size().columns
+                max_width = self._output_width()
             else:
                 max_width = None
 
