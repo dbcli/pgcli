@@ -235,6 +235,21 @@ def test_format_output_auto_expand():
     assert "\n".join(expanded_results) == "\n".join(expanded)
 
 
+def test_column_types_of_keeps_one_entry_per_column():
+    # A numeric column used to add two entries (float, then str from the
+    # fall-through), shifting the type of every column after it; the integer
+    # format then skipped the ints that followed a numeric.
+    from types import SimpleNamespace
+
+    from pgcli.main import column_types_of
+
+    names = {1700: "numeric", 23: "int4", 25: "text", 701: "float8"}
+    cur = mock.Mock()
+    cur.description = [SimpleNamespace(type_code=code) for code in (1700, 23, 25, 701, 9999)]
+    cur.adapters.types.get.side_effect = lambda code: SimpleNamespace(name=names[code]) if code in names else None
+    assert column_types_of(cur) == [float, int, str, float, str]
+
+
 termsize = namedtuple("termsize", ["rows", "columns"])
 test_line = "-" * 10
 test_data = [
