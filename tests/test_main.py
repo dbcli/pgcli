@@ -1102,3 +1102,39 @@ def test_connect_timeout_config_value_must_be_a_number(tmpdir):
         f.write("[main]\nconnect_timeout = soon\n")
     with pytest.raises(ValueError):
         PGCli(pgclirc_file=rc)
+
+
+@dbtest
+def test_format_output_applies_the_float_format_to_float_and_numeric_columns(executor):
+    # Left to infer the types from the values, cli_helpers files float and
+    # Decimal alike under Decimal, which format_numbers skips: the float format
+    # of [data_formats] never applied. The types now come from the cursor.
+    with executor.conn.cursor() as cur:
+        cur.execute("select 1234567::int4 as i, 123456.78::float8 as f, 123456.78::numeric as n")
+        settings = OutputSettings(table_format="psql", dcmlfmt=",", floatfmt=",.2f")
+        output = "\n".join(format_output(None, cur, ["i", "f", "n"], "SELECT 1", settings))
+    assert "1,234,567" in output
+    assert output.count("123,456.78") == 2
+
+
+@dbtest
+def test_format_output_formats_numbers_in_the_auto_vertical_fallback_too(executor):
+    with executor.conn.cursor() as cur:
+        cur.execute("select 1234567::int4 as i, 123456.78::float8 as f")
+        settings = OutputSettings(table_format="psql", dcmlfmt=",", floatfmt=",.2f", max_width=5)
+        output = "\n".join(format_output(None, cur, ["i", "f"], "SELECT 1", settings))
+    assert "RECORD 1" in output and "1,234,567" in output and "123,456.78" in output
+
+
+@dbtest
+def test_format_output_aligns_float_and_numeric_columns_on_the_decimal_point(executor):
+    # With no float format, align_decimals pads the numbers of a float column
+    # so their decimal points line up; it needs the column typed as float.
+    with executor.conn.cursor() as cur:
+        cur.execute("select n, n::float8 as f from (values (1.5), (123.456)) as t(n) order by 1")
+        lines = list(format_output(None, cur, ["n", "f"], "SELECT 2", OutputSettings(table_format="psql")))
+    values = [line for line in lines if "1.5" in line or "123.456" in line]
+    assert len(values) == 2
+    for column in (0, 1):
+        points = {line.split("|")[column + 1].index(".") for line in values}
+        assert len(points) == 1, values

@@ -2218,11 +2218,15 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
     if cur:
         headers = [] if settings.tuples_only else [case_function(x) for x in headers]
+        # The types come from the cursor, which list(cur) below turns into plain
+        # rows. Left to infer them from the values, cli_helpers files float and
+        # Decimal alike under Decimal, which neither format_numbers nor
+        # align_decimals treats as a number: the float format never applied.
+        column_types = column_types_of(cur) if hasattr(cur, "description") else None
         if max_width is not None:
             cur = list(cur)
-        column_types = column_types_of(cur) if hasattr(cur, "description") else None
 
-        formatted = formatter.format_output(cur, headers, **output_kwargs)
+        formatted = formatter.format_output(cur, headers, column_types=column_types, **output_kwargs)
         if isinstance(formatted, str):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
