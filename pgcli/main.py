@@ -784,8 +784,10 @@ class PGCli:
 
         key = f"{user}@{host}@{port}"
 
+        password_loaded_from_keyring = False
         if not passwd and auth.keyring:
             passwd = auth.keyring_get_password(key)
+            password_loaded_from_keyring = bool(passwd)
 
         def should_ask_for_password(exc):
             # Prompt for a password after 1st attempt to connect
@@ -883,6 +885,7 @@ class PGCli:
                         show_default=False,
                         type=str,
                     )
+                    password_loaded_from_keyring = False
                     pgexecute = PGExecute(
                         database,
                         user,
@@ -895,7 +898,7 @@ class PGCli:
                     )
                 else:
                     raise e
-            if passwd and auth.keyring:
+            if passwd and auth.keyring and not password_loaded_from_keyring:
                 auth.keyring_set_password(key, passwd)
 
         except Exception as e:  # Connecting to a database could fail.

@@ -1,4 +1,5 @@
 import click
+import platform
 from textwrap import dedent
 
 
@@ -45,9 +46,33 @@ def keyring_get_password(key):
     return passwd
 
 
+def _is_macos_keyring_backend(backend):
+    return backend.__class__.__module__ == "keyring.backends.macOS"
+
+
+def _set_password_with_backend(backend, key, passwd):
+    if _is_macos_keyring_backend(backend):
+        from pgcli import macos_keychain
+
+        macos_keychain.set_password("pgcli", key, passwd)
+    else:
+        backend.set_password("pgcli", key, passwd)
+
+
 def keyring_set_password(key, passwd):
     try:
-        keyring.set_password("pgcli", key, passwd)
+        configured_backend = keyring.get_keyring() if platform.system() == "Darwin" else None
+        if configured_backend is not None and configured_backend.__class__.__module__ == "keyring.backends.chainer":
+            for backend in configured_backend.backends:
+                try:
+                    _set_password_with_backend(backend, key, passwd)
+                    break
+                except NotImplementedError:
+                    pass
+        elif configured_backend is not None and _is_macos_keyring_backend(configured_backend):
+            _set_password_with_backend(configured_backend, key, passwd)
+        else:
+            keyring.set_password("pgcli", key, passwd)
     except Exception as e:
         click.secho(
             keyring_error_message.format("Set password in keyring returned:", str(e)),
