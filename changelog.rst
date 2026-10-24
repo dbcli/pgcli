@@ -13,6 +13,8 @@ Bug fixes:
   so a broken query printed nothing at all. Errors now go to stderr under
   `-t`, as with `psql -t`, so stdout still carries only rows.
 
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 
 4.7.1 (2026-09-20)
 ==================
