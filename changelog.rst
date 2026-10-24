@@ -6,6 +6,11 @@ Features:
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
+Bug fixes:
+----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
+
 4.7.1 (2026-09-20)
 ==================
 
