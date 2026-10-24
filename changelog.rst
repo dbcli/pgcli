@@ -7,6 +7,13 @@ Features:
   filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+* Add psql's ``\crosstabview [colV [colH [colD [sortcolH]]]]``: run the query
+  and show the result as a crosstab grid, with the values of ``colV`` down the
+  side, the values of ``colH`` across the top and ``colD`` in the cells.
+  Columns are given by name or number and default to the first three, ``sortcolH``
+  orders the columns by an integer column, and a bare ``\crosstabview`` re-runs
+  the last query. The errors match psql's
+  ([issue 1378](https://github.com/dbcli/pgcli/issues/1378)).
 
 Bug fixes:
 ----------
