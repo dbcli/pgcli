@@ -3,11 +3,15 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 * ``-c`` and ``-f`` now exit with psql's status codes instead of always 0. A
   failed ``-c`` exits 1. With ``on_error = STOP`` (the default, psql's
   ``ON_ERROR_STOP``) the first failure also stops every ``-c`` and ``-f`` after
