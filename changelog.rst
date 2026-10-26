@@ -12,6 +12,8 @@ Bug fixes:
 ----------
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
 
 4.7.1 (2026-09-20)
 ==================
