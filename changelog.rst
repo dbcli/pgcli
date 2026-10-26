@@ -3,11 +3,15 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 * ``--auto-vertical-output``, ``\x auto`` and ``auto_expand`` in the config work
   in ``-c``/``-f`` mode. The terminal width was read from the prompt, which
   those modes never build, so every statement failed with ``'NoneType' object
