@@ -13,6 +13,13 @@ Bug fixes:
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
 
+Internal:
+---------
+* Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
+  output by display width, so a header of wide characters like ``配列`` lines
+  up; ``test_format_array_output_expanded`` had the old misalignment written
+  down and fails with it.
+
 4.7.1 (2026-09-20)
 ==================
 
