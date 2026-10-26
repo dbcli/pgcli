@@ -3,11 +3,15 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 * The ``float`` format of ``[data_formats]`` applies at last, and the numbers of
   float and numeric columns line up on their decimal point: the formatter was
   left to infer the column types from the values, and cli_helpers files float
