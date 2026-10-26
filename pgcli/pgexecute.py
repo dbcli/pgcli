@@ -1,5 +1,9 @@
+import contextlib
 import ipaddress
 import logging
+import select
+import signal
+import time
 import traceback
 from collections import namedtuple
 import re
@@ -56,6 +60,22 @@ def register_typecasters(connection):
 
 
 # pg3: I don't know what is this
+@contextlib.contextmanager
+def _sigint_ignored():
+    """Ignore Ctrl-C inside the block (main thread only, where signals live)."""
+    try:
+        previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except ValueError:
+        # Not the main thread: signal handlers cannot be changed here.
+        yield
+        return
+    try:
+        yield
+    finally:
+        # None means the old handler was not set from Python.
+        signal.signal(signal.SIGINT, previous if previous is not None else signal.default_int_handler)
+
+
 class ProtocolSafeCursor(psycopg.Cursor):
     """This class wraps and suppresses Protocol Errors with pgbouncer database.
     See https://github.com/dbcli/pgcli/pull/1097.
@@ -447,6 +467,85 @@ class PGExecute:
 
         """
         return self.conn.closed != 0
+
+    def recover_from_interrupt(self, timeout=5.0):
+        """Leave the connection usable after Ctrl-C interrupted a query.
+
+        psycopg answers the first Ctrl-C by cancelling the query and then
+        reading the server's reply. A second Ctrl-C during that cleanup, easy
+        over an SSH tunnel where it takes a round trip or two, interrupts it:
+        the cancel may never be sent and the reply is never read, so every
+        later statement fails with "another command is already in progress"
+        while the query keeps running on the server.
+
+        Returns "idle" when the connection was not busy, "drained" once the
+        query is cancelled and its reply read, or "closed" when the server did
+        not answer within ``timeout`` and the connection had to be given up,
+        so that the next statement reconnects.
+        """
+        conn = self.conn
+        if conn is None or conn.closed or conn.info.transaction_status != psycopg.pq.TransactionStatus.ACTIVE:
+            return "idle"
+        try:
+            # cancel_safe() is psycopg >= 3.2; cancel() blocks but works on 3.0.
+            if hasattr(conn, "cancel_safe"):
+                conn.cancel_safe(timeout=timeout)
+            else:
+                conn.cancel()
+        except Exception as e:
+            _logger.debug("Cancel after an interrupted query failed: %r", e)
+        if self._drain_results(timeout):
+            return "drained"
+        _logger.debug("Connection still busy %ss after the cancel, closing it", timeout)
+        conn.close()
+        return "closed"
+
+    def abandon_connection(self, timeout=2.0):
+        """Close the connection, first cancelling whatever it still runs.
+
+        For when the user interrupts the recovery itself: closing alone would
+        leave the query running on the server, which only notices the client
+        is gone when it next sends it data. Ctrl-C is ignored for the at most
+        ``timeout`` seconds the cancel takes, so it always goes out.
+        """
+        conn = self.conn
+        if conn is None or conn.closed:
+            return
+        try:
+            if conn.info.transaction_status == psycopg.pq.TransactionStatus.ACTIVE:
+                with _sigint_ignored():
+                    if hasattr(conn, "cancel_safe"):
+                        conn.cancel_safe(timeout=timeout)
+                    else:
+                        conn.cancel()
+        except (Exception, KeyboardInterrupt) as e:
+            # Best effort: the connection is closed below either way.
+            _logger.debug("Cancel before closing failed: %r", e)
+        finally:
+            conn.close()
+
+    def _drain_results(self, timeout):
+        """Read and discard the reply of the query in flight.
+
+        Waits at most ``timeout`` seconds; returns True once the connection is
+        idle again.
+        """
+        pgconn = self.conn.pgconn  # type: ignore[union-attr]
+        deadline = time.monotonic() + timeout
+        try:
+            while True:
+                pgconn.consume_input()
+                if pgconn.is_busy():
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        return False
+                    select.select([pgconn.socket], [], [], remaining)
+                    continue
+                if pgconn.get_result() is None:
+                    return True
+        except psycopg.Error as e:
+            _logger.debug("Draining an interrupted query failed: %r", e)
+            return False
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
