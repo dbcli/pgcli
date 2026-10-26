@@ -3,11 +3,15 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 * Treat ``#`` as the bitwise XOR operator it is in PostgreSQL, rather than as a
   comment marker. ``select 17 # 5`` returned 17 instead of 20, and said nothing
   about it, because ``sqlparse.format(strip_comments=True)`` follows MySQL and
