@@ -25,6 +25,15 @@ def test_load_alias_map_file_invalid_json(tmp_path):
         pgcompleter.load_alias_map_file(str(fpath))
 
 
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig"])
+def test_load_alias_map_file_reads_utf8(tmp_path, encoding):
+    # JSON files are UTF-8, whatever the locale encoding is (e.g. cp932 or
+    # cp1252 on Windows). Editors such as Notepad may also add a BOM.
+    fpath = tmp_path / "aliases.json"
+    fpath.write_text('{"注文明細": "om", "café": "c"}', encoding=encoding)
+    assert pgcompleter.load_alias_map_file(str(fpath)) == {"注文明細": "om", "café": "c"}
+
+
 def test_path_completion_filters_files_for_cd(tmp_path, monkeypatch):
     (tmp_path / "folder").mkdir()
     (tmp_path / "file.sql").touch()
