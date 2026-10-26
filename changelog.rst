@@ -3,11 +3,15 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 * A second Ctrl-C while a query is being cancelled no longer leaves the
   connection stuck. psycopg answers Ctrl-C by cancelling the query and then
   reading the server's reply; another Ctrl-C during that cleanup, easy over an
