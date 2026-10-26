@@ -44,7 +44,7 @@ Set up [uv](https://docs.astral.sh/uv/getting-started/installation/) for develop
 
     cd pgcli
     uv venv
-    source ./pgcli-dev/bin/activate
+    source .venv/bin/activate
 
 Once the virtualenv is activated, install pgcli using pip as follows:
 
