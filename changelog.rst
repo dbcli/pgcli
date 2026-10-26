@@ -12,6 +12,13 @@ Bug fixes:
 ----------
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* The ``float`` format of ``[data_formats]`` applies at last, and the numbers of
+  float and numeric columns line up on their decimal point: the formatter was
+  left to infer the column types from the values, and cli_helpers files float
+  and Decimal alike under Decimal, which neither its number formatting nor its
+  decimal alignment treats as a number. The types now come from the cursor
+  description (``float4``, ``float8`` and ``numeric`` as float, ``int2`` to
+  ``int8`` as int), in the table and in the auto-vertical fallback.
 
 4.7.1 (2026-09-20)
 ==================
