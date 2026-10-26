@@ -12,6 +12,12 @@ Bug fixes:
 ----------
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* ``--auto-vertical-output``, ``\x auto`` and ``auto_expand`` in the config work
+  in ``-c``/``-f`` mode. The terminal width was read from the prompt, which
+  those modes never build, so every statement failed with ``'NoneType' object
+  has no attribute 'output'``. Without a prompt the terminal is asked directly,
+  and only when the output is one: a pipe or a file gets the plain table, as
+  with psql's ``\x auto``.
 
 4.7.1 (2026-09-20)
 ==================

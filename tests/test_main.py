@@ -1140,3 +1140,29 @@ def test_connect_timeout_config_value_must_be_a_number(tmpdir):
         f.write("[main]\nconnect_timeout = soon\n")
     with pytest.raises(ValueError):
         PGCli(pgclirc_file=rc)
+
+
+@dbtest
+def test_auto_expand_works_without_a_prompt(executor):
+    # -c/-f mode never builds the prompt, and --auto-vertical-output (or
+    # \x auto, or auto_expand in the config) then failed every statement
+    # with "'NoneType' object has no attribute 'output'". Output that is not
+    # a terminal gets the plain table, as psql's \x auto does.
+    cli = PGCli(pgexecute=executor, auto_vertical_output=True)
+    assert cli.prompt_app is None
+    with mock.patch("pgcli.main.sys.stdout.isatty", return_value=False):
+        output, query = cli._evaluate_command("select 1 as a, 2 as b")
+    assert query.successful
+    assert not any("RECORD 1" in line for line in output)
+
+
+@dbtest
+def test_auto_expand_without_a_prompt_asks_the_terminal(executor):
+    cli = PGCli(pgexecute=executor, auto_vertical_output=True)
+    with (
+        mock.patch("pgcli.main.sys.stdout.isatty", return_value=True),
+        mock.patch("pgcli.main.shutil.get_terminal_size", return_value=os.terminal_size((5, 24))),
+    ):
+        output, query = cli._evaluate_command("select 1 as a, 2 as b")
+    assert query.successful
+    assert any("RECORD 1" in line for line in output)
