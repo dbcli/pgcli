@@ -754,6 +754,22 @@ def test_pg_service_file(tmpdir):
     del os.environ["PGSERVICEFILE"]
 
 
+def test_pg_service_file_windows_default_location(tmp_path, monkeypatch):
+    # Without PGSERVICEFILE or PGSYSCONFDIR, libpq reads
+    # %APPDATA%\postgresql\.pg_service.conf on Windows.
+    service_dir = tmp_path / "postgresql"
+    service_dir.mkdir()
+    (service_dir / ".pg_service.conf").write_text("[myservice]\nhost=a_host\ndbname=a_dbname\n")
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    monkeypatch.delenv("PGSERVICEFILE", raising=False)
+    monkeypatch.delenv("PGSYSCONFDIR", raising=False)
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setattr("pgcli.main.platform.system", lambda: "Windows")
+    with mock.patch.object(cli, "connect") as mock_connect:
+        cli.connect_service("myservice", "a_user")
+    mock_connect.assert_called_with(database="a_dbname", host="a_host", user="a_user", port=None, passwd=None)
+
+
 def test_ssl_db_uri(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))

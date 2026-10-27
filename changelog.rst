@@ -16,6 +16,9 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* Fix a crash on Windows when connecting with ``service=...`` or ``PGSERVICE``
+  while neither ``PGSERVICEFILE`` nor ``PGSYSCONFDIR`` is set. The service file
+  is now read from ``%APPDATA%\postgresql\.pg_service.conf``, as libpq does.
 
 Internal:
 ---------

@@ -2278,8 +2278,11 @@ def parse_service_info(service):
     service_file = os.getenv("PGSERVICEFILE")
     if not service_file:
         # try ~/.pg_service.conf (if that exists)
-        if platform.system() == "Windows":
+        if platform.system() == "Windows" and os.getenv("PGSYSCONFDIR"):
             service_file = os.getenv("PGSYSCONFDIR") + "\\pg_service.conf"
+        elif platform.system() == "Windows":
+            # libpq's per-user service file on Windows
+            service_file = os.path.join(os.getenv("APPDATA", ""), "postgresql", ".pg_service.conf")
         elif os.getenv("PGSYSCONFDIR"):
             service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
         else:
