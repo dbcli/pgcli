@@ -1,4 +1,5 @@
 import os
+import pathlib
 import platform
 import re
 import tempfile
@@ -339,6 +340,58 @@ def test_i_works(tmpdir, executor):
     cli = PGCli(pgexecute=executor, pgclirc_file=rcfile)
     statement = r"\i {0}".format(sqlfile)
     run(executor, statement, pgspecial=cli.pgspecial)
+
+
+def test_change_directory(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(target))
+
+    assert pathlib.Path.cwd() == target
+    assert result[0][3] == str(target)
+
+
+def test_change_directory_reports_missing_path(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(tmp_path / "missing"))
+
+    assert pathlib.Path.cwd() == tmp_path
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
+
+
+@pytest.mark.parametrize("command", ["change_directory", "list_directory"])
+def test_filesystem_commands_report_expanduser_errors(command):
+    cli = object.__new__(PGCli)
+    with mock.patch.object(pathlib.Path, "expanduser", side_effect=RuntimeError("unknown home")):
+        result = getattr(cli, command)("~missing")
+
+    assert result[0][3] == "unknown home"
+    assert result[0][5:] == (False, True)
+
+
+def test_list_directory(tmp_path):
+    cli = object.__new__(PGCli)
+    (tmp_path / "folder").mkdir()
+    (tmp_path / "query.sql").write_text("select 1")
+
+    result = cli.list_directory(str(tmp_path))
+
+    assert result[0][3].splitlines() == [f"folder{os.sep}", "query.sql"]
+
+
+def test_list_directory_reports_missing_path(tmp_path):
+    cli = object.__new__(PGCli)
+
+    result = cli.list_directory(str(tmp_path / "missing"))
+
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
 
 
 @dbtest
@@ -796,6 +849,34 @@ def test_get_prompt_with_transaction_status(transaction_indicator, expected):
 
     result = cli.get_prompt("\\T\\u")
     assert result == expected
+
+
+@pytest.mark.parametrize("service_name", ["reporting", None])
+def test_get_prompt_service_name(service_name):
+    cli = PGCli()
+    cli.pgexecute = mock.MagicMock(user="user", host="localhost", short_host="localhost", dbname="db", transaction_indicator="")
+    cli.service_name = service_name
+    assert cli.get_prompt("\\service> ") == f"{service_name or ''}> "
+
+
+@pytest.mark.parametrize("service", ["reporting", None])
+def test_connect_service_remembers_name(tmp_path, monkeypatch, service):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    service_file = tmp_path / "pg_service.conf"
+    service_file.write_text("[reporting]\nhost=localhost\n")
+    monkeypatch.setenv("PGSERVICEFILE", str(service_file))
+    monkeypatch.setenv("PGSERVICE", "reporting")
+    with mock.patch.object(cli, "connect"):
+        cli.connect_service(service, None)
+    assert cli.service_name == "reporting"
+
+
+def test_direct_connection_clears_service_name(tmp_path):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    cli.service_name = "reporting"
+    with mock.patch("pgcli.main.PGExecute"):
+        cli.connect(database="db", user="user", host="localhost")
+    assert cli.service_name is None
 
 
 def test_get_prompt_transaction_status_in_full_prompt():

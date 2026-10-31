@@ -1,11 +1,19 @@
 Upcoming
 ========
 
+Features:
+---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+
 Bug fixes:
 ----------
 * Display database errors from ``\ef`` and ``\ev`` without exiting the
   interactive session, allowing recovery from an aborted transaction.
-
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
 
 4.7.1 (2026-09-20)
 ==================
@@ -21,7 +29,6 @@ Bug fixes:
 
 **Brown bag release:** this version shows (in `pgcli --version`) as
 "4.6.0" instead of "4.7.0".
-
 
 Features:
 ---------
