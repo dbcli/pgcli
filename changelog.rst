@@ -10,6 +10,8 @@ Features:
 
 Bug fixes:
 ----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
 
