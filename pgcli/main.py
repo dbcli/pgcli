@@ -2158,6 +2158,25 @@ def exception_formatter(e, verbose_errors: bool = False):
     return click.style(s, fg="red")
 
 
+def column_types_of(cur):
+    """One Python type per column of ``cur``, for cli_helpers' number formats.
+
+    A numeric column used to get two entries (float, then str from the
+    fall-through), which shifted the type of every column after it.
+    """
+    column_types = []
+    for d in cur.description:
+        col_type = cur.adapters.types.get(d.type_code)
+        type_name = col_type.name if col_type else None
+        if type_name in ("numeric", "float4", "float8"):
+            column_types.append(float)
+        elif type_name in ("int2", "int4", "int8"):
+            column_types.append(int)
+        else:
+            column_types.append(str)
+    return column_types
+
+
 def format_output(title, cur, headers, status, settings, explain_mode=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
@@ -2233,22 +2252,15 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
     if cur:
         headers = [] if settings.tuples_only else [case_function(x) for x in headers]
+        # The types come from the cursor, which list(cur) below turns into plain
+        # rows. Left to infer them from the values, cli_helpers files float and
+        # Decimal alike under Decimal, which neither format_numbers nor
+        # align_decimals treats as a number: the float format never applied.
+        column_types = column_types_of(cur) if hasattr(cur, "description") else None
         if max_width is not None:
             cur = list(cur)
-        column_types = None
-        if hasattr(cur, "description"):
-            column_types = []
-            for d in cur.description:
-                col_type = cur.adapters.types.get(d.type_code)
-                type_name = col_type.name if col_type else None
-                if type_name in ("numeric", "float4", "float8"):
-                    column_types.append(float)
-                if type_name in ("int2", "int4", "int8"):
-                    column_types.append(int)
-                else:
-                    column_types.append(str)
 
-        formatted = formatter.format_output(cur, headers, **output_kwargs)
+        formatted = formatter.format_output(cur, headers, column_types=column_types, **output_kwargs)
         if isinstance(formatted, str):
             formatted = iter(formatted.splitlines())
         first_line = next(formatted)
