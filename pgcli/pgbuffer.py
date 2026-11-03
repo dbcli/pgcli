@@ -4,6 +4,7 @@ import sqlparse
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.application import get_app
+from .crosstabview import split_query
 from .packages.parseutils.utils import is_open_quote
 
 _logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ def buffer_should_be_handled(pgcli):
             text.startswith("\\")
             or text.endswith((r"\e", r"\G"))
             or _is_complete(text)
+            or split_query(text) is not None
             or text == "exit"
             or text == "quit"
             or text == ":q"

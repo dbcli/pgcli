@@ -12,6 +12,7 @@ import sqlparse
 sqlparse.engine.grouping.MAX_GROUPING_DEPTH = None
 sqlparse.engine.grouping.MAX_GROUPING_TOKENS = None
 
+from .crosstabview import CrosstabViewError, crosstabview, parse_args, split_query
 from .packages.parseutils.meta import FunctionMetadata, ForeignKey
 
 _logger = logging.getLogger(__name__)
@@ -182,6 +183,7 @@ class PGExecute:
         self.notify_callback = notify_callback
         self.connect(database, user, password, host, port, dsn, **kwargs)
         self.reset_expanded = None
+        self.last_sql = None
 
     def is_virtual_database(self):
         if self._is_virtual_database is None:
@@ -387,6 +389,15 @@ class PGExecute:
                             self.reset_expanded = True
                         sql = sql[:-2].strip()
 
+                    # "<query> \crosstabview [args]" runs the query and pivots it.
+                    crosstab = split_query(sql)
+                    if crosstab and crosstab[0]:
+                        if explain_mode:
+                            sql = crosstab[0]
+                        else:
+                            yield self.crosstabview(*crosstab) + (sql, True, False)
+                            continue
+
                     # First try to run each query as special
                     _logger.debug("Trying a pgspecial command. sql: %r", sql)
                     try:
@@ -418,6 +429,10 @@ class PGExecute:
                     sql = self.explain_prefix() + sql
 
                 yield self.execute_normal_sql(sql) + (sql, True, False)
+            except CrosstabViewError as e:
+                yield None, None, None, str(e), sql, False, False
+                if not on_error_resume:
+                    break
             except psycopg.DatabaseError as e:
                 _logger.error("sql: %r, error: %r", sql, e)
                 _logger.error("traceback: %r", traceback.format_exc())
@@ -451,6 +466,7 @@ class PGExecute:
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
         _logger.debug("Regular sql statement. sql: %r", split_sql)
+        self.last_sql = split_sql
 
         title = ""
 
@@ -484,6 +500,25 @@ class PGExecute:
         else:
             _logger.debug("No rows in result.")
             return title, None, None, cur.statusmessage
+
+    def crosstabview(self, sql, args):
+        """Run sql (or the last query, like psql) and pivot the result.
+
+        Returns tuple (title, rows, headers, status)
+        """
+        sql = sql or self.last_sql
+        if not sql:
+            return None, None, None, "\\crosstabview: there is no previous query to run"
+        args = parse_args(args)
+        title, cur, headers, status = self.execute_normal_sql(sql)
+        if not headers:
+            # Not a result set: show it as usual, like psql does.
+            return title, cur, headers, status
+        rows, headers = crosstabview(headers, cur.fetchall(), args)
+        warnings = [f'\\crosstabview: extra argument "{arg}" ignored' for arg in args[4:]]
+        title = "\n".join(filter(None, [title] + warnings))
+        # An iterator, so an empty grid still prints its header like psql.
+        return title, iter(rows), headers, f"SELECT {len(rows)}"
 
     def search_path(self):
         """Returns the current search path as a list of schema names"""
