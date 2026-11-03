@@ -10,6 +10,7 @@ Features:
 
 Bug fixes:
 ----------
+* Fix ``NoneType`` crash when completing functions with unnamed (variadic) arguments (#1204).
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
 
