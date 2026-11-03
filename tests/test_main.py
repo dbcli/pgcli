@@ -192,15 +192,16 @@ def test_format_array_output_expanded(executor):
     SELECT '{}', NULL, array[NULL]
     """
     results = run(executor, statement, expanded=True)
+    # 配列 is two wide characters: its padding counts display width (cli_helpers 2.15.2+).
     expected = [
         "-[ RECORD 1 ]-------------------------",
         "bigint_array         | {1,2,3}",
         "nested_numeric_array | {{1,2},{3,4}}",
-        "配列                   | {å,魚,текст}",
+        "配列                 | {å,魚,текст}",
         "-[ RECORD 2 ]-------------------------",
         "bigint_array         | {}",
         "nested_numeric_array | <null>",
-        "配列                   | {<null>}",
+        "配列                 | {<null>}",
         "SELECT 2",
     ]
     assert "\n".join(results) == "\n".join(expected)
