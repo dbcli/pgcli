@@ -45,3 +45,18 @@ class TestIsCompleteWithTrailingComments:
 
     def test_comment_with_special_chars(self):
         assert _is_complete("VACUUM ANALYZE; -- 81.0% towards emergency, 971 MB") is True
+
+
+class TestIsCompleteWithTheXorOperator:
+    """``#`` is bitwise XOR in PostgreSQL. While trailing comments were being
+    stripped with sqlparse, which reads ``#`` as MySQL does, a statement using
+    it never looked complete (dbcli/pgcli#1646)."""
+
+    def test_xor_statement_is_complete(self):
+        assert _is_complete("select 17 # 5;") is True
+
+    def test_xor_statement_with_a_trailing_comment(self):
+        assert _is_complete("select 17 # 5; -- note") is True
+
+    def test_xor_without_a_semicolon_is_not_complete(self):
+        assert _is_complete("select 17 # 5") is False
