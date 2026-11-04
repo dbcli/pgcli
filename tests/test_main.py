@@ -939,7 +939,8 @@ def test_edit_named_query():
     """Test \\ne edits/creates a named query via the external editor."""
     from pgspecial.namedqueries import NamedQueries
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    # pgcli keeps its log open, which Windows will not delete at cleanup.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         config_file = os.path.join(tmpdir, "config")
         with open(config_file, "w") as f:
             f.write("[main]\n")

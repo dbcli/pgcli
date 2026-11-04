@@ -1,7 +1,6 @@
 import json
 import pytest
 from pgcli import pgcompleter
-import tempfile
 from prompt_toolkit.document import Document
 
 
@@ -87,17 +86,17 @@ def test_generate_alias_can_use_alias_map(table_name, alias_map, alias):
         ("some_table", {"some_table": "my_alias"}, "my_alias"),
     ],
 )
-def test_pgcompleter_alias_uses_configured_alias_map(table_name, alias_map, alias):
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as alias_map_file:
-        alias_map_file.write(json.dumps(alias_map))
-        alias_map_file.seek(0)
-        completer = pgcompleter.PGCompleter(
-            settings={
-                "generate_aliases": True,
-                "alias_map_file": alias_map_file.name,
-            }
-        )
-        assert completer.alias(table_name, []) == alias
+def test_pgcompleter_alias_uses_configured_alias_map(table_name, alias_map, alias, tmp_path):
+    # A plain file: Windows cannot reopen an open NamedTemporaryFile by name.
+    alias_map_file = tmp_path / "alias_map.json"
+    alias_map_file.write_text(json.dumps(alias_map))
+    completer = pgcompleter.PGCompleter(
+        settings={
+            "generate_aliases": True,
+            "alias_map_file": str(alias_map_file),
+        }
+    )
+    assert completer.alias(table_name, []) == alias
 
 
 @pytest.mark.parametrize(
