@@ -84,7 +84,9 @@ class InvalidMapFile(ValueError):
 
 def load_alias_map_file(path):
     try:
-        with open(path) as fo:
+        # Read bytes so that json detects the encoding (UTF-8, with or without
+        # a BOM) instead of using the locale encoding (e.g. cp932 on Windows).
+        with open(path, "rb") as fo:
             alias_map = json.load(fo)
     except FileNotFoundError as err:
         raise InvalidMapFile(f"Cannot read alias_map_file - {err.filename} does not exist")

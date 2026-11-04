@@ -14,6 +14,8 @@ Bug fixes:
   interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
 
 Internal:
 ---------
