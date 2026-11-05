@@ -151,10 +151,13 @@ class FunctionMetadata:
 
         if self.return_type.lower() == "void":
             return []
-        elif not self.arg_modes:
-            # For functions  without output parameters, the function name
-            # is used as the name of the output column.
+        elif not self.arg_modes or not self.arg_names or not self.arg_types:
+            # For functions without output parameters, the function name is
+            # used as the name of the output column.
             # E.g. 'SELECT unnest FROM unnest(...);'
+            # arg_names/arg_types can also be None (e.g. an unnamed variadic
+            # argument), which args() already guards against; without this the
+            # zip() below raised 'NoneType is not iterable'.
             return [ColumnMetadata(self.func_name, self.return_type, [])]
 
         return [
