@@ -3,18 +3,30 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
 
 Bug fixes:
 ----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
 * Fix `-t`/`--tuples-only` hiding SQL errors. The error of a failed
   statement was printed in place of the status footer that `-t` suppresses,
   so a broken query printed nothing at all. Errors now go to stderr under
   `-t`, as with `psql -t`, so stdout still carries only rows.
-
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
+
+Internal:
+---------
+* Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
+  output by display width, so a header of wide characters like ``配列`` lines
+  up; ``test_format_array_output_expanded`` had the old misalignment written
+  down and fails with it.
 
 4.7.1 (2026-09-20)
 ==================

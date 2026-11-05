@@ -2,6 +2,12 @@ import json
 import pytest
 from pgcli import pgcompleter
 import tempfile
+from prompt_toolkit.document import Document
+
+
+def path_completions(completer, text):
+    document = Document(text=text, cursor_position=len(text))
+    return list(completer.get_completions(document, None))
 
 
 def test_load_alias_map_file_missing_file():
@@ -17,6 +23,36 @@ def test_load_alias_map_file_invalid_json(tmp_path):
     fpath.write_text("this is not valid json")
     with pytest.raises(pgcompleter.InvalidMapFile, match=r".*is not valid json$"):
         pgcompleter.load_alias_map_file(str(fpath))
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig"])
+def test_load_alias_map_file_reads_utf8(tmp_path, encoding):
+    # JSON files are UTF-8, whatever the locale encoding is (e.g. cp932 or
+    # cp1252 on Windows). Editors such as Notepad may also add a BOM.
+    fpath = tmp_path / "aliases.json"
+    fpath.write_text('{"注文明細": "om", "café": "c"}', encoding=encoding)
+    assert pgcompleter.load_alias_map_file(str(fpath)) == {"注文明細": "om", "café": "c"}
+
+
+def test_path_completion_filters_files_for_cd(tmp_path, monkeypatch):
+    (tmp_path / "folder").mkdir()
+    (tmp_path / "file.sql").touch()
+    monkeypatch.chdir(tmp_path)
+    completer = pgcompleter.PGCompleter()
+
+    assert [completion.text for completion in path_completions(completer, r"\ls f")] == ["ile.sql", "older"]
+    assert [completion.text for completion in path_completions(completer, r"\cd f")] == ["older"]
+
+
+def test_path_completion_handles_spaces(tmp_path, monkeypatch):
+    directory = tmp_path / "space directory"
+    directory.mkdir()
+    (directory / "query.sql").touch()
+    monkeypatch.chdir(tmp_path)
+
+    completions = path_completions(pgcompleter.PGCompleter(), r"\i space directory/q")
+
+    assert [completion.text for completion in completions] == ["uery.sql"]
 
 
 @pytest.mark.parametrize(
