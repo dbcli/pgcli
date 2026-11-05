@@ -2273,34 +2273,37 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
     return output
 
 
+def service_file_paths():
+    """Return the service files libpq reads, in order: the per-user file, then the system one."""
+    paths = []
+    if os.getenv("PGSERVICEFILE"):
+        paths.append(os.getenv("PGSERVICEFILE"))
+    elif platform.system() == "Windows":
+        if os.getenv("APPDATA"):
+            paths.append(os.path.join(os.getenv("APPDATA"), "postgresql", ".pg_service.conf"))
+    else:
+        paths.append(os.path.expanduser("~/.pg_service.conf"))
+    if os.getenv("PGSYSCONFDIR"):
+        paths.append(os.path.join(os.getenv("PGSYSCONFDIR"), "pg_service.conf"))
+    return paths
+
+
 def parse_service_info(service):
     service = service or os.getenv("PGSERVICE")
-    service_file = os.getenv("PGSERVICEFILE")
-    if not service_file:
-        # try ~/.pg_service.conf (if that exists)
-        if platform.system() == "Windows" and os.getenv("PGSYSCONFDIR"):
-            service_file = os.getenv("PGSYSCONFDIR") + "\\pg_service.conf"
-        elif platform.system() == "Windows":
-            # libpq's per-user service file on Windows
-            service_file = os.path.join(os.getenv("APPDATA", ""), "postgresql", ".pg_service.conf")
-        elif os.getenv("PGSYSCONFDIR"):
-            service_file = os.path.join(os.getenv("PGSYSCONFDIR"), ".pg_service.conf")
-        else:
-            service_file = os.path.expanduser("~/.pg_service.conf")
-    if not service or not os.path.exists(service_file):
-        # nothing to do
-        return None, service_file
-    with open(service_file, newline="") as f:
-        skipped_lines = skip_initial_comment(f)
-        try:
-            service_file_config = ConfigObj(f)
-        except ParseError as err:
-            err.line_number += skipped_lines
-            raise err
-    if service not in service_file_config:
-        return None, service_file
-    service_conf = service_file_config.get(service)
-    return service_conf, service_file
+    service_files = service_file_paths()
+    for service_file in service_files:
+        if not service or not os.path.exists(service_file):
+            continue
+        with open(service_file, newline="") as f:
+            skipped_lines = skip_initial_comment(f)
+            try:
+                service_file_config = ConfigObj(f)
+            except ParseError as err:
+                err.line_number += skipped_lines
+                raise err
+        if service in service_file_config:
+            return service_file_config.get(service), service_file
+    return None, " or ".join(service_files) or "any service file"
 
 
 def duration_in_words(duration_in_seconds: float) -> str:

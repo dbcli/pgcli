@@ -24,6 +24,7 @@ from pgcli.main import (
     notify_callback,
     PGCli,
     OutputSettings,
+    parse_service_info,
     COLOR_CODE_REGEX,
 )
 from pgcli.pgexecute import PGExecute
@@ -768,6 +769,62 @@ def test_pg_service_file_windows_default_location(tmp_path, monkeypatch):
     with mock.patch.object(cli, "connect") as mock_connect:
         cli.connect_service("myservice", "a_user")
     mock_connect.assert_called_with(database="a_dbname", host="a_host", user="a_user", port=None, passwd=None)
+
+
+def service_cli(tmp_path, monkeypatch, system="Windows"):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    monkeypatch.delenv("PGSERVICEFILE", raising=False)
+    monkeypatch.delenv("PGSYSCONFDIR", raising=False)
+    monkeypatch.delenv("APPDATA", raising=False)
+    monkeypatch.setattr("pgcli.main.platform.system", lambda: system)
+    return cli
+
+
+def write_service(path, service, host):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"[{service}]\nhost={host}\ndbname=a_dbname\n")
+
+
+@pytest.mark.parametrize("system", ["Windows", "Linux"])
+def test_pg_service_file_user_file_comes_first(tmp_path, monkeypatch, system):
+    cli = service_cli(tmp_path, monkeypatch, system)
+    user_file = tmp_path / "user" / ".pg_service.conf"
+    write_service(user_file, "myservice", "user_host")
+    write_service(tmp_path / "etc" / "pg_service.conf", "myservice", "system_host")
+    monkeypatch.setenv("PGSERVICEFILE", str(user_file))
+    monkeypatch.setenv("PGSYSCONFDIR", str(tmp_path / "etc"))
+    with mock.patch.object(cli, "connect") as mock_connect:
+        cli.connect_service("myservice", "a_user")
+    assert mock_connect.call_args.kwargs["host"] == "user_host"
+
+
+@pytest.mark.parametrize("system", ["Windows", "Linux"])
+def test_pg_service_file_falls_back_to_system_file(tmp_path, monkeypatch, system):
+    cli = service_cli(tmp_path, monkeypatch, system)
+    user_file = tmp_path / "user" / ".pg_service.conf"
+    write_service(user_file, "other_service", "user_host")
+    write_service(tmp_path / "etc" / "pg_service.conf", "myservice", "system_host")
+    monkeypatch.setenv("PGSERVICEFILE", str(user_file))
+    monkeypatch.setenv("PGSYSCONFDIR", str(tmp_path / "etc"))
+    with mock.patch.object(cli, "connect") as mock_connect:
+        cli.connect_service("myservice", "a_user")
+    assert mock_connect.call_args.kwargs["host"] == "system_host"
+
+
+def test_pg_service_file_system_file_has_no_leading_dot(tmp_path, monkeypatch):
+    service_cli(tmp_path, monkeypatch, "Linux")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
+    write_service(tmp_path / "etc" / ".pg_service.conf", "myservice", "dotted_host")
+    monkeypatch.setenv("PGSYSCONFDIR", str(tmp_path / "etc"))
+    assert parse_service_info("myservice")[0] is None
+
+
+def test_pg_service_file_windows_without_appdata_ignores_cwd(tmp_path, monkeypatch):
+    service_cli(tmp_path, monkeypatch)
+    write_service(tmp_path / "postgresql" / ".pg_service.conf", "myservice", "cwd_host")
+    monkeypatch.chdir(tmp_path)
+    assert parse_service_info("myservice")[0] is None
 
 
 def test_ssl_db_uri(tmpdir):
