@@ -142,3 +142,34 @@ def step_see_all_command_outputs(context):
     # For the 3-command test, also check for third
     if "third" in output or "result" in output:
         assert "third" in output, f"Expected 'third' in output for 3-command test, but got: {output}"
+
+
+@when('we run pgcli with -t -c "{command}"')
+def step_run_pgcli_with_t_and_c(context, command):
+    """Run pgcli with -t and -c, keeping stdout and stderr apart."""
+    cmd = [
+        "pgcli",
+        "-h",
+        context.conf["host"],
+        "-p",
+        str(context.conf["port"]),
+        "-U",
+        context.conf["user"],
+        "-d",
+        context.conf["dbname"],
+        "-t",
+        "-c",
+        command,
+    ]
+    result = subprocess.run(cmd, cwd=context.package_root, capture_output=True, timeout=5)
+    context.cmd_output = result.stdout
+    context.cmd_stderr = result.stderr.decode()
+    context.exit_code = result.returncode
+
+
+@then("we see the error on stderr and nothing on stdout")
+def step_error_on_stderr_only(context):
+    """With -t, stdout carries only rows, so the error must be on stderr."""
+    stdout = context.cmd_output.decode()
+    assert "does not exist" in context.cmd_stderr, f"Expected the error on stderr, got: {context.cmd_stderr!r}"
+    assert "does not exist" not in stdout, f"Expected no error on stdout, got: {stdout!r}"
