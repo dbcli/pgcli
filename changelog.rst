@@ -3,6 +3,8 @@ Upcoming
 
 Features:
 ---------
+* Highlight function definitions from ``\sf`` and ``\sf+`` using the configured
+  syntax theme in psql, plain, and expanded output.
 * Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
   filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
