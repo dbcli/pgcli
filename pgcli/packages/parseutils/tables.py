@@ -106,13 +106,12 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                     # Sometimes Keywords (such as FROM ) are classified as
                     # identifiers which don't have the get_real_name() method.
                     try:
-                        schema_name = identifier.get_parent_name()
-                        real_name = identifier.get_real_name()
+                        schema_name, real_name, alias = parse_identifier(identifier)
                         is_function = allow_functions and _identifier_is_function(identifier)
                     except AttributeError:
                         continue
                     if real_name:
-                        yield TableReference(schema_name, real_name, identifier.get_alias(), is_function)
+                        yield TableReference(schema_name, real_name, alias, is_function)
             elif isinstance(item, Identifier):
                 schema_name, real_name, alias = parse_identifier(item)
                 is_function = allow_functions and _identifier_is_function(item)
