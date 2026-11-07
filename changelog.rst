@@ -16,6 +16,8 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* Treat table names in a comma-separated ``FROM`` list the same way as a single
+  table name, so upper-case names are folded like they are for one table.
 
 Internal:
 ---------
