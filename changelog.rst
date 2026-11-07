@@ -16,6 +16,11 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* Fix completion crashing with ``TypeError: 'NoneType' object is not iterable``
+  for set-returning functions whose parameters or ``TABLE(...)`` output
+  columns have no names (e.g. an unnamed ``VARIADIC`` parameter). Such
+  functions now offer the function name as their column, like functions
+  without output parameters.
 
 Internal:
 ---------
