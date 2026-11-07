@@ -325,3 +325,27 @@ def test_is_destructive_unconditional_update_string_literal(sql, expected):
 )
 def test_parse_destructive_warning(warning_level, expected):
     assert parse_destructive_warning(warning_level) == expected
+
+
+@pytest.mark.parametrize('schema', ['', 'PUBLIC.'])
+def test_extract_tables_comma_list_matches_standalone_case_folding(schema):
+    first = schema + 'USERS'
+    second = schema + 'ORDERS'
+    assert extract_tables(f'SELECT * FROM {first}, {second}') == (
+        extract_tables(f'SELECT * FROM {first}') + extract_tables(f'SELECT * FROM {second}')
+    )
+
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        '"public"."users"',
+        '"PUBLIC"."USERS"',
+        '"Foo"',
+        'users "Alias"',
+        'users "alias"',
+        '"users"',
+    ],
+)
+def test_comma_list_quoted_identifier_matches_standalone(identifier):
+    assert extract_tables(f"SELECT * FROM {identifier}, orders")[0] == extract_tables(f"SELECT * FROM {identifier}")[0]
