@@ -10,13 +10,24 @@ Features:
 
 Bug fixes:
 ----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
 * Fix completion crashing with ``TypeError: 'NoneType' object is not iterable``
   for set-returning functions whose parameters or ``TABLE(...)`` output
   columns have no names (e.g. an unnamed ``VARIADIC`` parameter). Such
   functions now offer the function name as their column, like functions
   without output parameters.
+
+Internal:
+---------
+* Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
+  output by display width, so a header of wide characters like ``配列`` lines
+  up; ``test_format_array_output_expanded`` had the old misalignment written
+  down and fails with it.
 
 4.7.1 (2026-09-20)
 ==================

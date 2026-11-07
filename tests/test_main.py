@@ -28,6 +28,7 @@ from pgcli.main import (
 )
 from pgcli.pgexecute import PGExecute
 from psycopg.conninfo import conninfo_to_dict
+from psycopg.pq import TransactionStatus
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
@@ -192,15 +193,16 @@ def test_format_array_output_expanded(executor):
     SELECT '{}', NULL, array[NULL]
     """
     results = run(executor, statement, expanded=True)
+    # 配列 is two wide characters: its padding counts display width (cli_helpers 2.15.2+).
     expected = [
         "-[ RECORD 1 ]-------------------------",
         "bigint_array         | {1,2,3}",
         "nested_numeric_array | {{1,2},{3,4}}",
-        "配列                   | {å,魚,текст}",
+        "配列                 | {å,魚,текст}",
         "-[ RECORD 2 ]-------------------------",
         "bigint_array         | {}",
         "nested_numeric_array | <null>",
-        "配列                   | {<null>}",
+        "配列                 | {<null>}",
         "SELECT 2",
     ]
     assert "\n".join(results) == "\n".join(expected)
@@ -653,6 +655,35 @@ def test_file_mode_runs_statements(tmpdir):
             cli.run_cli()
     assert e.value.code == 0
     mock_exec.assert_called_once_with("select 1;\nselect 2;")
+
+
+@dbtest
+@pytest.mark.parametrize("editor_command", [r"\ef example", r"\ev example"])
+def test_editor_in_failed_transaction(executor, tmpdir, capsys, editor_command):
+    cli = PGCli(pgexecute=executor, pgclirc_file=str(tmpdir.join("rcfile")))
+    executor.conn.execute("BEGIN")
+    list(executor.run("SELECT 1 / 0", exception_formatter=str))
+    prompt = mock.Mock()
+
+    def commands():
+        yield editor_command
+        assert executor.conn.info.transaction_status == TransactionStatus.INERROR
+        yield "ROLLBACK"
+        raise EOFError
+
+    prompt.prompt.side_effect = commands()
+    with (
+        mock.patch.object(cli, "refresh_completions"),
+        mock.patch.object(cli, "_build_cli", return_value=prompt),
+        mock.patch.object(cli, "echo_via_pager"),
+        mock.patch("pgcli.main.special.open_external_editor") as editor,
+    ):
+        cli.run_cli()
+    assert "current transaction is aborted" in capsys.readouterr().err
+    editor.assert_not_called()
+    with executor.conn.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        assert cursor.fetchone() == (1,)
 
 
 def test_missing_rc_dir(tmpdir):
