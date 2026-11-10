@@ -471,7 +471,18 @@ class PGExecute:
             return title, None, None, res.command_status.decode()
 
         cur = self.conn.cursor()
-        cur.execute(split_sql)
+        # Read before execute(): while a COPY runs the status is ACTIVE either way.
+        outside_transaction = self.conn.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+        try:
+            cur.execute(split_sql)
+        except psycopg.ProgrammingError as e:
+            # psycopg rejects COPY ... TO STDOUT / FROM STDIN only after the
+            # server has started the COPY, which leaves the connection busy:
+            # every later query fails and pgcli thinks a transaction is ongoing.
+            if self.conn.info.transaction_status != psycopg.pq.TransactionStatus.ACTIVE:
+                raise
+            self._end_copy(cancel=outside_transaction)
+            raise psycopg.ProgrammingError("COPY to STDOUT or from STDIN is not supported, use \\copy instead") from e
 
         # cur.description will be None for operations that do not return
         # rows.
@@ -484,6 +495,33 @@ class PGExecute:
         else:
             _logger.debug("No rows in result.")
             return title, None, None, cur.statusmessage
+
+    def _end_copy(self, cancel):
+        """Finish a COPY that was started by ``cursor.execute()``.
+
+        ``cancel`` asks the server to stop a COPY TO STDOUT instead of sending
+        all of its rows. It must be false inside a transaction: the cancel would
+        abort the transaction, and the work done in it would be lost.
+        """
+        pgconn = self.conn.pgconn
+        nonblocking = pgconn.nonblocking
+        # Blocking mode, so libpq waits for the server instead of us polling.
+        pgconn.nonblocking = 0
+        try:
+            try:
+                # COPY FROM STDIN: abort it without sending any data.
+                pgconn.put_copy_end(b"use \\copy instead")
+            except psycopg.OperationalError:
+                # COPY TO STDOUT: discard the rows sent by the server. Without a
+                # cancel this takes as long as reading the whole result.
+                if cancel:
+                    self.conn.cancel()
+                while pgconn.get_copy_data(0)[0] > 0:
+                    pass
+            while pgconn.get_result() is not None:
+                pass
+        finally:
+            pgconn.nonblocking = nonblocking
 
     def search_path(self):
         """Returns the current search path as a list of schema names"""

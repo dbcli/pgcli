@@ -10,6 +10,13 @@ Features:
 
 Bug fixes:
 ----------
+* Fix ``COPY ... TO STDOUT`` and ``COPY ... FROM STDIN`` (instead of ``\copy``)
+  leaving the connection stuck: every later query failed with "another command
+  is already in progress" and quitting asked about an ongoing transaction.
+  The COPY is now ended cleanly and the error suggests ``\copy`` instead
+  ([issue 1505](https://github.com/dbcli/pgcli/issues/1505)). Outside a
+  transaction, a ``COPY ... TO STDOUT`` is cancelled first, so the error does
+  not wait for the whole result to be read.
 * Display database errors from ``\ef`` and ``\ev`` without exiting the
   interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
