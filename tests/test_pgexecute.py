@@ -687,6 +687,39 @@ def test_copy_stdout_keeps_open_transaction(executor, exception_formatter):
 
 
 @dbtest
+def test_copy_stdout_is_cancelled_outside_a_transaction(executor, exception_formatter, monkeypatch):
+    # Without the cancel, the error waits until every row has been read and discarded.
+    cancels = []
+    cancel = executor.conn.cancel
+    monkeypatch.setattr(executor.conn, "cancel", lambda: cancels.append(1) or cancel())
+    try:
+        result = run(executor, "copy (select generate_series(1, 1000000)) to stdout", exception_formatter=exception_formatter)
+        assert "use \\copy instead" in result[-1]
+        assert cancels == [1]
+        assert run(executor, "select 1", join=True).endswith("SELECT 1")
+    finally:
+        executor.conn.close()
+
+
+@dbtest
+def test_copy_stdout_in_a_transaction_keeps_its_work(executor, exception_formatter, monkeypatch):
+    # A cancel would abort the transaction, so the commit would roll back the insert.
+    cancels = []
+    cancel = executor.conn.cancel
+    monkeypatch.setattr(executor.conn, "cancel", lambda: cancels.append(1) or cancel())
+    try:
+        run(executor, "create table test(a text)")
+        run(executor, "begin")
+        run(executor, "insert into test values ('kept')")
+        run(executor, "copy (select generate_series(1, 1000)) to stdout", exception_formatter=exception_formatter)
+        assert cancels == []
+        run(executor, "commit")
+        assert run(executor, "select a from test", join=True).endswith("SELECT 1")
+    finally:
+        executor.conn.close()
+
+
+@dbtest
 @pytest.mark.parametrize(
     ("sql", "error"),
     [
