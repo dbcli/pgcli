@@ -14,6 +14,9 @@ Bug fixes:
   interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Pass the SSL options (``sslmode``, ``sslrootcert``, ``sslcert``, ``sslkey``) and
+  other connection parameters from a ``pg_service.conf`` entry to the connection
+  when using ``service=...`` or ``PGSERVICE``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
 
