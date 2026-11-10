@@ -700,6 +700,35 @@ def test_quoted_db_uri(tmpdir):
     mock_connect.assert_called_with(database="testdb[", host="baz.com", user="bar^", passwd="]foo")
 
 
+def test_pg_service_file_forwards_ssl_options(tmp_path, monkeypatch):
+    service_file = tmp_path / "pg_service.conf"
+    service_file.write_text(
+        "[secure]\n"
+        "host=a_host\n"
+        "user=a_user\n"
+        "dbname=a_dbname\n"
+        "sslmode=verify-full\n"
+        "sslrootcert=/path/to/ca.crt\n"
+        "sslcert=/path/to/user.crt\n"
+        "sslkey=/path/to/user.key\n"
+    )
+    monkeypatch.setenv("PGSERVICEFILE", str(service_file))
+    with mock.patch.object(PGCli, "connect") as mock_connect:
+        cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+        cli.connect_service("secure", None)
+    mock_connect.assert_called_with(
+        database="a_dbname",
+        host="a_host",
+        user="a_user",
+        port=None,
+        passwd=None,
+        sslmode="verify-full",
+        sslrootcert="/path/to/ca.crt",
+        sslcert="/path/to/user.crt",
+        sslkey="/path/to/user.key",
+    )
+
+
 def test_pg_service_file(tmpdir):
     with mock.patch.object(PGCli, "connect") as mock_connect:
         cli = PGCli(pgclirc_file=str(tmpdir.join("rcfile")))
