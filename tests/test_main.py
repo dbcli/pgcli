@@ -81,6 +81,12 @@ def test_format_output():
     assert list(results) == expected
 
 
+def test_format_output_arrays_without_float_format():
+    settings = OutputSettings(table_format="psql")
+    results = format_output("", [(["a", "b"],)], ["tags"], "", settings)
+    assert "| {a,b} |" in list(results)
+
+
 def test_column_date_formats():
     settings = OutputSettings(
         table_format="psql",

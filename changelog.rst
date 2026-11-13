@@ -16,6 +16,9 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* Show array columns in Postgres format (``{a,b}``) with the default
+  settings. They were shown as Python lists (``['a', 'b']``) unless a
+  ``float`` format was set in ``[data_formats]``.
 
 Internal:
 ---------
