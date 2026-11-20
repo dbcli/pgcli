@@ -43,6 +43,10 @@ _pgcli()
             _pg_databases
             return 0
             ;;
+        --env-file)
+            _filedir
+            return 0
+            ;;
         --help|-v|--version|-p|--port|-R|--row-limit)
             # all other arguments are noop with these
             return 0
@@ -57,7 +61,7 @@ _pgcli()
         --*)
             # return list of available options
             COMPREPLY=( $( compgen -W '--host --port --user --password --no-password
-                --single-connection --version --dbname --pgclirc --dsn
+                --single-connection --version --dbname --env-file --pgclirc --dsn
                 --row-limit --help' -- "$cur" ) )
             [[ $COMPREPLY == *= ]] && compopt -o nospace
             return 0

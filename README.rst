@@ -92,6 +92,7 @@ For more details:
       --single-connection        Do not use a separate connection for completions.
       -v, --version              Version of pgcli.
       -d, --dbname TEXT          database name to connect to.
+      --env-file PATH            Read a database URL from a local .env file.
       --pgclirc FILE             Location of pgclirc file.
       -D, --dsn TEXT             Use DSN configured into the [alias_dsn] section
                                  of pgclirc file.
@@ -110,6 +111,30 @@ For more details:
       --help                     Show this message and exit.
 
 ``pgcli`` also supports many of the same `environment variables`_ as ``psql`` for login options (e.g. ``PGHOST``, ``PGPORT``, ``PGUSER``, ``PGPASSWORD``, ``PGDATABASE``).
+
+To connect using a URL in a local project file, opt in explicitly::
+
+    # .env (or .env.local)
+    DB_URL='postgresql://user:password@localhost:5432/app_db'
+
+    $ pgcli --env-file .env
+    $ pgcli --env-file .env.local --ping
+
+The first non-empty variable wins, in this order: ``DATABASE_URL``,
+``DATABASE_URI``, ``DB_URL``, ``DB_URI``. Values must be ``postgres://`` or
+``postgresql://`` URLs. Quoted values, comments, and ``export`` prefixes are
+supported. Variable references such as ``${PASSWORD}`` are kept literal.
+
+Explicit connection arguments (``DBNAME``, ``USERNAME``, ``-d``, ``-h``, ``-p``,
+``-U``/``-u``, or ``-D``) select the usual connection instead of the file URL.
+Otherwise, the file URL takes precedence over environment defaults such as
+``PGDATABASE`` and ``DSN``. The usual libpq defaults, including ``PGSERVICE``,
+still apply to the URL. Other options, including ``--ssh-tunnel``,
+``--list``, and ``--ping``, work as with a URL passed on the command line.
+
+Only the named file is read; pgcli does not search parent directories or load
+``.env`` automatically. An unreadable file, missing URL, or invalid URL produces
+an error. The file does not export any variables into the process environment.
 
 The SSL-related environment variables are also supported, so if you need to connect a postgres database via ssl connection, you can set set environment like this:
 

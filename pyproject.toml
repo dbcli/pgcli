@@ -24,7 +24,7 @@ requires-python = ">=3.10"
 dependencies = [
     "pgspecial>=2.0.0",
     # Click 8.1.8 through 8.3.0 have broken pager invocation for multi-argument PAGER values, which causes behave test failures.
-    "click >= 4.1, != 8.1.8, != 8.2.*, != 8.3.0, < 9",
+    "click >= 8.0, != 8.1.8, != 8.2.*, != 8.3.0, < 9",
     "Pygments>=2.0",       # Pygments has to be Capitalcased.
     # We still need to use pt-2 unless pt-3 released on Fedora32
     # see: https://github.com/dbcli/pgcli/pull/1197
@@ -33,6 +33,7 @@ dependencies = [
     "psycopg-binary >= 3.0.14; sys_platform == 'win32'",
     "sqlparse >=0.3.0,<0.7",
     "configobj >= 5.0.6",
+    "python-dotenv >= 1.0",
     "cli_helpers[styles] >= 2.15.2",
     # setproctitle is used to mask the password when running `ps` in command line.
     # But this is not necessary in Windows since the password is never shown in the

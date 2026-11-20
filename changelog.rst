@@ -3,6 +3,9 @@ Upcoming
 
 Features:
 ---------
+* Add ``--env-file PATH`` to opt in to reading a database URL from a local
+  ``.env`` file. Explicit connection arguments take precedence over the file,
+  which takes precedence over environment defaults.
 * Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
   filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
