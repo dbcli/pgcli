@@ -7,7 +7,28 @@ from pgcli.main import PGCli
 from utils import dbtest
 
 
-def _leave_query_unread(executor):
+def _start_sleep(executor, connection):
+    """Send pg_sleep(30) on the executor's connection, and return once it runs.
+
+    A cancel that reaches the backend before it starts the query, while it is
+    still reading it, is dropped (ProcessInterrupts in postgres.c), and the
+    query then runs to the end. A user's Ctrl-C comes long after, but a test
+    cancelling right away could lose that race on a slow CI runner.
+    """
+    pid = executor.conn.info.backend_pid
+    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        with connection.cursor() as cur:
+            cur.execute("select state, query from pg_stat_activity where pid = %s", (pid,))
+            row = cur.fetchone()
+        if row and row[0] == "active" and "pg_sleep" in row[1]:
+            return
+        time.sleep(0.01)
+    raise AssertionError("pg_sleep never started on the server")
+
+
+def _leave_query_unread(executor, connection):
     """Put the connection where a second Ctrl-C leaves it.
 
     psycopg handles the first Ctrl-C by sending a cancel and then reading the
@@ -15,16 +36,16 @@ def _leave_query_unread(executor):
     tunnel, where it takes a round trip or two) interrupts it, so the query is
     still running on the server and its answer is never read.
     """
-    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    _start_sleep(executor, connection)
     raise KeyboardInterrupt
 
 
 @dbtest
-def test_double_ctrl_c_does_not_leave_the_connection_busy(executor):
+def test_double_ctrl_c_does_not_leave_the_connection_busy(executor, connection):
     cli = PGCli(pgexecute=executor)
     start = time.monotonic()
 
-    with patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor)):
+    with patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor, connection)):
         cli.execute_command("select pg_sleep(30)")
     output, query = cli._evaluate_command("select 40 + 2 as answer")
 
@@ -37,13 +58,13 @@ def test_double_ctrl_c_does_not_leave_the_connection_busy(executor):
 
 
 @dbtest
-def test_connection_still_busy_after_the_cancel_is_closed_then_reopened(executor):
+def test_connection_still_busy_after_the_cancel_is_closed_then_reopened(executor, connection):
     cli = PGCli(pgexecute=executor)
     cli.auto_retry_closed_connection = True
 
     with (
         patch.object(executor, "_drain_results", return_value=False),
-        patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor)),
+        patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor, connection)),
     ):
         cli.execute_command("select pg_sleep(30)")
     assert executor.conn.closed
@@ -67,14 +88,14 @@ def _still_running(connection, pid):
     return True
 
 
-def _leave_query_running_and_closed(executor):
+def _leave_query_running_and_closed(executor, connection):
     """Put the connection where psycopg >= 3.3.9 leaves it after a second Ctrl-C.
 
     psycopg now closes the connection when its cancel is interrupted (psycopg
     #1435), so it is no longer busy but cannot cancel anything either, and the
     server keeps running the query until it next sends the client data.
     """
-    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    _start_sleep(executor, connection)
     executor.conn.pgconn.finish()
     raise KeyboardInterrupt
 
@@ -85,7 +106,7 @@ def test_query_is_cancelled_when_psycopg_closed_the_connection(executor, connect
     cli.auto_retry_closed_connection = True
     pid = executor.conn.info.backend_pid
 
-    with patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_running_and_closed(executor)):
+    with patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_running_and_closed(executor, connection)):
         cli.execute_command("select pg_sleep(30)")
 
     assert not _still_running(connection, pid)
@@ -108,7 +129,7 @@ def test_another_ctrl_c_during_the_recovery_closes_the_connection(executor, conn
 
     with (
         patch.object(executor, "recover_from_interrupt", side_effect=KeyboardInterrupt),
-        patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor)),
+        patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_unread(executor, connection)),
     ):
         cli.execute_command("select pg_sleep(30)")
 
@@ -122,7 +143,7 @@ def test_ctrl_c_during_the_last_resort_cancel_is_ignored(executor, connection):
     # Someone hammering Ctrl-C must not cost the cancel: closing alone would
     # leave the query running on the server.
     pid = executor.conn.info.backend_pid
-    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    _start_sleep(executor, connection)
     name = "cancel_safe" if hasattr(executor.conn, "cancel_safe") else "cancel"
     real_cancel = getattr(executor.conn, name)
 
