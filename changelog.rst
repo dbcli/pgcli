@@ -10,8 +10,12 @@ Features:
 
 Bug fixes:
 ----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
 * A second Ctrl-C while a query is being cancelled no longer leaves the
   connection stuck. psycopg answers Ctrl-C by cancelling the query and then
   reading the server's reply; another Ctrl-C during that cleanup, easy over an
@@ -23,6 +27,13 @@ Bug fixes:
   5 seconds, or yet another Ctrl-C arrives, it cancels (ignoring Ctrl-C for
   the at most 2 seconds that takes, so the query never outlives the session)
   and closes the connection so the next statement reconnects.
+
+Internal:
+---------
+* Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
+  output by display width, so a header of wide characters like ``配列`` lines
+  up; ``test_format_array_output_expanded`` had the old misalignment written
+  down and fails with it.
 
 4.7.1 (2026-09-20)
 ==================
