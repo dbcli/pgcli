@@ -26,7 +26,10 @@ Bug fixes:
   cancels again and reads the reply, and if the server does not answer within
   5 seconds, or yet another Ctrl-C arrives, it cancels (ignoring Ctrl-C for
   the at most 2 seconds that takes, so the query never outlives the session)
-  and closes the connection so the next statement reconnects.
+  and closes the connection so the next statement reconnects. Since psycopg
+  3.3.9 the second Ctrl-C makes psycopg close the connection itself, which
+  left the query running on the server; pgcli then cancels it with the key
+  libpq gave when connecting, which still reaches the backend.
 
 Internal:
 ---------

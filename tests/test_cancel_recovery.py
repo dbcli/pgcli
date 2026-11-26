@@ -67,6 +67,40 @@ def _still_running(connection, pid):
     return True
 
 
+def _leave_query_running_and_closed(executor):
+    """Put the connection where psycopg >= 3.3.9 leaves it after a second Ctrl-C.
+
+    psycopg now closes the connection when its cancel is interrupted (psycopg
+    #1435), so it is no longer busy but cannot cancel anything either, and the
+    server keeps running the query until it next sends the client data.
+    """
+    executor.conn.pgconn.send_query(b"select pg_sleep(30)")
+    executor.conn.pgconn.finish()
+    raise KeyboardInterrupt
+
+
+@dbtest
+def test_query_is_cancelled_when_psycopg_closed_the_connection(executor, connection):
+    cli = PGCli(pgexecute=executor)
+    cli.auto_retry_closed_connection = True
+    pid = executor.conn.info.backend_pid
+
+    with patch.object(cli, "_evaluate_command", side_effect=lambda text: _leave_query_running_and_closed(executor)):
+        cli.execute_command("select pg_sleep(30)")
+
+    assert not _still_running(connection, pid)
+    cli.execute_command("select 1")
+    output, query = cli._evaluate_command("select 40 + 2 as answer")
+    assert query.successful
+
+
+@dbtest
+def test_saved_cancel_key_is_used_once(executor):
+    executor.conn.pgconn.finish()
+    assert executor.send_saved_cancel()
+    assert not executor.send_saved_cancel()
+
+
 @dbtest
 def test_another_ctrl_c_during_the_recovery_closes_the_connection(executor, connection):
     cli = PGCli(pgexecute=executor)

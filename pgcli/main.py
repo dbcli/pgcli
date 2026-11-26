@@ -1464,7 +1464,23 @@ class PGCli:
         except KeyboardInterrupt:
             self.pgexecute.abandon_connection()
             outcome = "closed"
-        if outcome == "closed":
+        if outcome == "recancelled":
+            self.logger.debug("psycopg closed the connection mid-cancel; cancel sent again")
+            click.secho(
+                "The connection was closed while the query was being cancelled; the cancel has been sent "
+                "again. The next statement reconnects.",
+                err=True,
+                fg="red",
+            )
+        elif outcome == "lost":
+            self.logger.debug("psycopg closed the connection mid-cancel; the cancel could not be sent")
+            click.secho(
+                "The connection was closed while the query was being cancelled, and the query may still be "
+                "running on the server. The next statement reconnects.",
+                err=True,
+                fg="red",
+            )
+        elif outcome == "closed":
             self.logger.debug("Connection closed after an interrupted query")
             click.secho(
                 "The connection was still busy after the cancel and has been closed. If the cancel did not "
