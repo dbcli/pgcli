@@ -27,6 +27,7 @@ from cli_helpers.tabular_output.preprocessors import (
 from cli_helpers.utils import strip_ansi
 from .explain_output_formatter import ExplainOutputFormatter
 import click
+from click.core import ParameterSource
 import sqlparse
 from sqlparse import tokens as sqlparse_tokens
 import tzlocal
@@ -35,6 +36,7 @@ try:
     import setproctitle
 except ImportError:
     setproctitle = None
+from dotenv import dotenv_values
 from prompt_toolkit.completion import DynamicCompleter, ThreadedCompleter
 from prompt_toolkit.enums import DEFAULT_BUFFER, EditingMode
 from prompt_toolkit.shortcuts import PromptSession, CompleteStyle
@@ -82,7 +84,7 @@ from urllib.parse import urlparse
 
 from getpass import getuser
 
-from psycopg import DatabaseError, OperationalError, InterfaceError, Notify
+from psycopg import DatabaseError, OperationalError, InterfaceError, Notify, ProgrammingError
 from psycopg.conninfo import make_conninfo, conninfo_to_dict
 from psycopg.errors import Diagnostic
 
@@ -1584,6 +1586,28 @@ class PGCli:
             click.echo_via_pager(text, color)
 
 
+def read_env_database(env_file):
+    """Read a database URL without exporting unrelated project settings."""
+    try:
+        with open(env_file, encoding="utf-8-sig") as stream:
+            values = dotenv_values(stream=stream, interpolate=False)
+    except (OSError, UnicodeError) as exc:
+        raise click.BadParameter("Could not read the environment file.", param_hint="--env-file") from exc
+
+    for name in ("DATABASE_URL", "DATABASE_URI", "DB_URL", "DB_URI"):
+        value = values.get(name)
+        if value and value.strip():
+            # Do not echo the URL: it may contain credentials.
+            if not value.startswith(("postgres://", "postgresql://")):
+                raise click.BadParameter(f"{name} must be a PostgreSQL URL.", param_hint="--env-file")
+            try:
+                conninfo_to_dict(value)
+            except ProgrammingError as exc:
+                raise click.BadParameter(f"{name} contains an invalid PostgreSQL URL.", param_hint="--env-file") from exc
+            return value
+    raise click.BadParameter("No non-empty DATABASE_URL, DATABASE_URI, DB_URL or DB_URI found.", param_hint="--env-file")
+
+
 @click.command()
 # Default host is '' so psycopg can default to either localhost or unix socket
 @click.option(
@@ -1640,6 +1664,11 @@ class PGCli:
 )
 @click.option("-v", "--version", is_flag=True, help="Version of pgcli.")
 @click.option("-d", "--dbname", "dbname_opt", help="database name to connect to.")
+@click.option(
+    "--env-file",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Read a database URL from this local .env file. Explicit connection arguments take precedence.",
+)
 @click.option(
     "--pgclirc",
     default=config_location() + "config",
@@ -1758,7 +1787,9 @@ class PGCli:
 )
 @click.argument("dbname", default=lambda: None, envvar="PGDATABASE", nargs=1)
 @click.argument("username", default=lambda: None, envvar="PGUSER", nargs=1)
+@click.pass_context
 def cli(
+    ctx,
     dbname,
     username_opt,
     host,
@@ -1789,6 +1820,7 @@ def cli(
     force_destructive: bool,
     input_files: tuple,
     connect_timeout: int | None,
+    env_file,
 ):
     if version:
         print("Version:", __version__)
@@ -1838,6 +1870,15 @@ def cli(
         )
         sys.exit(1)
 
+    env_database = None
+    if env_file and not any(
+        ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE
+        for name in ("dbname", "dbname_opt", "username", "username_opt", "host", "port", "dsn")
+    ):
+        env_database = read_env_database(env_file)
+        # An explicitly selected file takes precedence over environment defaults.
+        dsn = ""
+
     pgcli = PGCli(
         prompt_passwd,
         never_prompt,
@@ -1866,12 +1907,12 @@ def cli(
     if dbname_opt and dbname:
         # work as psql: when database is given as option and argument use the argument as user
         username = dbname
-    database = dbname_opt or dbname or ""
+    database = env_database or dbname_opt or dbname or ""
     user = username_opt or username
     service = None
     if database.startswith("service="):
         service = database[8:]
-    elif os.getenv("PGSERVICE") is not None:
+    elif env_database is None and os.getenv("PGSERVICE") is not None:
         service = os.getenv("PGSERVICE")
     # because option --ping, --list or -l are not supposed to have a db name.
     # A connection string is not a db name though: a URI or a key=value conninfo
@@ -2022,7 +2063,7 @@ def cli(
 
     pgcli.logger.debug(
         "Launch Params: \n\tdatabase: %r\tuser: %r\thost: %r\tport: %r",
-        database,
+        "<from --env-file>" if env_database else database,
         user,
         host,
         port,
