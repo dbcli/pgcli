@@ -1021,3 +1021,24 @@ def test_special_name_completion(completer):
             display_meta="Toggle timing of commands.",
         )
     ])
+
+
+@parametrize("completer", completers(casing=False, qualify=no_qual))
+@parametrize(
+    "tables",
+    [
+        ("USERS", "ORDERS"),
+        ('"PUBLIC"."USERS"', "ORDERS"),
+        ('"Foo"', "orders"),
+        ('"users"', 'orders'),
+        ('"Users"', 'orders'),
+        ('"public"."users"', '"public".orders'),
+        ('users "Alias"', 'orders "Other"'),
+        ('users "alias"', 'orders "other"'),
+    ],
+)
+def test_comma_list_preserves_identifier_column_completions(completer, tables):
+    first, second = tables
+    comma = get_result(completer, f"SELECT  from {first}, {second}", len("SELECT "))
+    joined = get_result(completer, f"SELECT  from {first} CROSS JOIN {second}", len("SELECT "))
+    assert completions_to_set(comma) == completions_to_set(joined)
