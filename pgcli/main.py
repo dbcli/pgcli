@@ -2214,7 +2214,7 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
         "max_field_width": settings.max_field_width,
     }
     if not settings.floatfmt:
-        output_kwargs["preprocessors"] = (align_decimals,)
+        output_kwargs["preprocessors"] = (align_decimals, format_arrays)
 
     if settings.column_date_formats:
         output_kwargs["preprocessors"] += (format_timestamps,)
