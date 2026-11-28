@@ -976,6 +976,7 @@ class PGCli:
             else:
                 logger.debug("cancelled query, sql: %r", text)
                 click.secho("cancelled query", err=True, fg="red")
+                self._recover_from_interrupt()
         except NotImplementedError:
             click.secho("Not Yet Implemented.", fg="yellow")
         except OperationalError as e:
@@ -1449,6 +1450,44 @@ class PGCli:
         )
 
         return output, meta_query
+
+    def _recover_from_interrupt(self):
+        """Make sure Ctrl-C did not leave the connection busy.
+
+        See PGExecute.recover_from_interrupt(). If yet another Ctrl-C lands
+        while that runs, give the connection up rather than leave it stuck.
+        """
+        if self.pgexecute is None:
+            return
+        try:
+            outcome = self.pgexecute.recover_from_interrupt()
+        except KeyboardInterrupt:
+            self.pgexecute.abandon_connection()
+            outcome = "closed"
+        if outcome == "recancelled":
+            self.logger.debug("psycopg closed the connection mid-cancel; cancel sent again")
+            click.secho(
+                "The connection was closed while the query was being cancelled; the cancel has been sent "
+                "again. The next statement reconnects.",
+                err=True,
+                fg="red",
+            )
+        elif outcome == "lost":
+            self.logger.debug("psycopg closed the connection mid-cancel; the cancel could not be sent")
+            click.secho(
+                "The connection was closed while the query was being cancelled, and the query may still be "
+                "running on the server. The next statement reconnects.",
+                err=True,
+                fg="red",
+            )
+        elif outcome == "closed":
+            self.logger.debug("Connection closed after an interrupted query")
+            click.secho(
+                "The connection was still busy after the cancel and has been closed. If the cancel did not "
+                "get through, the query may still be running on the server. The next statement reconnects.",
+                err=True,
+                fg="red",
+            )
 
     def _handle_server_closed_connection(self, text):
         """Used during CLI execution."""

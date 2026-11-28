@@ -16,6 +16,20 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* A second Ctrl-C while a query is being cancelled no longer leaves the
+  connection stuck. psycopg answers Ctrl-C by cancelling the query and then
+  reading the server's reply; another Ctrl-C during that cleanup, easy over an
+  SSH tunnel where it takes a round trip or two, cut it short, so the cancel
+  could be lost, the query kept running on the server and every later
+  statement failed with ``another command is already in progress``. After a
+  cancelled query pgcli now checks the connection: if it is still busy it
+  cancels again and reads the reply, and if the server does not answer within
+  5 seconds, or yet another Ctrl-C arrives, it cancels (ignoring Ctrl-C for
+  the at most 2 seconds that takes, so the query never outlives the session)
+  and closes the connection so the next statement reconnects. Since psycopg
+  3.3.9 the second Ctrl-C makes psycopg close the connection itself, which
+  left the query running on the server; pgcli then cancels it with the key
+  libpq gave when connecting, which still reaches the backend.
 
 Internal:
 ---------

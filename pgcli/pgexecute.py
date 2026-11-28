@@ -1,5 +1,10 @@
+import contextlib
 import ipaddress
 import logging
+import select
+import signal
+import threading
+import time
 import traceback
 from collections import namedtuple
 import re
@@ -56,6 +61,31 @@ def register_typecasters(connection):
 
 
 # pg3: I don't know what is this
+@contextlib.contextmanager
+def _sigint_ignored():
+    """Ignore Ctrl-C inside the block (main thread only, where signals live)."""
+    try:
+        previous = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    except ValueError:
+        # Not the main thread: signal handlers cannot be changed here.
+        yield
+        return
+    try:
+        yield
+    finally:
+        # None means the old handler was not set from Python.
+        signal.signal(signal.SIGINT, previous if previous is not None else signal.default_int_handler)
+
+
+def _cancel_handle_of(conn):
+    """libpq's cancel key for ``conn``'s backend, or None if it has none."""
+    try:
+        return conn.pgconn.get_cancel()
+    except Exception as e:
+        _logger.debug("No cancel key for the connection: %r", e)
+        return None
+
+
 class ProtocolSafeCursor(psycopg.Cursor):
     """This class wraps and suppresses Protocol Errors with pgbouncer database.
     See https://github.com/dbcli/pgcli/pull/1097.
@@ -172,6 +202,8 @@ class PGExecute:
         self._conn_params = {}
         self._is_virtual_database = None
         self.conn = None
+        # libpq's cancel key for self.conn's backend; see send_saved_cancel().
+        self._cancel_handle = None
         self.dbname = None
         self.user = None
         self.password = None
@@ -238,6 +270,8 @@ class PGExecute:
             self.conn.close()
         self.conn = conn
         self.conn.autocommit = True
+        # Taken while the connection is open: psycopg may close it mid-cancel.
+        self._cancel_handle = _cancel_handle_of(conn)
 
         if self.notify_callback is not None:
             self.conn.add_notify_handler(self.notify_callback)
@@ -447,6 +481,127 @@ class PGExecute:
 
         """
         return self.conn.closed != 0
+
+    def recover_from_interrupt(self, timeout=5.0):
+        """Leave the connection usable after Ctrl-C interrupted a query.
+
+        psycopg answers the first Ctrl-C by cancelling the query and then
+        reading the server's reply. A second Ctrl-C during that cleanup, easy
+        over an SSH tunnel where it takes a round trip or two, interrupts it:
+        the cancel may never be sent and the reply is never read, so every
+        later statement fails with "another command is already in progress"
+        while the query keeps running on the server.
+
+        Returns "idle" when the connection was not busy, "drained" once the
+        query is cancelled and its reply read, or "closed" when the server did
+        not answer within ``timeout`` and the connection had to be given up,
+        so that the next statement reconnects. When psycopg already closed the
+        connection, returns "recancelled" once the cancel saved at connect
+        time went out, or "lost" if it could not be sent.
+        """
+        conn = self.conn
+        if conn is None:
+            return "idle"
+        if conn.closed:
+            # psycopg >= 3.3.9 closes the connection itself when a second
+            # Ctrl-C interrupts its cancel (psycopg #1435). The connection can
+            # no longer cancel anything, and the server only notices the
+            # client is gone when it next sends data.
+            if self._cancel_handle is None:
+                return "idle"
+            return "recancelled" if self.send_saved_cancel() else "lost"
+        if conn.info.transaction_status != psycopg.pq.TransactionStatus.ACTIVE:
+            return "idle"
+        try:
+            # cancel_safe() is psycopg >= 3.2; cancel() blocks but works on 3.0.
+            if hasattr(conn, "cancel_safe"):
+                conn.cancel_safe(timeout=timeout)
+            else:
+                conn.cancel()
+        except Exception as e:
+            _logger.debug("Cancel after an interrupted query failed: %r", e)
+        if self._drain_results(timeout):
+            return "drained"
+        _logger.debug("Connection still busy %ss after the cancel, closing it", timeout)
+        conn.close()
+        return "closed"
+
+    def abandon_connection(self, timeout=2.0):
+        """Close the connection, first cancelling whatever it still runs.
+
+        For when the user interrupts the recovery itself: closing alone would
+        leave the query running on the server, which only notices the client
+        is gone when it next sends it data. Ctrl-C is ignored for the at most
+        ``timeout`` seconds the cancel takes, so it always goes out.
+        """
+        conn = self.conn
+        if conn is None:
+            return
+        if conn.closed:
+            self.send_saved_cancel(timeout)
+            return
+        try:
+            if conn.info.transaction_status == psycopg.pq.TransactionStatus.ACTIVE:
+                with _sigint_ignored():
+                    if hasattr(conn, "cancel_safe"):
+                        conn.cancel_safe(timeout=timeout)
+                    else:
+                        conn.cancel()
+        except (Exception, KeyboardInterrupt) as e:
+            # Best effort: the connection is closed below either way.
+            _logger.debug("Cancel before closing failed: %r", e)
+        finally:
+            conn.close()
+
+    def send_saved_cancel(self, timeout=2.0):
+        """Cancel the backend's query with the key saved at connect time.
+
+        It still works once the connection is closed. Ctrl-C is ignored while
+        it is sent, for at most ``timeout`` seconds; the key is used only once,
+        since the backend goes away with the closed connection. Returns True
+        if the cancel request went out.
+        """
+        handle, self._cancel_handle = self._cancel_handle, None
+        if handle is None:
+            return False
+        sent = threading.Event()
+
+        def send():
+            try:
+                handle.cancel()
+                sent.set()
+            except Exception as e:
+                _logger.debug("Cancel with the saved key failed: %r", e)
+
+        # In a thread because libpq's cancel blocks with no timeout of its own.
+        thread = threading.Thread(target=send, name="pgcli-cancel", daemon=True)
+        with _sigint_ignored():
+            thread.start()
+            thread.join(timeout)
+        return sent.is_set()
+
+    def _drain_results(self, timeout):
+        """Read and discard the reply of the query in flight.
+
+        Waits at most ``timeout`` seconds; returns True once the connection is
+        idle again.
+        """
+        pgconn = self.conn.pgconn  # type: ignore[union-attr]
+        deadline = time.monotonic() + timeout
+        try:
+            while True:
+                pgconn.consume_input()
+                if pgconn.is_busy():
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        return False
+                    select.select([pgconn.socket], [], [], remaining)
+                    continue
+                if pgconn.get_result() is None:
+                    return True
+        except psycopg.Error as e:
+            _logger.debug("Draining an interrupted query failed: %r", e)
+            return False
 
     def execute_normal_sql(self, split_sql):
         """Returns tuple (title, rows, headers, status)"""
