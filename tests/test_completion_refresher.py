@@ -1,3 +1,4 @@
+import builtins
 import time
 import pytest
 from unittest.mock import Mock, patch
@@ -93,3 +94,37 @@ def test_refresh_with_callbacks(refresher):
     refresher.refresh(pgexecute, special, callbacks)
     time.sleep(1)  # Wait for the thread to work.
     assert callbacks[0].call_count == 1
+
+
+@pytest.fixture
+def cp1252_locale(monkeypatch):
+    """Make open() default to cp1252, as it does on Western European Windows."""
+    from pgcli import completion_refresher
+
+    def locale_open(file, mode="r", *args, **kwargs):
+        if "b" not in mode and len(args) < 2:
+            kwargs.setdefault("encoding", "cp1252")
+        return builtins.open(file, mode, *args, **kwargs)
+
+    monkeypatch.setattr(completion_refresher, "open", locale_open, raising=False)
+
+
+def test_refresh_casing_writes_casing_file_as_utf8(refresher, tmp_path, cp1252_locale):
+    casing_file = tmp_path / "casing"
+    completer = Mock(casing_file=str(casing_file), generate_casing_file=True)
+    executor = Mock(**{"casing.return_value": ["Café", "注文明細"]})
+
+    refresher.refreshers["casing"](completer, executor)
+
+    assert casing_file.read_text(encoding="utf-8") == "Café\n注文明細"
+    completer.extend_casing.assert_called_once_with(["Café", "注文明細"])
+
+
+def test_refresh_casing_reads_casing_file_as_utf8(refresher, tmp_path, cp1252_locale):
+    casing_file = tmp_path / "casing"
+    casing_file.write_text("Café\n注文明細\n", encoding="utf-8")
+    completer = Mock(casing_file=str(casing_file), generate_casing_file=False)
+
+    refresher.refreshers["casing"](completer, Mock())
+
+    completer.extend_casing.assert_called_once_with(["Café", "注文明細"])

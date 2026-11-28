@@ -695,7 +695,7 @@ class PGCli:
         if log_level.upper() == "NONE":
             handler = logging.NullHandler()
         else:
-            handler = logging.FileHandler(os.path.expanduser(log_file))
+            handler = logging.FileHandler(os.path.expanduser(log_file), encoding="utf-8")
 
         level_map = {
             "CRITICAL": logging.CRITICAL,

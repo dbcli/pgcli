@@ -136,10 +136,10 @@ def refresh_casing(completer, executor):
     generate_casing_file = completer.generate_casing_file
     if generate_casing_file and not os.path.isfile(casing_file):
         casing_prefs = "\n".join(executor.casing())
-        with open(casing_file, "w") as f:
+        with open(casing_file, "w", encoding="utf-8") as f:
             f.write(casing_prefs)
     if os.path.isfile(casing_file):
-        with open(casing_file) as f:
+        with open(casing_file, encoding="utf-8") as f:
             completer.extend_casing([line.strip() for line in f])
 
 

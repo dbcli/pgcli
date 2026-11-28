@@ -4,6 +4,7 @@ import platform
 import re
 import tempfile
 import datetime
+import logging
 from unittest import mock
 
 import pytest
@@ -441,6 +442,28 @@ def test_logfile_works(executor):
         assert datetime.datetime.fromisoformat(log_contents[0].strip())
         assert log_contents[1].strip() == r"\qecho hello!"
         assert log_contents[2].strip() == "hello!"
+
+
+def test_log_file_is_written_as_utf8(tmp_path):
+    # The log records queries and errors, which can hold any character; the
+    # locale encoding (e.g. cp1252 on Windows) cannot encode all of them.
+    cli = PGCli()
+    log_file = tmp_path / "pgcli.log"
+    cli.config["main"]["log_file"] = str(log_file)
+    cli.config["main"]["log_level"] = "DEBUG"
+    root_logger = logging.getLogger("pgcli")
+    handlers_before = list(root_logger.handlers)
+    cli.initialize_logging()
+    (handler,) = [h for h in root_logger.handlers if h not in handlers_before]
+    try:
+        assert handler.encoding == "utf-8"
+        root_logger.debug("SELECT * FROM 注文明細")
+        handler.flush()
+        assert "SELECT * FROM 注文明細" in log_file.read_text(encoding="utf-8")
+    finally:
+        root_logger.removeHandler(handler)
+        logging.getLogger("pgspecial").removeHandler(handler)
+        handler.close()
 
 
 @dbtest

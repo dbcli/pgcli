@@ -16,6 +16,8 @@ Bug fixes:
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
   locale encoding, which made non-ASCII aliases fail on Windows.
+* Read and write the casing file and the log file as UTF-8 instead of the
+  locale encoding, which broke non-ASCII identifiers and queries on Windows.
 
 Internal:
 ---------
