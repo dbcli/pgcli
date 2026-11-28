@@ -3,6 +3,46 @@ Upcoming
 
 Features:
 ---------
+* Add ``\\cd`` and ``\\ls`` filesystem commands, with path completion for
+  filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
+* Add a ``\service`` prompt token for connections made using ``service=...``
+  or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+
+Bug fixes:
+----------
+* Display database errors from ``\ef`` and ``\ev`` without exiting the
+  interactive session, allowing recovery from an aborted transaction.
+* Fix the development setup instructions to activate the ``.venv`` directory
+  created by ``uv venv``.
+* Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
+  locale encoding, which made non-ASCII aliases fail on Windows.
+
+Internal:
+---------
+* Add a "Before Opening a Pull Request" section to the development guide,
+  and a matching item to the pull request checklist.
+* Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
+  output by display width, so a header of wide characters like ``配列`` lines
+  up; ``test_format_array_output_expanded`` had the old misalignment written
+  down and fails with it.
+
+4.7.1 (2026-09-20)
+==================
+
+Bug fixes:
+----------
+* Fix wrong version number that was shown in `pgcli --version` for
+  version 4.7.0.
+
+
+4.7.0 (2026-09-19)
+==================
+
+**Brown bag release:** this version shows (in `pgcli --version`) as
+"4.6.0" instead of "4.7.0".
+
+Features:
+---------
 * Add support for `single-command` to run a SQL command and exit.
     * Command line option `-c` or `--command`.
     * You can specify multiple times.
@@ -72,6 +112,8 @@ Bug fixes:
   issues (CVE-2026-59893, CVE-2026-54284, CVE-2026-71491) and a string-escaping
   bug (CVE-2026-59894); the previous ``<0.6`` cap prevented users from
   installing the fixed release.
+* Detect an unconditional ``UPDATE`` with ``sqlparse`` rather than splitting on whitespace, so a
+  ``WHERE`` appearing inside a string literal no longer suppresses the destructive-statement warning.
 
 Features:
 ---------

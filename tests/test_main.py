@@ -1,4 +1,5 @@
 import os
+import pathlib
 import platform
 import re
 import tempfile
@@ -28,6 +29,7 @@ from pgcli.main import (
 )
 from pgcli.pgexecute import PGExecute
 from psycopg.conninfo import conninfo_to_dict
+from psycopg.pq import TransactionStatus
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
@@ -192,15 +194,16 @@ def test_format_array_output_expanded(executor):
     SELECT '{}', NULL, array[NULL]
     """
     results = run(executor, statement, expanded=True)
+    # 配列 is two wide characters: its padding counts display width (cli_helpers 2.15.2+).
     expected = [
         "-[ RECORD 1 ]-------------------------",
         "bigint_array         | {1,2,3}",
         "nested_numeric_array | {{1,2},{3,4}}",
-        "配列                   | {å,魚,текст}",
+        "配列                 | {å,魚,текст}",
         "-[ RECORD 2 ]-------------------------",
         "bigint_array         | {}",
         "nested_numeric_array | <null>",
-        "配列                   | {<null>}",
+        "配列                 | {<null>}",
         "SELECT 2",
     ]
     assert "\n".join(results) == "\n".join(expected)
@@ -339,6 +342,58 @@ def test_i_works(tmpdir, executor):
     cli = PGCli(pgexecute=executor, pgclirc_file=rcfile)
     statement = r"\i {0}".format(sqlfile)
     run(executor, statement, pgspecial=cli.pgspecial)
+
+
+def test_change_directory(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    target = tmp_path / "target"
+    target.mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(target))
+
+    assert pathlib.Path.cwd() == target
+    assert result[0][3] == str(target)
+
+
+def test_change_directory_reports_missing_path(tmp_path, monkeypatch):
+    cli = object.__new__(PGCli)
+    monkeypatch.chdir(tmp_path)
+
+    result = cli.change_directory(str(tmp_path / "missing"))
+
+    assert pathlib.Path.cwd() == tmp_path
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
+
+
+@pytest.mark.parametrize("command", ["change_directory", "list_directory"])
+def test_filesystem_commands_report_expanduser_errors(command):
+    cli = object.__new__(PGCli)
+    with mock.patch.object(pathlib.Path, "expanduser", side_effect=RuntimeError("unknown home")):
+        result = getattr(cli, command)("~missing")
+
+    assert result[0][3] == "unknown home"
+    assert result[0][5:] == (False, True)
+
+
+def test_list_directory(tmp_path):
+    cli = object.__new__(PGCli)
+    (tmp_path / "folder").mkdir()
+    (tmp_path / "query.sql").write_text("select 1")
+
+    result = cli.list_directory(str(tmp_path))
+
+    assert result[0][3].splitlines() == [f"folder{os.sep}", "query.sql"]
+
+
+def test_list_directory_reports_missing_path(tmp_path):
+    cli = object.__new__(PGCli)
+
+    result = cli.list_directory(str(tmp_path / "missing"))
+
+    assert result[0][5:] == (False, True)
+    assert "missing" in result[0][3]
 
 
 @dbtest
@@ -553,6 +608,7 @@ def test_execute_statements_sql_then_metacommand(executor):
     assert "medio" in outputs[1]
 
 
+@dbtest
 def test_execute_statements_does_not_split_inside_literals(executor):
     """Semicolons inside string literals are not statement boundaries."""
     cli = PGCli(pgexecute=executor)
@@ -600,6 +656,35 @@ def test_file_mode_runs_statements(tmpdir):
             cli.run_cli()
     assert e.value.code == 0
     mock_exec.assert_called_once_with("select 1;\nselect 2;")
+
+
+@dbtest
+@pytest.mark.parametrize("editor_command", [r"\ef example", r"\ev example"])
+def test_editor_in_failed_transaction(executor, tmpdir, capsys, editor_command):
+    cli = PGCli(pgexecute=executor, pgclirc_file=str(tmpdir.join("rcfile")))
+    executor.conn.execute("BEGIN")
+    list(executor.run("SELECT 1 / 0", exception_formatter=str))
+    prompt = mock.Mock()
+
+    def commands():
+        yield editor_command
+        assert executor.conn.info.transaction_status == TransactionStatus.INERROR
+        yield "ROLLBACK"
+        raise EOFError
+
+    prompt.prompt.side_effect = commands()
+    with (
+        mock.patch.object(cli, "refresh_completions"),
+        mock.patch.object(cli, "_build_cli", return_value=prompt),
+        mock.patch.object(cli, "echo_via_pager"),
+        mock.patch("pgcli.main.special.open_external_editor") as editor,
+    ):
+        cli.run_cli()
+    assert "current transaction is aborted" in capsys.readouterr().err
+    editor.assert_not_called()
+    with executor.conn.cursor() as cursor:
+        cursor.execute("SELECT 1")
+        assert cursor.fetchone() == (1,)
 
 
 def test_missing_rc_dir(tmpdir):
@@ -778,6 +863,34 @@ def test_get_prompt_with_transaction_status(transaction_indicator, expected):
 
     result = cli.get_prompt("\\T\\u")
     assert result == expected
+
+
+@pytest.mark.parametrize("service_name", ["reporting", None])
+def test_get_prompt_service_name(service_name):
+    cli = PGCli()
+    cli.pgexecute = mock.MagicMock(user="user", host="localhost", short_host="localhost", dbname="db", transaction_indicator="")
+    cli.service_name = service_name
+    assert cli.get_prompt("\\service> ") == f"{service_name or ''}> "
+
+
+@pytest.mark.parametrize("service", ["reporting", None])
+def test_connect_service_remembers_name(tmp_path, monkeypatch, service):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    service_file = tmp_path / "pg_service.conf"
+    service_file.write_text("[reporting]\nhost=localhost\n")
+    monkeypatch.setenv("PGSERVICEFILE", str(service_file))
+    monkeypatch.setenv("PGSERVICE", "reporting")
+    with mock.patch.object(cli, "connect"):
+        cli.connect_service(service, None)
+    assert cli.service_name == "reporting"
+
+
+def test_direct_connection_clears_service_name(tmp_path):
+    cli = PGCli(pgclirc_file=str(tmp_path / "rcfile"))
+    cli.service_name = "reporting"
+    with mock.patch("pgcli.main.PGExecute"):
+        cli.connect(database="db", user="user", host="localhost")
+    assert cli.service_name is None
 
 
 def test_get_prompt_transaction_status_in_full_prompt():

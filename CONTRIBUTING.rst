@@ -2,6 +2,19 @@ Development Guide
 -----------------
 This is a guide for developers who would like to contribute to this project.
 
+Before Opening a Pull Request
+-----------------------------
+
+Reviews are done by volunteers in their spare time. Please check first:
+
+* Search the open and closed issues and pull requests for the same topic.
+* If there is none, open an issue.
+* If there is an issue but no pull request, say on the issue that you are
+  working on a fix, and link your pull request there when you open it.
+* If there is a pull request already, comment on it instead of opening a new
+  one. If you still think a separate one is better, open it and link the
+  existing one, saying how they differ.
+
 GitHub Workflow
 ---------------
 
@@ -44,7 +57,7 @@ Set up [uv](https://docs.astral.sh/uv/getting-started/installation/) for develop
 
     cd pgcli
     uv venv
-    source ./pgcli-dev/bin/activate
+    source .venv/bin/activate
 
 Once the virtualenv is activated, install pgcli using pip as follows:
 
