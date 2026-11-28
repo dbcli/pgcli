@@ -19,6 +19,8 @@ Bug fixes:
 
 Internal:
 ---------
+* Add a "Before Opening a Pull Request" section to the development guide,
+  and a matching item to the pull request checklist.
 * Require ``cli_helpers >= 2.15.2``. That release aligns vertical (expanded)
   output by display width, so a header of wide characters like ``配列`` lines
   up; ``test_format_array_output_expanded`` had the old misalignment written
