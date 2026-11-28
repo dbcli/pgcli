@@ -51,6 +51,8 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.cursor_shapes import ModalCursorShapeConfig
 from pygments.lexers.sql import PostgresLexer
+from pygments import highlight
+from pygments.formatters import Terminal256Formatter
 
 from pgspecial.main import PGSpecial, NO_QUERY, PAGER_OFF, PAGER_LONG_OUTPUT
 import pgspecial as special
@@ -1421,7 +1423,15 @@ class PGCli:
                 title = None
 
             execution = time() - start
-            formatted = format_output(title, cur, headers, status, settings, self.explain_mode)
+            formatted = format_output(
+                title,
+                cur,
+                headers,
+                status,
+                settings,
+                self.explain_mode,
+                function_definition=bool(is_special and re.match(r"^\\sf\+?(?:\s|$)", sql.lstrip())),
+            )
 
             output.extend(formatted)
             total = time() - start
@@ -2158,7 +2168,7 @@ def exception_formatter(e, verbose_errors: bool = False):
     return click.style(s, fg="red")
 
 
-def format_output(title, cur, headers, status, settings, explain_mode=False):
+def format_output(title, cur, headers, status, settings, explain_mode=False, function_definition=False):
     output = []
     expanded = settings.expanded or settings.table_format == "vertical"
     if settings.tuples_only:
@@ -2191,6 +2201,20 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
         return data, headers
 
+    def highlight_function(data, headers, table_format, **_):
+        lexer = PostgresLexer(stripnl=False, ensurenl=False)
+        sql_formatter = Terminal256Formatter(style=settings.style_output)
+
+        def highlight_source(source):
+            colored = highlight(source, lexer, sql_formatter)
+            if table_format == "vertical":
+                # Tables normalize line endings; expanded output preserves the source.
+                line_endings = iter(re.findall(r"\r\n|\r|\n", source))
+                colored = re.sub("\n", lambda _: next(line_endings), colored)
+            return colored
+
+        return ([highlight_source(field) for field in row] for row in data), headers
+
     def format_status(cur, status):
         # redshift does not return rowcount as part of status.
         # See https://github.com/dbcli/pgcli/issues/1320
@@ -2218,6 +2242,9 @@ def format_output(title, cur, headers, status, settings, explain_mode=False):
 
     if settings.column_date_formats:
         output_kwargs["preprocessors"] += (format_timestamps,)
+
+    if function_definition and settings.style_output and table_format in ("psql", "plain", "vertical"):
+        output_kwargs["preprocessors"] += (highlight_function,)
 
     if table_format == "csv":
         # The default CSV dialect is "excel" which is not handling newline values correctly

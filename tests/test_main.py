@@ -32,6 +32,8 @@ from psycopg.pq import TransactionStatus
 from pgspecial.main import PAGER_OFF, PAGER_LONG_OUTPUT, PAGER_ALWAYS
 from utils import dbtest, run
 from collections import namedtuple
+from cli_helpers.utils import strip_ansi
+from pgcli.pgstyle import style_factory_output
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Not applicable in windows")
@@ -79,6 +81,46 @@ def test_format_output():
         "test status",
     ]
     assert list(results) == expected
+
+
+@pytest.mark.parametrize("table_format", ["psql", "plain", "vertical"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
+def test_function_definition_highlighting(table_format, newline):
+    source = f"CREATE FUNCTION demo() RETURNS integer{newline}LANGUAGE sql AS 'SELECT 1';{newline}"
+    settings = OutputSettings(table_format=table_format, style_output=style_factory_output("native", {}))
+    plain = list(format_output(None, [(source,)], ["Source"], None, settings))
+    colored = list(format_output(None, [(source,)], ["Source"], None, settings, function_definition=True))
+    assert colored != plain
+    assert [strip_ansi(line) for line in colored] == [strip_ansi(line) for line in plain]
+
+
+@pytest.mark.parametrize("table_format", ["csv", "tsv", "jsonl"])
+def test_function_definition_machine_output(table_format):
+    source = "CREATE FUNCTION demo() RETURNS text AS 'SELECT ''a,b''';\n"
+    settings = OutputSettings(table_format=table_format, style_output=style_factory_output("native", {}))
+    plain = list(format_output(None, [(source,)], ["Source"], None, settings))
+    assert list(format_output(None, [(source,)], ["Source"], None, settings, function_definition=True)) == plain
+
+
+def test_function_definition_auto_expand_preserves_line_endings():
+    source = "CREATE FUNCTION demo()\r\nRETURNS integer LANGUAGE sql AS 'SELECT 1';\r\n"
+    settings = OutputSettings(table_format="psql", max_width=1, style_output=style_factory_output("native", {}))
+    plain = list(format_output(None, [(source,)], ["Source"], None, settings))
+    colored = list(format_output(None, [(source,)], ["Source"], None, settings, function_definition=True))
+    assert [strip_ansi(line) for line in colored] == [strip_ansi(line) for line in plain]
+
+
+@pytest.mark.parametrize("command,highlighted", [(r"\sf demo", True), (r"\sf+ demo", True), (r"\sfoo demo", False)])
+def test_function_definition_command(command, highlighted):
+    source = "CREATE FUNCTION demo() RETURNS integer LANGUAGE sql AS 'SELECT 1';\n"
+    executor = mock.MagicMock()
+    executor.run.return_value = [(None, [(source,)], ["Source"], None, command, True, True)]
+    cli = PGCli(pgexecute=executor)
+    output, _ = cli._evaluate_command(command)
+    settings = OutputSettings(table_format=cli.table_format, style_output=cli.style_output)
+    plain = list(format_output(None, [(source,)], ["Source"], None, settings))
+    assert (output != plain) == highlighted
+    assert [strip_ansi(line) for line in output] == [strip_ansi(line) for line in plain]
 
 
 def test_column_date_formats():
