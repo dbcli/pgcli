@@ -7,6 +7,12 @@ Features:
   filesystem-aware commands including ``\\e``, ``\\i``, ``\\log-file``, and ``\\o``.
 * Add a ``\service`` prompt token for connections made using ``service=...``
   or ``PGSERVICE``. For example, set ``prompt = '\service> '``.
+* Add ``--no-timings`` and ``--no-status`` to suppress the timing line and the
+  status footer independently. ``-t``/``--tuples-only`` already turns off both,
+  along with the headers and the title, but there was no way to keep the table
+  formatting and drop only one of the two, which scripts that post-process the
+  output often want. A failed statement still prints its error under
+  ``--no-status``.
 
 Bug fixes:
 ----------
