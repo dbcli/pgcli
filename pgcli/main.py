@@ -737,6 +737,8 @@ class PGCli:
             user=user or service_config.get("user"),
             port=service_config.get("port"),
             passwd=service_config.get("password"),
+            # Forward the remaining libpq parameters (sslmode, sslrootcert, ...)
+            **{k: v for k, v in service_config.items() if k not in ("dbname", "host", "user", "port", "password")},
         )
         self.service_name = service or os.getenv("PGSERVICE")
 
