@@ -151,7 +151,7 @@ class FunctionMetadata:
 
         if self.return_type.lower() == "void":
             return []
-        elif not self.arg_modes:
+        elif not any(mode in ("o", "b", "t") for mode in self.arg_modes or []):
             # For functions  without output parameters, the function name
             # is used as the name of the output column.
             # E.g. 'SELECT unnest FROM unnest(...);'
@@ -159,6 +159,6 @@ class FunctionMetadata:
 
         return [
             ColumnMetadata(name, typ, [])
-            for name, typ, mode in zip(self.arg_names, self.arg_types, self.arg_modes)
+            for name, typ, mode in zip(self.arg_names or [], self.arg_types or [], self.arg_modes)
             if mode in ("o", "b", "t")
         ]  # OUT, INOUT, TABLE

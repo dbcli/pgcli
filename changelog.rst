@@ -10,6 +10,7 @@ Features:
 
 Bug fixes:
 ----------
+* Fix ``NoneType`` crash when completing functions with unnamed (variadic) arguments (#1204).
 * Display database errors from ``\ef`` and ``\ev`` without exiting the
   interactive session, allowing recovery from an aborted transaction.
 * Fix the development setup instructions to activate the ``.venv`` directory
