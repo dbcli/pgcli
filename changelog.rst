@@ -12,6 +12,10 @@ Bug fixes:
 ----------
 * Display database errors from ``\ef`` and ``\ev`` without exiting the
   interactive session, allowing recovery from an aborted transaction.
+* Fix `-t`/`--tuples-only` hiding SQL errors. The error of a failed
+  statement was printed in place of the status footer that `-t` suppresses,
+  so a broken query printed nothing at all. Errors now go to stderr under
+  `-t`, as with `psql -t`, so stdout still carries only rows.
 * Fix the development setup instructions to activate the ``.venv`` directory
   created by ``uv venv``.
 * Read ``alias_map_file`` as UTF-8 (with or without a BOM) instead of the
